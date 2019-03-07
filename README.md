@@ -1,4 +1,5 @@
-# Botsashi
+<img src="https://github.com/Buenia0/Botsashi/blob/master/res/logo.png" alt="drawing" width="300"/>
+
 Motrola 68000 emulation engine, kinda
 
 This was created to emulate the M68K processor. But also, you know, to have a fun challenge ;)

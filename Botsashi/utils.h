@@ -1,0 +1,42 @@
+#ifndef UTIL_H
+#define UTIL_H
+
+#include <cstdint>
+#include <string>
+#include <fstream>
+#include <algorithm>
+using namespace std;
+
+bool TestBit(uint8_t reg, int bit);
+
+uint8_t BitSet(uint8_t reg, int bit);
+
+uint8_t BitReset(uint8_t reg, int bit);
+
+int BitGetVal(uint8_t reg, int bit);
+
+uint8_t BitSetTo(uint8_t reg, int bit, bool set);
+
+extern uint16_t opcodeencode(uint16_t opcode);
+            
+extern uint16_t opcodecondition(uint16_t opcode);
+            
+extern uint16_t opcodedestregister(uint16_t opcode);
+            
+extern uint16_t opcodedestmode(uint16_t opcode);
+            
+extern uint16_t opcodebit8(uint16_t opcode);
+            
+extern uint16_t opcodesize(uint16_t opcode);
+            
+extern uint16_t opcodesourcemode(uint16_t opcode);
+
+extern uint16_t opcodemiscencode(uint16_t opcode);
+            
+extern uint16_t opcodesourceregister(uint16_t opcode);
+
+extern string tohexstring(uint32_t val);
+
+extern string tostring(uint32_t val);
+
+#endif // UTIL_H
