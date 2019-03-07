@@ -1,6 +1,6 @@
-<img src="https://github.com/Buenia0/Botsashi/blob/master/res/logo.png" alt="drawing" width="300"/>
+<img src="https://github.com/Buenia0/Botsashi/blob/master/res/logo.png" alt="drawing" width="275"/>
 
-Motrola 68000 emulation engine, kinda
+Motorola 68000 emulation engine, kinda
 
 This was created to emulate the M68K processor. But also, you know, to have a fun challenge ;)
 
