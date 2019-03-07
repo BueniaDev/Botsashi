@@ -1,3 +1,12 @@
+// Botsashi
+// (C) Buenia 2019
+// Licensed under the GNU GPL v3
+// See LICENSE for full license text
+
+// File: m68kdebug.cpp
+// Date: March 7, 2019
+// Description: Provides debug mnemnoics for Motorola 68000 opcodes
+
 #include "m68k.h"
 #include <iostream>
 using namespace m68k;

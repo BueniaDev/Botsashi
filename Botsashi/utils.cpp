@@ -1,3 +1,12 @@
+// Botsashi
+// (C) Buenia 2019
+// Licensed under the GNU GPL v3
+// See LICENSE for full license text
+
+// File: utils.cpp
+// Date: March 7, 2019
+// Description: Provides misc utilities for the emulator
+
 #include "utils.h"
 #include <iostream>
 #include <sstream>
