@@ -11,7 +11,7 @@ This repo comes with a simple example project.
 
 ## Near-term
 
-Complete Motorola 68000 support (as of right now, this engine supports only a subset of the M68K instruction set with no interrupts)
+Complete Motorola 68000 support (as of right now, this engine supports only a subset of the M68K instruction set with only basic interrupt support)
 
 # License
 
