@@ -55,9 +55,17 @@ int main()
 {
     m68kcpu.writeLong(0x000000, 0x0000FFFE);
     m68kcpu.writeLong(0x000004, 0x00000100);
+    for (int i = 1; i < 8; i++)
+    {
+        m68kcpu.writeLong((0x000064 + ((i - 1) * 4)), 0x00000120);
+    }
+    m68kcpu.writeLong(0x000070, 0x00000130);
+    m68kcpu.writeLong(0x000078, 0x00000124);
+    m68kcpu.writeLong(0x00007C, 0x00000128);
     m68kcpu.writeWord(0x000100, 0x1039);
     m68kcpu.writeLong(0x000102, 0xA1000001);
     m68kcpu.writeWord(0x000106, 0x60F8);
+    m68kcpu.writeLong(0x000120, 0x1039);
 
     m68kcpu.reset();
 
@@ -67,11 +75,31 @@ int main()
     {
 	m68kcpu.executenextm68kopcode();
 
-	if (m68kcpu.mcycles >= 1024)
-	{
-	    cout << "Total cycles taken: " << m68kcpu.mcycles << endl;
-	    quit = true;
-	}
+	   if (m68kcpu.mcycles >= 1024)
+	   {
+	       cout << "Total cycles taken: " << m68kcpu.mcycles << endl;
+	       cout << endl;
+	       cout << "PC value: 0x" << hex << (int)m68kcpu.m68kreg.pc << endl;
+	       cout << "SR value: 0x" << hex << (int)m68kcpu.m68kreg.sr << endl;
+	       cout << endl;
+	       m68kcpu.requestinterrupt(1);
+	       cout << "PC value: 0x" << hex << (int)m68kcpu.m68kreg.pc << endl;
+	       cout << "SR value: 0x" << hex << (int)m68kcpu.m68kreg.sr << endl;
+	       cout << endl;
+	       m68kcpu.requestinterrupt(6);
+	       cout << "PC value: 0x" << hex << (int)m68kcpu.m68kreg.pc << endl;
+	       cout << "SR value: 0x" << hex << (int)m68kcpu.m68kreg.sr << endl;
+	       cout << endl;
+	       m68kcpu.requestinterrupt(4);
+	       cout << "PC value: 0x" << hex << (int)m68kcpu.m68kreg.pc << endl;
+	       cout << "SR value: 0x" << hex << (int)m68kcpu.m68kreg.sr << endl;
+	       cout << endl;
+	       m68kcpu.requestinterrupt(7);
+	       cout << "PC value: 0x" << hex << (int)m68kcpu.m68kreg.pc << endl;
+	       cout << "SR value: 0x" << hex << (int)m68kcpu.m68kreg.sr << endl;
+	       cout << endl;
+	       quit = true;
+	   }
     }
 
     return 0;

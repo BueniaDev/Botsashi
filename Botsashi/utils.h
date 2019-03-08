@@ -16,15 +16,15 @@
 #include <algorithm>
 using namespace std;
 
-bool TestBit(uint8_t reg, int bit);
+bool TestBit(uint32_t reg, int bit);
 
-uint8_t BitSet(uint8_t reg, int bit);
+uint32_t BitSet(uint32_t reg, int bit);
 
-uint8_t BitReset(uint8_t reg, int bit);
+uint32_t BitReset(uint32_t reg, int bit);
 
-int BitGetVal(uint8_t reg, int bit);
+int BitGetVal(uint32_t reg, int bit);
 
-uint8_t BitSetTo(uint8_t reg, int bit, bool set);
+uint32_t BitSetTo(uint32_t reg, int bit, bool set);
 
 extern uint16_t opcodeencode(uint16_t opcode);
             

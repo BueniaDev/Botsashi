@@ -572,8 +572,8 @@ namespace m68k
                                                     case 0x4E73: break; // RTE
                                                     case 0x4E75: 
                                                     {
-                                                        m68kreg.pc = readLong(m68kreg.sp);
-                                                        m68kreg.sp += 4;
+                                                        m68kreg.pc = readLong(m68kreg.getsp());
+                                                        m68kreg.setsp(m68kreg.getsp() + 4);
                                                         mcycles += 16;
                                                     }
                                                     break; // RTS
@@ -811,8 +811,8 @@ namespace m68k
                             pctemp += (int8_t)distemp;
                         }
                         
-                        m68kreg.sp -= 4;
-                        writeLong(m68kreg.sp, m68kreg.pc + 2);
+                        m68kreg.setsp(m68kreg.getsp() - 4);
+                        writeLong(m68kreg.getsp(), m68kreg.pc + 2);
                         m68kreg.pc = pctemp;
                         mcycles += 18;
                     }

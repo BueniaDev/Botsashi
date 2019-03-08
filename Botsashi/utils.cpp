@@ -13,27 +13,27 @@
 #include <algorithm>
 using namespace std;
 
-bool TestBit(uint8_t reg, int bit)
+bool TestBit(uint32_t reg, int bit)
 {
     return (reg & (1 << bit)) ? true : false;
 }
 
-uint8_t BitSet(uint8_t reg, int bit)
+uint32_t BitSet(uint32_t reg, int bit)
 {
     return (reg | (1 << bit));
 }
 
-uint8_t BitReset(uint8_t reg, int bit)
+uint32_t BitReset(uint32_t reg, int bit)
 {
     return (reg & ~(1 << bit));
 }
 
-int BitGetVal(uint8_t reg, int bit)
+int BitGetVal(uint32_t reg, int bit)
 {
     return (reg & (1 << bit)) ? 1 : 0;
 }
 
-uint8_t BitSetTo(uint8_t reg, int bit, bool set)
+uint32_t BitSetTo(uint32_t reg, int bit, bool set)
 {
     return set ? (reg | (1 << bit)) : (reg & ~(1 << bit));
 }

@@ -28,9 +28,12 @@ namespace m68k
             {
                 uint32_t datareg[8] = {0};
                 uint32_t addrreg[7] = {0};
-                uint32_t sp;
+                uint32_t ssp;
+                uint32_t usp;
                 uint32_t pc;
                 uint16_t sr;
+                uint32_t getsp();
+                void setsp(uint32_t value);
             };
             
             struct conditioncodes
@@ -51,6 +54,13 @@ namespace m68k
             void executem68kopcode(uint16_t opcode);
             void unimplementedopcode(uint16_t opcode);
             string getm68kmnemonic(uint32_t addr);
+            
+            bool interruptsanitycheck(int value);
+            int getinterruptmask();
+            void setinterruptmask(int value);
+            void requestinterrupt(int interruptlevel);
+            void checkinterrupts(int interruptlevel);
+            void exceptioninterrupt(int interruptlevel);
             
             string mnemonic = "";
             string opsource = "";
