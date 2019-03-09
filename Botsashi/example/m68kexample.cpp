@@ -73,33 +73,9 @@ int main()
 
     while (!quit)
     {
-	m68kcpu.executenextm68kopcode();
-
-	   if (m68kcpu.mcycles >= 1024)
-	   {
-	       cout << "Total cycles taken: " << m68kcpu.mcycles << endl;
-	       cout << endl;
-	       cout << "PC value: 0x" << hex << (int)m68kcpu.m68kreg.pc << endl;
-	       cout << "SR value: 0x" << hex << (int)m68kcpu.m68kreg.sr << endl;
-	       cout << endl;
-	       m68kcpu.requestinterrupt(1);
-	       cout << "PC value: 0x" << hex << (int)m68kcpu.m68kreg.pc << endl;
-	       cout << "SR value: 0x" << hex << (int)m68kcpu.m68kreg.sr << endl;
-	       cout << endl;
-	       m68kcpu.requestinterrupt(6);
-	       cout << "PC value: 0x" << hex << (int)m68kcpu.m68kreg.pc << endl;
-	       cout << "SR value: 0x" << hex << (int)m68kcpu.m68kreg.sr << endl;
-	       cout << endl;
-	       m68kcpu.requestinterrupt(4);
-	       cout << "PC value: 0x" << hex << (int)m68kcpu.m68kreg.pc << endl;
-	       cout << "SR value: 0x" << hex << (int)m68kcpu.m68kreg.sr << endl;
-	       cout << endl;
-	       m68kcpu.requestinterrupt(7);
-	       cout << "PC value: 0x" << hex << (int)m68kcpu.m68kreg.pc << endl;
-	       cout << "SR value: 0x" << hex << (int)m68kcpu.m68kreg.sr << endl;
-	       cout << endl;
-	       quit = true;
-	   }
+	m68kcpu.execute(2060);
+	cout << "Total cycles taken: " << m68kcpu.mcycles << endl;
+	quit = true;	
     }
 
     return 0;

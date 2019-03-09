@@ -67,6 +67,21 @@ namespace m68k
             usp = value;
         }
     }
+
+    int M68K::execute(int cycles)
+    {
+	int executecycles = cycles;
+
+	while (executecycles > 0)
+	{
+	    int corecycles = mcycles;
+	    executenextm68kopcode();
+	    int remcycles = mcycles - corecycles;
+	    executecycles -= remcycles;
+	}
+
+	return 0;
+    }
     
     void M68K::executenextm68kopcode()
     {

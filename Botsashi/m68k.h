@@ -50,6 +50,7 @@ namespace m68k
             uint32_t tempaddr = 0;
             int mcycles = 0;
             
+	    int execute(int cycles);
             void executenextm68kopcode();
             void executem68kopcode(uint16_t opcode);
             void unimplementedopcode(uint16_t opcode);
