@@ -23,6 +23,7 @@ namespace m68k
             ~M68K();
             
             void reset();
+	    void shutdown();
             
             struct m68kregisters
             {

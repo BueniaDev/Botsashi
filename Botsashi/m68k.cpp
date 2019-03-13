@@ -21,7 +21,7 @@ namespace m68k
     
     M68K::~M68K()
     {
-        cout << "M68K::Shutting down..." << endl;
+
     }
     
     void M68K::reset()
@@ -42,6 +42,11 @@ namespace m68k
         mcycles = 0;
         
         cout << "M68K::Initialized" << endl;
+    }
+
+    void M68K::shutdown()
+    {
+        cout << "M68K::Shutting down..." << endl;
     }
     
     uint32_t M68K::m68kregisters::getsp()
