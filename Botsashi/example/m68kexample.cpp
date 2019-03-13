@@ -78,5 +78,7 @@ int main()
 	quit = true;	
     }
 
+    m68kcpu.shutdown();
+
     return 0;
 }
