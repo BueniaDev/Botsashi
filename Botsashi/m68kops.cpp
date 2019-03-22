@@ -278,9 +278,7 @@ namespace m68k
                                 m68kreg.pc += 2;
                                 
                                 int16_t bytetemp = (int16_t)(wordtemp);
-                                uint32_t temp = (bytetemp < 0) ? (0xFFFF0000 | wordtemp) : wordtemp;
-                                
-                                temp |= wordtemp;
+                                uint32_t temp = (bytetemp < 0) ? (0xFFFF0000 | wordtemp) : (0x00000000 | wordtemp);
                                 
                                 writeByte(temp, source);
                                 mcycles += 8;
@@ -337,7 +335,7 @@ namespace m68k
                                 m68kreg.pc += 2;
                                 
                                 int16_t bytetemp = (int16_t)(wordtemp);
-                                uint32_t temp = (bytetemp < 0) ? (0xFFFF0000 | wordtemp): wordtemp;
+                                uint32_t temp = (bytetemp < 0) ? (0xFFFF0000 | wordtemp): (0x00000000 | wordtemp);
                                 
                                 source = readLong(temp);
                                 mcycles += 16;
@@ -444,7 +442,7 @@ namespace m68k
                                 m68kreg.pc += 2;
                                 
                                 int16_t bytetemp = (int16_t)(wordtemp);
-                                uint32_t temp = (bytetemp < 0) ? (0xFFFF0000 | wordtemp) : wordtemp;
+                                uint32_t temp = (bytetemp < 0) ? (0xFFFF0000 | wordtemp) : (0x00000000 | wordtemp);
                                 
                                 temp |= wordtemp;
                                 

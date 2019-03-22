@@ -28,12 +28,12 @@ namespace m68k
     {
         for (int i = 0; i < 8; i++)
         {
-            m68kreg.datareg[i] = 0xFFFFFFFF;
+            m68kreg.datareg[i] = 0;
         }
         
         for (int i = 0; i < 7; i++)
         {
-            m68kreg.addrreg[i] = 0xFFFFFFFF;
+            m68kreg.addrreg[i] = 0;
         }
         
         m68kreg.ssp = readLong(0x000000);
