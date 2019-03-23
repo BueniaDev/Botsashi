@@ -24,7 +24,6 @@ namespace m68k
             {
                 bool andccr = false;
                 
-                uint32_t source = 0;
                 uint32_t temp = 0;
                 
                 switch (opcodebit8(opcode)) // Determines type of opcode
@@ -40,12 +39,14 @@ namespace m68k
                                 {
                                     case 0:
                                     {
-                                        switch (opcodesourcemode(opcode)) // Determines effective address mode
+					uint8_t source = 0;                                        
+
+					switch (opcodesourcemode(opcode)) // Determines effective address mode
                                         {
                                             case 0:
                                             {
-                                                source = m68kreg.datareg[opcodesourceregister(opcode)];
-                                                source &= (readByte(m68kreg.pc + 1) & 0xFF);
+                                                source = (m68kreg.datareg[opcodesourceregister(opcode)] & 0xFF);
+                                                source &= readByte(m68kreg.pc + 1) ;
                                                 m68kreg.pc += 2;
                                                 
                                                 temp = m68kreg.datareg[opcodesourceregister(opcode)];
@@ -77,7 +78,7 @@ namespace m68k
                                         
                                         if (!andccr)
                                         {
-                                            uint8_t conditionval = ((m68kreg.sr & 0xFF) & 0xF0);
+                                            uint8_t conditionval = (m68kreg.sr & 0xF0);
                 
                                             if (TestBit(source, 7))
                                             {
@@ -146,7 +147,7 @@ namespace m68k
                                             break; // Addressing mode 7
                                         }
                                         
-                                        uint8_t conditionval = ((m68kreg.sr & 0xFF) & 0xF0);
+                                        uint8_t conditionval = (m68kreg.sr & 0xF0);
                                         
                                         int16_t signedtemp = (int16_t)(temp);
                                         
@@ -214,7 +215,7 @@ namespace m68k
                                 m68kreg.pc += 2;
                                 
                                 int16_t bytetemp = (int16_t)(wordtemp);
-                                uint32_t temp = (bytetemp < 0) ? (0xFFFF0000 | wordtemp) : wordtemp;
+                                uint32_t temp = (bytetemp < 0) ? (0xFFFF0000 | wordtemp) : (0x00000000 | wordtemp);
                                 
                                 source = readByte(temp);
                                 
@@ -291,7 +292,7 @@ namespace m68k
                     break; // Addressing mode 7
                 }
                 
-                uint8_t conditionval = ((m68kreg.sr & 0xFF) & 0xF0);
+                uint8_t conditionval = (m68kreg.sr & 0xF0);
                 
                 int8_t sourcetemp = (int8_t)(source);
                 
@@ -398,7 +399,7 @@ namespace m68k
                     break; // Addressing mode 7
                 }
                 
-                uint8_t conditionval = ((m68kreg.sr & 0xFF) & 0xF0);
+                uint8_t conditionval = (m68kreg.sr & 0xF0);
                 int32_t sourcetemp = (int32_t)(source);
                 
                 if (sourcetemp < 0)
@@ -510,7 +511,7 @@ namespace m68k
                     break; // Addressing mode 7
                 }
                 
-                uint8_t conditionval = ((m68kreg.sr & 0xFF) & 0xF0);
+                uint8_t conditionval = (m68kreg.sr & 0xF0);
                 
                 int16_t sourcetemp = (int16_t)(source);
                 
@@ -653,7 +654,7 @@ namespace m68k
                                     default: break;
                                 }
                         
-                                uint8_t conditionval = ((m68kreg.sr & 0xFF) & 0xE0);
+                                uint8_t conditionval = (m68kreg.sr & 0xE0);
                 
                                 int32_t signedaddtemp = (int32_t)(addtemp);
                 
@@ -702,9 +703,10 @@ namespace m68k
                                     case 0: unimplementedopcode(opcode); break; // DBT
                                     case 1:
                                     {
-                                        m68kreg.datareg[opcodesourceregister(opcode)] -= 1;
+                                        uint16_t temp = (m68kreg.datareg[opcodesourceregister(opcode)] & 0xFFFF);
+					temp -= 1;
                                         
-                                        int32_t tempreg = (int32_t)m68kreg.datareg[opcodesourceregister(opcode)];
+                                        int16_t tempreg = (int16_t)(temp);
                                         
                                         if (tempreg != -1)
                                         {
@@ -714,7 +716,6 @@ namespace m68k
                                         }
                                         else
                                         {
-                                            m68kreg.datareg[opcodesourceregister(opcode)] &= 0xFFFF;
                                             m68kreg.pc += 2;
                                             mcycles += 4;
                                         }

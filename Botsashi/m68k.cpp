@@ -36,7 +36,7 @@ namespace m68k
             m68kreg.addrreg[i] = 0;
         }
         
-        m68kreg.ssp = readLong(0x000000);
+        m68kreg.ssp = m68kreg.addrreg[7] = readLong(0x000000);
         m68kreg.pc = readLong(0x000004);
         m68kreg.sr = 0x7FFF;
         mcycles = 0;
@@ -51,14 +51,7 @@ namespace m68k
     
     uint32_t M68K::m68kregisters::getsp()
     {
-        if (TestBit(sr, 13))
-        {
-            return ssp;
-        }
-        else
-        {
-            return usp;
-        }
+        return addrreg[7];
     }
     
     void M68K::m68kregisters::setsp(uint32_t value)
@@ -66,10 +59,12 @@ namespace m68k
         if (TestBit(sr, 13))
         {
             ssp = value;
+	    addrreg[7] = ssp;
         }
         else
         {
             usp = value;
+	    addrreg[7] = usp;
         }
     }
 
@@ -154,17 +149,15 @@ namespace m68k
 
     void M68K::exceptioninterrupt(int interruptlevel)
     {
-        m68kreg.ssp -= 4;
-        writeWord(m68kreg.ssp, m68kreg.pc);
-        m68kreg.ssp -= 2;
-        writeWord(m68kreg.ssp, m68kreg.sr);
+	m68kreg.setsp(m68kreg.getsp() - 4);
+        writeWord(m68kreg.getsp(), m68kreg.pc);
+	m68kreg.setsp(m68kreg.getsp() - 2);
+        writeWord(m68kreg.getsp(), m68kreg.sr);
 
         m68kreg.pc = readLong((0x64 + ((interruptlevel - 1) * 4)));
         mcycles += 44;
     }
 
-
-    
     void M68K::unimplementedopcode(uint16_t opcode)
     {
         cout << "M68K::Unrecognized opcode at " << tohexstring(opcode) << endl;

@@ -28,7 +28,7 @@ namespace m68k
             struct m68kregisters
             {
                 uint32_t datareg[8] = {0};
-                uint32_t addrreg[7] = {0};
+                uint32_t addrreg[8] = {0};
                 uint32_t ssp;
                 uint32_t usp;
                 uint32_t pc;
