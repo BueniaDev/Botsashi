@@ -13,19 +13,11 @@ using namespace m68k;
 using namespace std;
 
 namespace m68k
-{
-    M68K::M68K()
+{   
+    void M68K::reset(uint32_t val)
     {
-
-    }
-    
-    M68K::~M68K()
-    {
-
-    }
-    
-    void M68K::reset()
-    {
+        m68kreg.vbr = val;
+        
         for (int i = 0; i < 8; i++)
         {
             m68kreg.datareg[i] = 0;
@@ -36,9 +28,9 @@ namespace m68k
             m68kreg.addrreg[i] = 0;
         }
         
-        m68kreg.ssp = m68kreg.addrreg[7] = readLong(0x000000);
-        m68kreg.pc = readLong(0x000004);
-        m68kreg.sr = 0x7FFF;
+        m68kreg.ssp = m68kreg.addrreg[7] = readLong(m68kreg.vbr);
+        m68kreg.pc = readLong(m68kreg.vbr + 4);
+        m68kreg.sr = 0x2700;
         mcycles = 0;
         
         cout << "M68K::Initialized" << endl;
@@ -85,6 +77,9 @@ namespace m68k
     
     void M68K::executenextm68kopcode()
     {
+        #ifdef BOTDEBUG
+        cout << getm68kmnemonic(m68kreg.pc) << endl;
+        #endif // BOTDEBUG
         uint16_t opcode = readWord(m68kreg.pc);
         m68kreg.pc += 2;
         executem68kopcode(opcode);
@@ -149,12 +144,12 @@ namespace m68k
 
     void M68K::exceptioninterrupt(int interruptlevel)
     {
-	m68kreg.setsp(m68kreg.getsp() - 4);
+	    m68kreg.setsp(m68kreg.getsp() - 4);
         writeWord(m68kreg.getsp(), m68kreg.pc);
-	m68kreg.setsp(m68kreg.getsp() - 2);
+	    m68kreg.setsp(m68kreg.getsp() - 2);
         writeWord(m68kreg.getsp(), m68kreg.sr);
 
-        m68kreg.pc = readLong((0x64 + ((interruptlevel - 1) * 4)));
+        m68kreg.pc = readLong(m68kreg.vbr + (0x64 + ((interruptlevel - 1) * 4)));
         mcycles += 44;
     }
 

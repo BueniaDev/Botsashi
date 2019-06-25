@@ -20,6 +20,8 @@ string M68K::getm68kmnemonic(uint32_t addr)
     string opsource = "";
     string opdest = "";
     
+    bool immediate = false;
+    
     // Bits 15-12 determine the opcode
     switch (opcodeencode(opcode))
     {
@@ -139,16 +141,7 @@ string M68K::getm68kmnemonic(uint32_t addr)
                         {
                             uint16_t wordtemp = readWord(addr);
                                 
-                            int16_t bytetemp = (int16_t)(wordtemp);
-                            uint32_t temp = 0;
-                                
-                            if (bytetemp < 0)
-                            {
-                                temp = 0xFFFFFFFF;
-                            }
-                            
-                            temp &= 0xFFFF0000;
-                            temp |= wordtemp;
+                            uint32_t temp = (uint32_t)(int16_t)(wordtemp);
                             
                             opsource = "$" + tohexstring(temp);
                         }
@@ -156,7 +149,7 @@ string M68K::getm68kmnemonic(uint32_t addr)
                         case 1: opsource = "$" + tohexstring(readLong(addr + 2)); break; // Absolute long
                         case 2: mnemonic = "NAN"; break; // PC with displacement
                         case 3: mnemonic = "NAN"; break; // PC with index
-                        case 4: opsource = "#$" + tohexstring(readLong(addr)); break; // Immediate
+                        case 4: opsource = "#$" + tohexstring(readByte(addr + 3)); immediate = true; break; // Immediate
                     }
                 }
                 break; // Addressing mode 7
@@ -207,22 +200,25 @@ string M68K::getm68kmnemonic(uint32_t addr)
                             uint16_t wordtemp = readWord(addr + 1);
                             addr += 2;
                                 
-                            int16_t bytetemp = (int16_t)(wordtemp);
-                            uint32_t temp = 0;
-                        
-                            if (bytetemp < 0)
-                            {
-                                temp = 0xFFFFFFFF;
-                            }
-                                
-                            temp &= 0xFFFF0000;
-                            temp |= wordtemp;
+                            uint32_t temp = (uint32_t)(int16_t)(wordtemp);
                                 
                             opdest = "$" + tohexstring(temp);
                             mnemonic = "move.b " + opsource + "," + opdest; 
                         }
                         break; // Absolute word
-                        case 1: mnemonic = "NAN"; break; // Absolute long
+                        case 1:
+                        {
+                            uint32_t temp = ((immediate) ? (addr + 4) : (addr + 2));
+                            
+                            if (immediate)
+                            {
+                                immediate = false;
+                            }
+                            
+                            opdest = "$" + tohexstring(readLong(temp));
+                            mnemonic = "move.b " + opsource + "," + opdest;
+                        }
+                        break; // Absolute long
                         default: mnemonic = "NAN"; break;
                     }
                 }
@@ -252,16 +248,7 @@ string M68K::getm68kmnemonic(uint32_t addr)
                             uint16_t wordtemp = readWord(addr);
                             addr += 2;
                                 
-                            int16_t bytetemp = (int16_t)(wordtemp);
-                            uint32_t temp = 0;
-                                
-                            if (bytetemp < 0)
-                            {
-                                temp = 0xFFFFFFFF;
-                            }
-                            
-                            temp &= 0xFFFF0000;
-                            temp |= wordtemp;
+                            uint32_t temp = (uint32_t)(int16_t)(wordtemp);
                             
                             opsource = "$" + tohexstring(temp);
                         }
@@ -347,16 +334,7 @@ string M68K::getm68kmnemonic(uint32_t addr)
                             uint16_t wordtemp = readWord(addr);
                             addr += 2;
                             
-                            int16_t bytetemp = (int16_t)(wordtemp);
-                            uint32_t temp = 0;
-                                
-                            if (bytetemp < 0)
-                            {
-                                temp = 0xFFFFFFFF;
-                            }
-                                
-                            temp &= 0xFFFF0000;
-                            temp |= wordtemp;
+                            uint32_t temp = (uint32_t)(int16_t)(wordtemp);
                             
                             opsource = "$" + tohexstring(temp);
                         } 
@@ -426,7 +404,39 @@ string M68K::getm68kmnemonic(uint32_t addr)
             switch (opcodedestmode(opcode))
             {
                 case 6: mnemonic = "NAN"; break; // CHK
-                case 7: mnemonic = "NAN"; break; // LEA
+                case 7:                         
+                {
+                    switch (opcodesourcemode(opcode)) // Determines addressing mode
+                    {
+                        case 2: opsource = "(a" + tostring(opcodesourceregister(opcode)); mcycles += 4; break; // Address
+                        case 5: unimplementedopcode(opcode); break; // Address with displacement
+                        case 6: unimplementedopcode(opcode); break; // Address with index
+                        case 7:
+                        {
+                            switch (opcodesourceregister(opcode)) // Addressing mode 7
+                            {
+                                case 0: 
+                                {
+                                    uint16_t wordtemp = readWord(addr + 2);
+                                
+                                    uint32_t temp = (uint32_t)(int16_t)(wordtemp);
+                            
+                                    opsource = "$" + tohexstring(temp);
+                                }
+                                break; // Absolute word
+                                case 1: opsource = "$" + tohexstring(readLong(addr)); break; // Absolute long
+                                case 2: unimplementedopcode(opcode); break; // PC with displacement
+                                case 3: unimplementedopcode(opcode); break; // PC with index
+                            }
+                        }
+                        default: break;
+                    }
+                        
+                    opdest = tostring(opcodedestregister(opcode));
+                    
+                    mnemonic = "lea " + opsource + ",a" + opdest;
+                }
+                break; // LEA
                 default:
                 {
                     switch (opcodedestregister(opcode))
@@ -640,9 +650,60 @@ string M68K::getm68kmnemonic(uint32_t addr)
                 break; // BSR
                 case 2: mnemonic = "NAN"; break; // BHI
                 case 3: mnemonic = "NAN"; break; // BLS
-                case 4: mnemonic = "NAN"; break; // BCC
-                case 5: mnemonic = "NAN"; break; // BCS
-                case 6: mnemonic = "NAN"; break; // BNE
+                case 4:
+                {
+                    uint8_t distemp = (opcode & 0xFF);
+                    uint32_t pctemp = 0;
+                        
+                    if (distemp == 0)
+                    {
+                        uint16_t wordtemp = readWord(addr + 2);
+                        pctemp = wordtemp;
+                    }
+                    else
+                    {
+                        pctemp = distemp;
+                    }
+                    
+                    mnemonic = "bcc #$" + tohexstring(pctemp);
+                }
+                break; // BCC
+                case 5:
+                {
+                    uint8_t distemp = (opcode & 0xFF);
+                    uint32_t pctemp = 0;
+                        
+                    if (distemp == 0)
+                    {
+                        uint16_t wordtemp = readWord(addr + 2);
+                        pctemp = wordtemp;
+                    }
+                    else
+                    {
+                        pctemp = distemp;
+                    }
+                    
+                    mnemonic = "bcs #$" + tohexstring(pctemp);
+                }
+                break; // BCS
+                case 6:
+                {
+                    uint8_t distemp = (opcode & 0xFF);
+                    uint32_t pctemp = 0;
+                        
+                    if (distemp == 0)
+                    {
+                        uint16_t wordtemp = readWord(addr + 2);
+                        pctemp = wordtemp;
+                    }
+                    else
+                    {
+                        pctemp = distemp;
+                    }
+                    
+                    mnemonic = "bne #$" + tohexstring(pctemp);
+                }
+                break; // BNE
                 case 7:
                 {
                     uint8_t distemp = (opcode & 0xFF);
@@ -661,10 +722,78 @@ string M68K::getm68kmnemonic(uint32_t addr)
                     mnemonic = "beq #$" + tohexstring(pctemp);
                 }
                 break; // BEQ
-                case 8: mnemonic = "NAN"; break; // BVC
-                case 9: mnemonic = "NAN"; break; // BVS
-                case 10: mnemonic = "NAN"; break; // BPL
-                case 11: mnemonic = "NAN"; break; // BMI
+                case 8:
+                {
+                    uint8_t distemp = (opcode & 0xFF);
+                    uint32_t pctemp = 0;
+                        
+                    if (distemp == 0)
+                    {
+                        uint16_t wordtemp = readWord(addr + 2);
+                        pctemp = wordtemp;
+                    }
+                    else
+                    {
+                        pctemp = distemp;
+                    }
+                    
+                    mnemonic = "bvc #$" + tohexstring(pctemp);
+                }
+                break; // BVC
+                case 9:
+                {
+                    uint8_t distemp = (opcode & 0xFF);
+                    uint32_t pctemp = 0;
+                        
+                    if (distemp == 0)
+                    {
+                        uint16_t wordtemp = readWord(addr + 2);
+                        pctemp = wordtemp;
+                    }
+                    else
+                    {
+                        pctemp = distemp;
+                    }
+                    
+                    mnemonic = "bvs #$" + tohexstring(pctemp);
+                }
+                break; // BVS
+                case 10:
+                {
+                    uint8_t distemp = (opcode & 0xFF);
+                    uint32_t pctemp = 0;
+                        
+                    if (distemp == 0)
+                    {
+                        uint16_t wordtemp = readWord(addr + 2);
+                        pctemp = wordtemp;
+                    }
+                    else
+                    {
+                        pctemp = distemp;
+                    }
+                    
+                    mnemonic = "bpl #$" + tohexstring(pctemp);
+                }
+                break; // BPL
+                case 11:
+                {
+                    uint8_t distemp = (opcode & 0xFF);
+                    uint32_t pctemp = 0;
+                        
+                    if (distemp == 0)
+                    {
+                        uint16_t wordtemp = readWord(addr + 2);
+                        pctemp = wordtemp;
+                    }
+                    else
+                    {
+                        pctemp = distemp;
+                    }
+                    
+                    mnemonic = "bmi #$" + tohexstring(pctemp);
+                }
+                break; // BMI
                 case 12: mnemonic = "NAN"; break; // BGE
                 case 13: mnemonic = "NAN"; break; // BLT
                 case 14: mnemonic = "NAN"; break; // BGT
@@ -677,12 +806,7 @@ string M68K::getm68kmnemonic(uint32_t addr)
         case 0x7000:
         {
             uint8_t bytevalue = (opcode & 0xFF);
-            uint32_t temp = (bytevalue << 24);
-            temp |= (bytevalue << 16);
-            temp |= (bytevalue << 8);
-            temp |= bytevalue;
-            opsource = "#$" + tohexstring(temp);
-            opdest = "d" + tostring(opcodedestregister(opcode));
+            uint32_t temp = (uint32_t)(int8_t)(bytevalue);
             mnemonic = "moveq #$" + tohexstring(temp) + ",d" + tostring(opcodedestregister(opcode));
         }
         break;

@@ -1,5 +1,7 @@
 #include "../m68k.h"
 #include <iostream>
+#include <string>
+#include <fstream>
 #include <functional>
 using namespace m68k;
 using namespace std;
@@ -8,6 +10,8 @@ using namespace std::placeholders;
 M68K m68kcpu;
 
 uint8_t memorymap[0x1000000];
+uint8_t arr1[0x10000];
+uint8_t arr2[0x10000];
 
 uint8_t readb(uint32_t address)
 {
@@ -26,7 +30,6 @@ void writeb(uint32_t address, uint8_t value)
 uint16_t readw(uint32_t address)
 {
     address = (address % 0x1000000);
-    
     return (readb(address) << 8) | readb(address + 1);
 }
     
@@ -67,36 +70,68 @@ void init()
     m68kcpu.setrwlcallback(rl, wl);
 }
 
-int main()
+bool loadROM(string filename, uint8_t *array)
 {
+    ifstream file(filename.c_str(), ios::in | ios::binary | ios::ate);
+    
+    if (file.is_open())
+    {
+        streampos size = file.tellg();
+        
+        file.seekg(0, ios::beg);
+        file.read((char*)&array[0], size);
+        
+        cout << filename << " succefully loaded." << endl;
+        file.close();
+        return true;
+    }
+    else
+    {
+        cout << "Error: " << filename << " could not be opened." << endl;
+        return false;
+    }
+}
+
+bool loadfiles(string file1, string file2)
+{
+    
+    if (!loadROM(file1, arr1))
+    {
+        return false;
+    }
+    
+    if (!loadROM(file2, arr2))
+    {
+        return false;
+    }
+    
+    for (int i = 0; i < 0x10000; i++)
+    {
+        memorymap[i * 2] = arr1[i];
+        memorymap[i * 2 + 1] = arr2[i];
+    }
+    
+    return true;
+}
+
+int main(int argc, char* argv[])
+{
+    if (argc < 3)
+    {
+        cout << "Usage: " << argv[0] << " ROM1 ROM2" << endl;
+        return 1;
+    }
+    
+    if (!loadfiles(argv[1], argv[2]))
+    {
+        return 1;
+    }
+    
     init();
     
-    m68kcpu.writeLong(0x000000, 0x0000FFFE);
-    m68kcpu.writeLong(0x000004, 0x00000100);
-    for (int i = 1; i < 8; i++)
-    {
-        m68kcpu.writeLong((0x000064 + ((i - 1) * 4)), 0x00000100);
-    }
-    m68kcpu.writeLong(0x000070, 0x00000130);
-    m68kcpu.writeLong(0x000078, 0x00000124);
-    m68kcpu.writeLong(0x00007C, 0x00000128);
-    m68kcpu.writeWord(0x000100, 0x1039);
-    m68kcpu.writeLong(0x000102, 0xA1000001);
-    m68kcpu.writeWord(0x000106, 0x70FF);
-    m68kcpu.writeWord(0x000108, 0x60F6);
-
     m68kcpu.reset(0);
-
-    bool quit = false;
-
-    while (!quit)
-    {
-	   m68kcpu.execute(2060);
-	   cout << "Total cycles taken: " << m68kcpu.mcycles << endl;
-	   quit = true;	
-    }
-
+    m68kcpu.execute(1000);
     m68kcpu.shutdown();
-
+    
     return 0;
 }
