@@ -55,6 +55,110 @@ namespace m68k
         conditioncodes condition;
         uint32_t tempaddr = 0;
         int mcycles = 0;
+
+	inline bool getcond(int cond)
+	{
+	    bool temp = false;	    
+
+	    switch (cond)
+	    {
+		case 0: temp = true; break; // T
+		case 1: temp = false; break; // F
+		case 2: temp = (!iscarry() && !iszero()); break; // HI
+		case 3: temp = (iscarry() || iszero()); break; // LS
+		case 4: temp = !iscarry(); break; // CC
+		case 5: temp = iscarry(); break; // CS
+		case 6: temp = !iszero(); break; // NE
+		case 7: temp = iszero(); break; // EQ
+		case 8: temp = !isoverflow(); break; // VC
+		case 9: temp = isoverflow(); break; // VS
+		case 10: temp = !isnegative(); break; // PL
+		case 11: temp = isnegative(); break; // MI
+		case 12: temp = (isnegative() == isoverflow()); break; // GE
+		case 13: temp = (isnegative() != isoverflow()); break; // LT
+		case 14: temp = (!iszero() && (isnegative() == isoverflow())); break; // GT
+		case 15: temp = (!iszero() || (isnegative() != isoverflow())); break; // LE
+	    }
+
+	    return temp;
+	}
+
+	inline int getmsb(int length)
+	{
+	    return ((2 << (1 + length)) - 1);
+	}
+
+	inline bool sign(uint32_t operand, int length)
+	{
+	    return TestBit(operand, getmsb(length));
+	}
+
+	inline bool overflow(uint32_t op1, uint32_t op2, uint32_t op3, int length)
+	{
+	    int bit = getmsb(length);
+	    if (!TestBit(op1, bit) && !TestBit(op2, bit) && TestBit(op3, bit))
+	    {
+		return true;
+	    }
+	    else if (TestBit(op1, bit) && TestBit(op2, bit) && !TestBit(op3, bit))
+	    {
+		return true;
+	    }
+	    else
+	    {
+		return false;
+	    }
+	}
+
+	inline bool isextended()
+	{
+	    return TestBit(m68kreg.sr, 4);
+	}
+
+	inline void setextended(bool val)
+	{
+	    m68kreg.sr = (val) ? BitSet(m68kreg.sr, 4) : BitReset(m68kreg.sr, 4);
+	}
+
+	inline bool isnegative()
+	{
+	    return TestBit(m68kreg.sr, 3);
+	}
+
+	inline void setnegative(bool val)
+	{
+	    m68kreg.sr = (val) ? BitSet(m68kreg.sr, 3) : BitReset(m68kreg.sr, 3);
+	}
+
+	inline bool iszero()
+	{
+	    return TestBit(m68kreg.sr, 2);
+	}
+
+	inline void setzero(bool val)
+	{
+	    m68kreg.sr = (val) ? BitSet(m68kreg.sr, 2) : BitReset(m68kreg.sr, 2);
+	}
+
+	inline bool isoverflow()
+	{
+	    return TestBit(m68kreg.sr, 1);
+	}
+
+	inline void setoverflow(bool val)
+	{
+	    m68kreg.sr = (val) ? BitSet(m68kreg.sr, 1) : BitReset(m68kreg.sr, 1);
+	}
+
+	inline bool iscarry()
+	{
+	    return TestBit(m68kreg.sr, 0);
+	}
+
+	inline void setcarry(bool val)
+	{
+	    m68kreg.sr = (val) ? BitSet(m68kreg.sr, 0) : BitReset(m68kreg.sr, 0);
+	}
             
 	int execute(int cycles);
         void executenextm68kopcode();

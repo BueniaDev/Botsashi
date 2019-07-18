@@ -39,9 +39,9 @@ namespace m68k
                                 {
                                     case 0:
                                     {
-					                    uint8_t source = 0;
+					uint8_t source = 0;
 
-					                    switch (opcodesourcemode(opcode)) // Determines effective address mode
+					switch (opcodesourcemode(opcode)) // Determines effective address mode
                                         {
                                             case 0:
                                             {
@@ -78,18 +78,9 @@ namespace m68k
                                         
                                         if (!andccr)
                                         {
-                                            m68kreg.sr &= 0xFFF0;
-                
-                                            if (TestBit(source, 7))
-                                            {
-                                                m68kreg.sr = BitSet(m68kreg.sr, condition.negative);
-                                            }
-                
-                                            if (source == 0)
-                                            {
-                                                m68kreg.sr = BitSet(m68kreg.sr, condition.zero);
-                                            }
-                                        }
+					    setnegative(sign(source, 1));
+					    setzero((source == 0));
+					}
                                     }
                                     break; // Size is byte
                                     case 1: unimplementedopcode(opcode); break; // Size is word
@@ -142,32 +133,10 @@ namespace m68k
                                             break; // Addressing mode 7
                                         }
                                         
-                                        m68kreg.sr &= 0xFFF0;
-                                        
-                                        
-                                        if (TestBit(temp, 15))
-                                        {
-                                            m68kreg.sr = BitSet(m68kreg.sr, condition.negative);
-                                        }
-                                        
-                                        if (temp == 0)
-                                        {
-                                            m68kreg.sr = BitSet(m68kreg.sr, condition.zero);
-                                        }
-                                        
-                                        if (!TestBit(desttemp, 15) && TestBit(wordtemp, 15) && TestBit(temp, 15))
-                                        {
-                                            m68kreg.sr = BitSet(m68kreg.sr, condition.overflow);
-                                        }
-                                        else if (TestBit(desttemp, 15) && !TestBit(wordtemp, 15) && !TestBit(temp, 15))
-                                        {
-                                            m68kreg.sr = BitSet(m68kreg.sr, condition.overflow);
-                                        }
-                                        
-                                        if (desttemp < wordtemp)
-                                        {
-                                            m68kreg.sr = BitSet(m68kreg.sr, condition.carry);
-                                        }
+					setnegative(sign(temp, 2));
+					setzero((temp == 0));
+					setoverflow(overflow(desttemp, wordtemp, temp, 2));
+				        setcarry((desttemp < wordtemp));
                                     }
                                     break; // Size is word
                                     case 2: unimplementedopcode(opcode); break; // Size is long
@@ -280,17 +249,8 @@ namespace m68k
                     break; // Addressing mode 7
                 }
                 
-                m68kreg.sr &= 0xFFF0;
-                
-                if (TestBit(source, 7))
-                {
-                    m68kreg.sr = BitSet(m68kreg.sr, condition.negative);
-                }
-                
-                if (source == 0)
-                {
-                    m68kreg.sr = BitSet(m68kreg.sr, condition.zero);
-                }
+		setnegative(sign(source, 1));
+		setzero((source == 0));
             }
             break;
 
@@ -389,17 +349,8 @@ namespace m68k
                     break; // Addressing mode 7
                 }
                 
-                m68kreg.sr &= 0xFFF0;
-                
-                if (TestBit(source, 31))
-                {
-                    m68kreg.sr = BitSet(m68kreg.sr, condition.negative);
-                }
-                
-                if (source == 0)
-                {
-                    m68kreg.sr = BitSet(m68kreg.sr, condition.zero);
-                }
+		setnegative(sign(source, 3));
+		setzero((source == 0));
             }
             break;
             
@@ -492,17 +443,8 @@ namespace m68k
                     break; // Addressing mode 7
                 }
                 
-                m68kreg.sr &= 0xFFF0;
-                
-                if (TestBit(source, 15))
-                {
-                    m68kreg.sr = BitSet(m68kreg.sr, condition.negative);
-                }
-                
-                if (source == 0)
-                {
-                    m68kreg.sr = BitSet(m68kreg.sr, condition.zero);
-                }
+		setnegative(sign(source, 2));
+		setzero((source == 0));
             }
             break;
             
@@ -708,34 +650,12 @@ namespace m68k
                                     break; // Addressing mode 7
                                     default: break;
                                 }
-                        
-                                m68kreg.sr &= 0xFFE0;
-                
-                                if (TestBit(addtemp, 31))
-                                {
-                                    m68kreg.sr = BitSet(m68kreg.sr, condition.negative);
-                                }
-                
-                                if (addtemp == 0)
-                                {
-                                    m68kreg.sr = BitSet(m68kreg.sr, condition.zero);
-                                }
-                                
-                                if (addtemp > 0xFFFFFFFF)
-                                {
-                                    m68kreg.sr = BitSet(m68kreg.sr, condition.carry);
-                                    m68kreg.sr = BitSet(m68kreg.sr, condition.extended);
-                                }
-                                
-                                if (!TestBit(overflowtemp, 31) && !TestBit(adder, 31) && TestBit(addtemp, 31))
-                                {
-                                    m68kreg.sr = BitSet(m68kreg.sr, condition.overflow);
-                                }
-                                else if (TestBit(overflowtemp, 31) && TestBit(adder, 31) && !TestBit(addtemp, 31))
-                                {
-                                    m68kreg.sr = BitSet(m68kreg.sr, condition.overflow);
-                                }
 
+				setnegative(sign(addtemp, 3));
+				setzero((addtemp == 0));
+				setcarry((addtemp > 0xFFFFFFFF));
+				setextended(iscarry());
+				setoverflow(overflow(overflowtemp, adder, addtemp));
                             }
                             break; // ADDQ.L
                             case 1: unimplementedopcode(opcode); break; // SUBQ.L
@@ -749,45 +669,26 @@ namespace m68k
                         {
                             case 1:
                             {
-                                switch (opcodecondition(opcode))
-                                {
-                                    case 0: unimplementedopcode(opcode); break; // DBT
-                                    case 1:
+                                if (!getcond(opcodecondition(opcode)))
+				{
+                                    uint16_t temp = (m68kreg.datareg[opcodesourceregister(opcode)] & 0xFFFF);
+				    temp -= 1;
+                                        
+                                    int16_t tempreg = (int16_t)(temp);
+                                        
+                                    if (tempreg != -1)
                                     {
-                                        uint16_t temp = (m68kreg.datareg[opcodesourceregister(opcode)] & 0xFFFF);
-					                    temp -= 1;
-                                        
-                                        int16_t tempreg = (int16_t)(temp);
-                                        
-                                        if (tempreg != -1)
-                                        {
-                                            int16_t wordtemp = (int16_t)(readWord(m68kreg.pc));
-                                            m68kreg.pc += wordtemp;
-                                        }
-                                        else
-                                        {
-                                            m68kreg.pc += 2;
-                                            mcycles += 4;
-                                        }
-                                        
-                                        mcycles += 10;
+                                        int16_t wordtemp = (int16_t)(readWord(m68kreg.pc));
+                                        m68kreg.pc += wordtemp;
                                     }
-                                    break; // DBF
-                                    case 2: unimplementedopcode(opcode); break; // DBHI
-                                    case 3: unimplementedopcode(opcode); break; // DBLS
-                                    case 4: unimplementedopcode(opcode); break; // DBCC
-                                    case 5: unimplementedopcode(opcode); break; // DBCS
-                                    case 6: unimplementedopcode(opcode); break; // DBNE
-                                    case 7: unimplementedopcode(opcode); break; // DBEQ
-                                    case 8: unimplementedopcode(opcode); break; // DBVC
-                                    case 9: unimplementedopcode(opcode); break; // DBVS
-                                    case 10: unimplementedopcode(opcode); break; // DBPL
-                                    case 11: unimplementedopcode(opcode); break; // DBMI
-                                    case 12: unimplementedopcode(opcode); break; // DBGE
-                                    case 13: unimplementedopcode(opcode); break; // DBLT
-                                    case 14: unimplementedopcode(opcode); break; // DBGT
-                                    case 15: unimplementedopcode(opcode); break; // DBLE
-                                }
+                                    else
+                                    {
+                                        m68kreg.pc += 2;
+                                        mcycles += 4;
+                                    }
+                                        
+                                    mcycles += 10;
+				}
                             }
                             break; // DBcc
                             default:
@@ -821,10 +722,49 @@ namespace m68k
             // Bcc / BSR / BSA
             case 0x6000:
             {   
-                switch (opcodecondition(opcode))
-                {
-                    case 0:
+		if (opcodecondition(opcode) == 0) // BRA
+		{
+                    uint8_t distemp = (opcode & 0xFF);
+                    uint32_t pctemp = m68kreg.pc;
+                        
+                    if (distemp == 0)
                     {
+                        uint16_t wordtemp = readWord(m68kreg.pc);
+                        pctemp += wordtemp;
+                    }
+                    else
+                    {
+                        pctemp += (int8_t)distemp;
+                    }
+                        
+                    m68kreg.pc = pctemp;
+                        
+                    mcycles += 10;
+		}
+		else if (opcodecondition(opcode) == 1) // BSR
+		{
+                    uint8_t distemp = (opcode & 0xFF);
+                    uint32_t pctemp = m68kreg.pc;
+                        
+                    if (distemp == 0)
+                    {
+                        uint16_t wordtemp = readWord(m68kreg.pc);
+                        pctemp += wordtemp;
+                    }
+                    else
+                    {
+                        pctemp += (int8_t)distemp;
+                    }
+                        
+                    m68kreg.setsp(m68kreg.getsp() - 4);
+                    writeLong(m68kreg.getsp(), m68kreg.pc + 2);
+                    m68kreg.pc = pctemp;
+                    mcycles += 18;
+		}
+		else // Bcc
+		{
+		    if (getcond(opcodecondition(opcode))
+		    {
                         uint8_t distemp = (opcode & 0xFF);
                         uint32_t pctemp = m68kreg.pc;
                         
@@ -832,325 +772,27 @@ namespace m68k
                         {
                             uint16_t wordtemp = readWord(m68kreg.pc);
                             pctemp += wordtemp;
+                            isbyte = false;
                         }
                         else
                         {
-                            pctemp += (int8_t)distemp;
+                           pctemp += (int8_t)distemp;
+                            isbyte = true;
                         }
                         
                         m68kreg.pc = pctemp;
-                        
                         mcycles += 10;
-                    }
-                    break; // BRA
-                    case 1: 
-                    {
-                        uint8_t distemp = (opcode & 0xFF);
-                        uint32_t pctemp = m68kreg.pc;
-                        
-                        if (distemp == 0)
+		    }
+		    else
+		    {
+                        m68kreg.pc += 2;
+                        mcycles += 8;
+                        if (!isbyte)
                         {
-                            uint16_t wordtemp = readWord(m68kreg.pc);
-                            pctemp += wordtemp;
+                            mcycles += 4;
                         }
-                        else
-                        {
-                            pctemp += (int8_t)distemp;
-                        }
-                        
-                        m68kreg.setsp(m68kreg.getsp() - 4);
-                        writeLong(m68kreg.getsp(), m68kreg.pc + 2);
-                        m68kreg.pc = pctemp;
-                        mcycles += 18;
-                    }
-                    break; // BSR
-                    case 2: unimplementedopcode(opcode); break; // BHI
-                    case 3: unimplementedopcode(opcode); break; // BLS
-                    case 4:
-                    {
-                        bool isbyte = false;
-                        
-                        if (!TestBit(m68kreg.sr, condition.carry))
-                        {
-                            uint8_t distemp = (opcode & 0xFF);
-                            uint32_t pctemp = m68kreg.pc;
-                        
-                            if (distemp == 0)
-                            {
-                                uint16_t wordtemp = readWord(m68kreg.pc);
-                                pctemp += wordtemp;
-                                isbyte = false;
-                            }
-                            else
-                            {
-                                pctemp += (int8_t)distemp;
-                                isbyte = true;
-                            }
-                        
-                            m68kreg.pc = pctemp;
-                            mcycles += 10;
-                        }
-                        else
-                        {
-                            m68kreg.pc += 2;
-                            mcycles += 8;
-                            if (!isbyte)
-                            {
-                                mcycles += 4;
-                            }
-                        }
-                    }
-                    break; // BCC
-                    case 5:
-                    {
-                        bool isbyte = false;
-                        
-                        if (TestBit(m68kreg.sr, condition.carry))
-                        {
-                            uint8_t distemp = (opcode & 0xFF);
-                            uint32_t pctemp = m68kreg.pc;
-                        
-                            if (distemp == 0)
-                            {
-                                uint16_t wordtemp = readWord(m68kreg.pc);
-                                pctemp += wordtemp;
-                                isbyte = false;
-                            }
-                            else
-                            {
-                                pctemp += (int8_t)distemp;
-                                isbyte = true;
-                            }
-                        
-                            m68kreg.pc = pctemp;
-                            mcycles += 10;
-                        }
-                        else
-                        {
-                            m68kreg.pc += 2;
-                            mcycles += 8;
-                            if (!isbyte)
-                            {
-                                mcycles += 4;
-                            }
-                        }
-                    }
-                    break; // BCS
-                    case 6:
-                    {
-                        bool isbyte = false;
-                        
-                        if (!TestBit(m68kreg.sr, condition.zero))
-                        {
-                            uint8_t distemp = (opcode & 0xFF);
-                            uint32_t pctemp = m68kreg.pc;
-                        
-                            if (distemp == 0)
-                            {
-                                uint16_t wordtemp = readWord(m68kreg.pc);
-                                pctemp += wordtemp;
-                                isbyte = false;
-                            }
-                            else
-                            {
-                                pctemp += (int8_t)distemp;
-                                isbyte = true;
-                            }
-                        
-                            m68kreg.pc = pctemp;
-                            mcycles += 10;
-                        }
-                        else
-                        {
-                            m68kreg.pc += 2;
-                            mcycles += 8;
-                            if (!isbyte)
-                            {
-                                mcycles += 4;
-                            }
-                        }
-                    }
-                    break; // BNE
-                    case 7:
-                    {
-                        bool isbyte = false;
-                        
-                        if (TestBit(m68kreg.sr, condition.zero))
-                        {
-                            uint8_t distemp = (opcode & 0xFF);
-                            uint32_t pctemp = m68kreg.pc;
-                        
-                            if (distemp == 0)
-                            {
-                                uint16_t wordtemp = readWord(m68kreg.pc);
-                                pctemp += wordtemp;
-                                isbyte = false;
-                            }
-                            else
-                            {
-                                pctemp += (int8_t)distemp;
-                                isbyte = true;
-                            }
-                        
-                            m68kreg.pc = pctemp;
-                            mcycles += 10;
-                        }
-                        else
-                        {
-                            m68kreg.pc += 2;
-                            mcycles += 8;
-                            if (!isbyte)
-                            {
-                                mcycles += 4;
-                            }
-                        }
-                    }
-                    break; // BEQ
-                    case 8:
-                    {
-                        bool isbyte = false;
-                        
-                        if (!TestBit(m68kreg.sr, condition.overflow))
-                        {
-                            uint8_t distemp = (opcode & 0xFF);
-                            uint32_t pctemp = m68kreg.pc;
-                        
-                            if (distemp == 0)
-                            {
-                                uint16_t wordtemp = readWord(m68kreg.pc);
-                                pctemp += wordtemp;
-                                isbyte = false;
-                            }
-                            else
-                            {
-                                pctemp += (int8_t)distemp;
-                                isbyte = true;
-                            }
-                        
-                            m68kreg.pc = pctemp;
-                            mcycles += 10;
-                        }
-                        else
-                        {
-                            m68kreg.pc += 2;
-                            mcycles += 8;
-                            if (!isbyte)
-                            {
-                                mcycles += 4;
-                            }
-                        }
-                    }
-                    break; // BVC
-                    case 9:
-                    {
-                        bool isbyte = false;
-                        
-                        if (TestBit(m68kreg.sr, condition.overflow))
-                        {
-                            uint8_t distemp = (opcode & 0xFF);
-                            uint32_t pctemp = m68kreg.pc;
-                        
-                            if (distemp == 0)
-                            {
-                                uint16_t wordtemp = readWord(m68kreg.pc);
-                                pctemp += wordtemp;
-                                isbyte = false;
-                            }
-                            else
-                            {
-                                pctemp += (int8_t)distemp;
-                                isbyte = true;
-                            }
-                        
-                            m68kreg.pc = pctemp;
-                            mcycles += 10;
-                        }
-                        else
-                        {
-                            m68kreg.pc += 2;
-                            mcycles += 8;
-                            if (!isbyte)
-                            {
-                                mcycles += 4;
-                            }
-                        }
-                    }
-                    break; // BVS
-                    case 10:
-                    {
-                        bool isbyte = false;
-                        
-                        if (!TestBit(m68kreg.sr, condition.negative))
-                        {
-                            uint8_t distemp = (opcode & 0xFF);
-                            uint32_t pctemp = m68kreg.pc;
-                        
-                            if (distemp == 0)
-                            {
-                                uint16_t wordtemp = readWord(m68kreg.pc);
-                                pctemp += wordtemp;
-                                isbyte = false;
-                            }
-                            else
-                            {
-                                pctemp += (int8_t)distemp;
-                                isbyte = true;
-                            }
-                        
-                            m68kreg.pc = pctemp;
-                            mcycles += 10;
-                        }
-                        else
-                        {
-                            m68kreg.pc += 2;
-                            mcycles += 8;
-                            if (!isbyte)
-                            {
-                                mcycles += 4;
-                            }
-                        }
-                    }
-                    break; // BPL
-                    case 11:
-                    {
-                        bool isbyte = false;
-                        
-                        if (TestBit(m68kreg.sr, condition.negative))
-                        {
-                            uint8_t distemp = (opcode & 0xFF);
-                            uint32_t pctemp = m68kreg.pc;
-                        
-                            if (distemp == 0)
-                            {
-                                uint16_t wordtemp = readWord(m68kreg.pc);
-                                pctemp += wordtemp;
-                                isbyte = false;
-                            }
-                            else
-                            {
-                                pctemp += (int8_t)distemp;
-                                isbyte = true;
-                            }
-                        
-                            m68kreg.pc = pctemp;
-                            mcycles += 10;
-                        }
-                        else
-                        {
-                            m68kreg.pc += 2;
-                            mcycles += 8;
-                            if (!isbyte)
-                            {
-                                mcycles += 4;
-                            }
-                        }
-                    }
-                    break; // BMI
-                    case 12: unimplementedopcode(opcode); break; // BGE
-                    case 13: unimplementedopcode(opcode); break; // BLT
-                    case 14: unimplementedopcode(opcode); break; // BGT
-                    case 15: unimplementedopcode(opcode); break; // BLE
-                }
+		    }
+		}
             }
             break;
             
@@ -1161,18 +803,8 @@ namespace m68k
                 uint32_t temp = (uint32_t)(int8_t)(bytevalue);
                 m68kreg.datareg[opcodedestregister(opcode)] = temp;
 
-                m68kreg.sr &= 0xFFF0;
-
-                if (TestBit(bytevalue, 7))
-                {
-                    m68kreg.sr = BitSet(m68kreg.sr, condition.negative);
-                }
-
-                if (bytevalue == 0)
-                {
-                    m68kreg.sr = BitSet(m68kreg.sr, condition.zero);
-                }
-
+		setnegative(sign(bytevalue, 1));
+		setzero((bytevalue == 0));
                 mcycles += 4;
             }
             break;
