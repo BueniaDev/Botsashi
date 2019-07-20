@@ -28,7 +28,7 @@ namespace m68k
             m68kreg.addrreg[i] = 0;
         }
         
-        m68kreg.ssp = m68kreg.addrreg[7] = readLong(m68kreg.vbr);
+        m68kreg.ssp = m68kreg.usp = m68kreg.addrreg[7] = readLong(m68kreg.vbr);
         m68kreg.pc = readLong(m68kreg.vbr + 4);
         m68kreg.sr = 0x2700;
         mcycles = 0;
@@ -144,9 +144,9 @@ namespace m68k
 
     void M68K::exceptioninterrupt(int interruptlevel)
     {
-	    m68kreg.setsp(m68kreg.getsp() - 4);
+	m68kreg.setsp(m68kreg.getsp() - 4);
         writeWord(m68kreg.getsp(), m68kreg.pc);
-	    m68kreg.setsp(m68kreg.getsp() - 2);
+	m68kreg.setsp(m68kreg.getsp() - 2);
         writeWord(m68kreg.getsp(), m68kreg.sr);
 
         m68kreg.pc = readLong(m68kreg.vbr + (0x64 + ((interruptlevel - 1) * 4)));

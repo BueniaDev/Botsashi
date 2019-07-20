@@ -56,6 +56,172 @@ namespace m68k
         uint32_t tempaddr = 0;
         int mcycles = 0;
 
+	inline uint32_t getsourcereg(int opmode, int opreg, uint16_t opcode, int length)
+	{
+	    uint32_t temp = 0;
+
+	    bool byte = false;
+	    bool word = false;
+	    bool dword = false;
+
+	    switch (length)
+	    {
+		case 1: byte = true; word = dword = false; break;
+		case 2: word = true; byte = dword = false; break;
+		case 3: dword = true; byte = word = false; break;
+	    }
+
+	    switch (opmode)
+	    {
+		case 0: temp = m68kreg.datareg[opreg]; mcycles += 4; break;
+		case 1: temp = m68kreg.addrreg[opreg]; mcycles += 4;break;
+		case 2:
+		{
+		    if (byte)
+		    {
+			temp = readByte(m68kreg.addrreg[opreg]);
+			mcycles += 8;
+		    }
+		    else if (word)
+		    {
+			temp = readWord(m68kreg.addrreg[opreg]);
+			mcycles += 8;
+		    }
+		    else if (dword)
+		    {
+			temp = readLong(m68kreg.addrreg[opreg]);
+			mcycles += 12;
+		    }
+		}
+		break;
+		case 3:
+		{
+		    if (byte)
+		    {
+			temp = readByte(m68kreg.addrreg[opreg]);
+			m68kreg.addrreg[opreg] += 1;
+			mcycles += 8;
+		    }
+		    else if (word)
+		    {
+			temp = readWord(m68kreg.addrreg[opreg]);
+			m68kreg.addrreg[opreg] += 2;
+			mcycles += 8;
+		    }
+		    else if (dword)
+		    {
+			temp = readLong(m68kreg.addrreg[opreg]);
+			m68kreg.addrreg[opreg] += 4;
+			mcycles += 12;
+		    }
+		}
+		break;
+		case 4:
+		{
+		    if (byte)
+		    {
+			m68kreg.addrreg[opreg] -= 1;
+			temp = readByte(m68kreg.addrreg[opreg]);
+			mcycles += 10;
+		    }
+		    else if (word)
+		    {
+			m68kreg.addrreg[opreg] -= 2;			
+			temp = readWord(m68kreg.addrreg[opreg]);
+			mcycles += 10;
+		    }
+		    else if (dword)
+		    {
+			m68kreg.addrreg[opreg] -= 4;			
+			temp = readLong(m68kreg.addrreg[opreg]);
+			mcycles += 14;
+		    }
+		}
+		break;
+		case 5: unimplementedopcode(opcode); break;
+		case 6: unimplementedopcode(opcode); break;
+		case 7:
+		{
+		    switch (opreg)
+		    {
+			case 0:
+			{
+			    int16_t wordtemp = (int16_t)(readWord(m68kreg.pc));
+			    m68kreg.pc += 2;
+
+			    uint32_t readtemp = (uint32_t)(wordtemp);
+
+			    if (byte)
+			    {
+				temp = readByte(readtemp);
+				mcycles += 12;
+			    }
+			    else if (word)
+			    {
+				temp = readWord(readtemp);
+				mcycles += 12;
+			    }
+			    else if (dword)
+			    {
+				temp = readLong(readtemp);
+				mcycles += 16;
+			    }
+			}
+			break;
+			case 1:
+			{
+			    uint32_t readtemp = readLong(m68kreg.pc);
+			    m68kreg.pc += 4;
+
+			    if (byte)
+			    {
+				temp = readByte(readtemp);
+				mcycles += 16;
+			    }
+			    else if (word)
+			    {
+				temp = readWord(readtemp);
+				mcycles += 16;
+			    }
+			    else if (dword)
+			    {
+				temp = readLong(readtemp);
+				mcycles += 20;
+			    }
+			}
+			break;
+			case 2: unimplementedopcode(opcode); break;
+			case 3: unimplementedopcode(opcode); break;
+			case 4:
+			{
+			    if (byte)
+			    {
+				temp = readByte(m68kreg.pc);
+				m68kreg.pc += 1;
+				mcycles += 8;
+			    }
+			    else if (word)
+			    {
+				temp = readWord(m68kreg.pc);
+				m68kreg.pc += 2;
+				mcycles += 8;
+			    }
+			    else if (dword)
+			    {
+				temp = readLong(m68kreg.pc);
+				m68kreg.pc += 4;
+				mcycles += 12;
+			    }
+			}
+			break;
+		    }
+		}
+		break;
+	    }
+
+	    return temp;
+	}
+
 	inline bool getcond(int cond)
 	{
 	    bool temp = false;	    

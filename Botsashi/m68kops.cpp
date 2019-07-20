@@ -155,41 +155,8 @@ namespace m68k
             case 0x1000:
             {
                 uint8_t source = 0;
-                switch (opcodesourcemode(opcode)) // Determines source mode
-                {
-                    case 0: source = (m68kreg.datareg[opcodesourceregister(opcode)] & 0xFF); mcycles += 4; break; // Data register
-                    case 1: source = (m68kreg.addrreg[opcodesourceregister(opcode)] & 0xFF); mcycles += 4; break; // Address register
-                    case 2: source = readByte(m68kreg.addrreg[opcodesourceregister(opcode)]); mcycles += 8; break; // Address
-                    case 3: source = readByte(m68kreg.addrreg[opcodesourceregister(opcode)]); m68kreg.addrreg[opcodesourceregister(opcode)] += 1; mcycles += 8; break; // Address with post-increment
-                    case 4: m68kreg.addrreg[opcodesourceregister(opcode)] -= 1; source = readByte(m68kreg.addrreg[opcodesourceregister(opcode)]); mcycles += 10; break; // Address with pre-decrement
-                    case 5: unimplementedopcode(opcode); break; // Address with displacement
-                    case 6: unimplementedopcode(opcode); break; // Address with index
-                    case 7:
-                    {
-                        switch (opcodesourceregister(opcode)) // Determines source register
-                        {
-                            case 0:
-                            {
-                                uint16_t wordtemp = readWord(m68kreg.pc);
-                                m68kreg.pc += 2;
 
-                                uint32_t temp = (uint32_t)(int16_t)(wordtemp);
-                                
-                                source = readByte(temp);
-                                
-                                mcycles += 12;
-                            }
-                            break; // Absolute word
-                            case 1: source = readByte(readLong(m68kreg.pc)); m68kreg.pc += 4; mcycles += 16; break; // Absolute long
-                            case 2: unimplementedopcode(opcode); break; // PC with displacement
-                            case 3: unimplementedopcode(opcode); break; // PC with index
-                            case 4: source = readByte(m68kreg.pc + 1); m68kreg.pc += 2; mcycles += 8; break; // Immediate
-                        }
-                    }
-                    break; // Addressing mode 7
-                    default: unimplementedopcode(opcode); break;
-                }
-                
+		source = (uint8_t)(getsourcereg(opcodesourcemode(opcode), opcodesourceregister(opcode), opcode, 1));
                 
                 switch (opcodedestmode(opcode)) // Determines destination mode
                 {
@@ -258,41 +225,9 @@ namespace m68k
             case 0x2000:
             {
                 uint32_t source = 0;
-                switch (opcodesourcemode(opcode)) // Determines source mode
-                {
-                    case 0: source = m68kreg.datareg[opcodesourceregister(opcode)]; mcycles += 4; break; // Data register
-                    case 1: source = m68kreg.addrreg[opcodesourceregister(opcode)]; mcycles += 4; break; // Address register
-                    case 2: source = readLong(m68kreg.addrreg[opcodesourceregister(opcode)]); mcycles += 12; break; // Address
-                    case 3: source = readLong(m68kreg.addrreg[opcodesourceregister(opcode)]); m68kreg.addrreg[opcodesourceregister(opcode)] += 4; mcycles += 12; break; // Address with post-increment
-                    case 4: m68kreg.addrreg[opcodesourceregister(opcode)] -= 4; source = readLong(m68kreg.addrreg[opcodesourceregister(opcode)]); mcycles += 14; break; // Address with pre-decrement
-                    case 5: unimplementedopcode(opcode); break; // Address with displacement
-                    case 6: unimplementedopcode(opcode); break; // Address with index
-                    case 7:
-                    {
-                        switch (opcodesourceregister(opcode)) // Determines source register
-                        {
-                            case 0:
-                            {
-                                uint16_t wordtemp = readWord(m68kreg.pc);
-                                m68kreg.pc += 2;
-                                
-                                uint32_t temp = (uint32_t)(int16_t)(wordtemp);
-                                
-                                source = readLong(temp);
-                                mcycles += 16;
-                            }
-                            break; // Absolute word
-                            case 1: source = readLong(readLong(m68kreg.pc)); m68kreg.pc += 4; mcycles += 20; break; // Absolute long
-                            case 2: unimplementedopcode(opcode); break; // PC with displacement
-                            case 3: unimplementedopcode(opcode); break; // PC with index
-                            case 4: source = readLong(m68kreg.pc); m68kreg.pc += 4; mcycles += 12; break; // Immediate
-                        }
-                    }
-                    break; // Addressing mode 7
-                    default: unimplementedopcode(opcode); break;
-                }
-                
-                
+
+		source = (uint32_t)(getsourcereg(opcodesourcemode(opcode), opcodesourceregister(opcode), opcode, 3));
+
                 switch (opcodedestmode(opcode)) // Determines destination mode
                 {
                     case 0:
@@ -359,41 +294,7 @@ namespace m68k
             case 0x3000:
             {
                 uint16_t source = 0;
-                switch (opcodesourcemode(opcode)) // Determines source mode
-                {
-                    case 0: source = (m68kreg.datareg[opcodesourceregister(opcode)] & 0xFFFF); mcycles += 4; break; // Data register
-                    case 1: source = (m68kreg.addrreg[opcodesourceregister(opcode)] & 0xFFFF); mcycles += 4; break; // Address register
-                    case 2: source = readWord(m68kreg.addrreg[opcodesourceregister(opcode)]); mcycles += 8; break; // Address
-                    case 3: source = readWord(m68kreg.addrreg[opcodesourceregister(opcode)]); m68kreg.addrreg[opcodesourceregister(opcode)] += 2; mcycles += 8; break; // Address with post-increment
-                    case 4: m68kreg.addrreg[opcodesourceregister(opcode)] -= 2; source = readWord(m68kreg.addrreg[opcodesourceregister(opcode)]); mcycles += 10; break; // Address with pre-decrement
-                    case 5: unimplementedopcode(opcode); break; // Address with displacement
-                    case 6: unimplementedopcode(opcode); break; // Address with index
-                    case 7:
-                    {
-                        switch (opcodesourceregister(opcode)) // Determines source register
-                        {
-                            case 0:
-                            {
-                                uint16_t wordtemp = readWord(m68kreg.pc);
-                                m68kreg.pc += 2;
-                                
-                                uint32_t temp = (uint32_t)(int16_t)(wordtemp);
-                                
-                                source = readWord(temp);
-                                
-                                mcycles += 12;
-                            } 
-                            break; // Absolute word
-                            case 1: source = readWord(readLong(m68kreg.pc)); m68kreg.pc += 4; mcycles += 16; break; // Absolute long
-                            case 2: unimplementedopcode(opcode); break; // PC with displacement
-                            case 3: unimplementedopcode(opcode); break; // PC with index
-                            case 4: source = readWord(m68kreg.pc); m68kreg.pc += 2; mcycles += 8; break; // Immediate
-                        }
-                    }
-                    break; // Addressing mode 7
-                    default: unimplementedopcode(opcode); break;
-                }
-                
+		source = (uint16_t)(getsourcereg(opcodesourcemode(opcode), opcodesourceregister(opcode), opcode, 2));
                 
                 switch (opcodedestmode(opcode)) // Determines destination mode
                 {
@@ -655,7 +556,7 @@ namespace m68k
 				setzero((addtemp == 0));
 				setcarry((addtemp > 0xFFFFFFFF));
 				setextended(iscarry());
-				setoverflow(overflow(overflowtemp, adder, addtemp));
+				setoverflow(overflow(overflowtemp, adder, addtemp, 3));
                             }
                             break; // ADDQ.L
                             case 1: unimplementedopcode(opcode); break; // SUBQ.L
@@ -763,7 +664,10 @@ namespace m68k
 		}
 		else // Bcc
 		{
-		    if (getcond(opcodecondition(opcode))
+		    bool isbyte = false;		    
+
+
+		    if (getcond(opcodecondition(opcode)))
 		    {
                         uint8_t distemp = (opcode & 0xFF);
                         uint32_t pctemp = m68kreg.pc;
