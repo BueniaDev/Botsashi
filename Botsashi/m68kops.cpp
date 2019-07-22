@@ -154,67 +154,11 @@ namespace m68k
             // Move byte
             case 0x1000:
             {
-                uint8_t source = 0;
+                uint8_t source = (getsourcereg(opcodesourcemode(opcode), opcodesourceregister(opcode), opcode, 1) & 0xFF);
+		mcycles += getmovescycletimings(opcodesourcemode(opcode), opcodesourceregister(opcode), false);
 
-		source = (uint8_t)(getsourcereg(opcodesourcemode(opcode), opcodesourceregister(opcode), opcode, 1));
-                
-                switch (opcodedestmode(opcode)) // Determines destination mode
-                {
-                    case 0:
-                    {
-                         uint32_t temp = m68kreg.datareg[opcodedestregister(opcode)];
-                         m68kreg.datareg[opcodedestregister(opcode)] = ((temp & 0xFFFFFF00) | source);
-                    }
-                    break; // Data register
-                    case 1:
-                    {
-                        uint32_t temp = m68kreg.addrreg[opcodedestregister(opcode)];
-                        m68kreg.addrreg[opcodedestregister(opcode)] = ((temp & 0xFFFFFF00) | source);
-                    }
-                    break; // Address register
-                    case 2: 
-                    {
-                        writeByte(m68kreg.addrreg[opcodedestregister(opcode)], source);
-                        mcycles += 4;
-                    }
-                    break; // Address
-                    case 3: 
-                    {
-                        writeByte(m68kreg.addrreg[opcodedestregister(opcode)], source);
-                        m68kreg.addrreg[opcodedestregister(opcode)] += 1;
-                        mcycles += 4;
-                    }
-                    break; // Address with post-increment
-                    case 4: 
-                    {
-                        m68kreg.addrreg[opcodedestregister(opcode)] -= 1;
-                        writeByte(m68kreg.addrreg[opcodedestregister(opcode)], source);
-                        mcycles += 4;
-                    }
-                    break; // Address with pre-decrement
-                    case 5: unimplementedopcode(opcode); break; // Address with displacement
-                    case 6: unimplementedopcode(opcode); break; // Address with index
-                    case 7:
-                    {
-                        switch (opcodedestregister(opcode)) // Determines destination register
-                        {
-                            case 0:
-                            {
-                                uint16_t wordtemp = readWord(m68kreg.pc + 1);
-                                m68kreg.pc += 2;
-                                
-                                uint32_t temp = (uint32_t)(int16_t)(wordtemp);
-                                
-                                writeByte(temp, source);
-                                mcycles += 8;
-                            }
-                            break; // Absolute word
-                            case 1: writeByte(readLong(m68kreg.pc), source); m68kreg.pc += 4; mcycles += 12; break; // Absolute long
-                            default: unimplementedopcode(opcode); break;
-                        }
-                    }
-                    break; // Addressing mode 7
-                }
+		setdestreg(opcodedestmode(opcode), opcodedestregister(opcode), source, opcode, 1);
+		mcycles += getmovedcycletimings(opcodedestmode(opcode), opcodedestregister(opcode), false);
                 
 		setnegative(sign(source, 1));
 		setzero((source == 0));
@@ -224,65 +168,11 @@ namespace m68k
             // Move long
             case 0x2000:
             {
-                uint32_t source = 0;
+                uint32_t source = getsourcereg(opcodesourcemode(opcode), opcodesourceregister(opcode), opcode, 3);
+		mcycles += getmovescycletimings(opcodesourcemode(opcode), opcodesourceregister(opcode), true);
 
-		source = (uint32_t)(getsourcereg(opcodesourcemode(opcode), opcodesourceregister(opcode), opcode, 3));
-
-                switch (opcodedestmode(opcode)) // Determines destination mode
-                {
-                    case 0:
-                    {
-                        m68kreg.datareg[opcodedestregister(opcode)] = source;
-                    }
-                    break; // Data register
-                    case 1:
-                    {
-                        m68kreg.addrreg[opcodedestregister(opcode)] = source;
-                    }
-                    break; // Address register
-                    case 2: 
-                    {
-                        writeLong(m68kreg.addrreg[opcodedestregister(opcode)], source);
-                        mcycles += 8;
-                    }
-                    break; // Address
-                    case 3: 
-                    {
-                        writeLong(m68kreg.addrreg[opcodedestregister(opcode)], source);
-                        m68kreg.addrreg[opcodedestregister(opcode)] += 4;
-                        mcycles += 8;
-                    }
-                    break; // Address with post-increment
-                    case 4: 
-                    {
-                        m68kreg.addrreg[opcodedestregister(opcode)] -= 4;
-                        writeLong(m68kreg.addrreg[opcodedestregister(opcode)], source);
-                        mcycles += 8;
-                    }
-                    break; // Address with pre-decrement
-                    case 5: unimplementedopcode(opcode); break; // Address with displacement
-                    case 6: unimplementedopcode(opcode); break; // Address with index
-                    case 7:
-                    {
-                        switch (opcodedestregister(opcode)) // Determines destination register
-                        {
-                            case 0: 
-                            {
-                                uint16_t wordtemp = readWord(m68kreg.pc);
-                                m68kreg.pc += 2;
-                                
-                                uint32_t temp = (uint32_t)(int16_t)(wordtemp);
-                                
-                                writeLong(temp, source);
-                                mcycles += 12;
-                            }
-                            break; // Absolute word
-                            case 1: writeLong(readLong(m68kreg.pc), source); m68kreg.pc += 4; mcycles += 16; break; // Absolute long
-                            default: unimplementedopcode(opcode); break;
-                        }
-                    }
-                    break; // Addressing mode 7
-                }
+		setdestreg(opcodedestmode(opcode), opcodedestregister(opcode), source, opcode, 3);
+		mcycles += getmovedcycletimings(opcodedestmode(opcode), opcodedestregister(opcode), true);
                 
 		setnegative(sign(source, 3));
 		setzero((source == 0));
@@ -293,56 +183,11 @@ namespace m68k
             // Move word
             case 0x3000:
             {
-                uint16_t source = 0;
-		source = (uint16_t)(getsourcereg(opcodesourcemode(opcode), opcodesourceregister(opcode), opcode, 2));
-                
-                switch (opcodedestmode(opcode)) // Determines destination mode
-                {
-                    case 0:
-                    {
-                         uint32_t temp = m68kreg.datareg[opcodedestregister(opcode)];
-                         m68kreg.datareg[opcodedestregister(opcode)] = ((temp & 0xFFFF0000) | source);
-                    }
-                    break; // Data register
-                    case 1:
-                    {
-                        uint32_t temp = m68kreg.addrreg[opcodedestregister(opcode)];
-                        m68kreg.addrreg[opcodedestregister(opcode)] = ((temp & 0xFFFF0000) | source);
-                    }
-                    break; // Address register
-                    case 2: 
-                    {
-                        writeWord(m68kreg.addrreg[opcodedestregister(opcode)], source);
-                        mcycles += 4;
-                    }
-                    break; // Address
-                    case 3: 
-                    {
-                        writeWord(m68kreg.addrreg[opcodedestregister(opcode)], source);
-                        m68kreg.addrreg[opcodedestregister(opcode)] += 2;
-                        mcycles += 4;
-                    }
-                    break; // Address with post-increment
-                    case 4: 
-                    {
-                        m68kreg.addrreg[opcodedestregister(opcode)] -= 2;
-                        writeWord(m68kreg.addrreg[opcodedestregister(opcode)], source);
-                        mcycles += 4;
-                    }
-                    break; // Address with pre-decrement
-                    case 5: unimplementedopcode(opcode); break; // Address with displacement
-                    case 6: unimplementedopcode(opcode); break; // Address with index
-                    case 7:
-                    {
-                        switch (opcodedestregister(opcode)) // Determines destination register
-                        {
-                            case 0: unimplementedopcode(opcode); break; // Absolute word
-                            case 1: unimplementedopcode(opcode); break; // Absolute long
-                            default: break;
-                        }
-                    }
-                    break; // Addressing mode 7
-                }
+                uint16_t source = (getsourcereg(opcodesourcemode(opcode), opcodesourceregister(opcode), opcode, 2) & 0xFFFF);
+		mcycles += getmovescycletimings(opcodesourcemode(opcode), opcodesourceregister(opcode), false);
+
+		setdestreg(opcodedestmode(opcode), opcodedestregister(opcode), source, opcode, 2);
+		mcycles += getmovedcycletimings(opcodedestmode(opcode), opcodedestregister(opcode), false);
                 
 		setnegative(sign(source, 2));
 		setzero((source == 0));
@@ -507,50 +352,29 @@ namespace m68k
                         {
                             case 0:
                             {
-                                int adder = 0;
+                                uint32_t adder = 0;
                                 uint32_t addtemp = 0;
                                 uint32_t overflowtemp = 0;
-                                switch (opcodedestregister(opcode)) // Determines immediate data
-                                {
-                                    case 0: adder = 8; break; // Immediate value 0
-                                    default: adder = (int)opcodedestregister(opcode); break; // Immediate values 1-7
-                                }
-                        
-                                switch (opcodesourcemode(opcode)) // Determines destination register
-                                {
-                                    case 0:
-                                    {
-                                        addtemp = m68kreg.datareg[opcodesourceregister(opcode)];
-                                        overflowtemp = addtemp;
-                                        m68kreg.datareg[opcodesourceregister(opcode)] = (addtemp + adder);
-                                        mcycles += 8;
-                                    }
-                                    break; // Data register
-                                    case 1:
-                                    {
-                                        addtemp = m68kreg.addrreg[opcodesourceregister(opcode)];
-                                        overflowtemp = addtemp;
-                                        m68kreg.addrreg[opcodesourceregister(opcode)] = (addtemp + adder);
-                                        mcycles += 8;
-                                    }
-                                    break; // Address register
-                                    case 2: unimplementedopcode(opcode); break; // Address
-                                    case 3: unimplementedopcode(opcode); break; // Address with post-increment
-                                    case 4: unimplementedopcode(opcode); break; // Address with pre-decrement
-                                    case 5: unimplementedopcode(opcode); break; // Address with displacement
-                                    case 6: unimplementedopcode(opcode); break; // Address with index
-                                    case 7:
-                                    {
-                                        switch (opcodesourceregister(opcode))
-                                        {
-                                            case 0: unimplementedopcode(opcode); break; // Absolute word
-                                            case 1: unimplementedopcode(opcode); break; // Absolute long
-                                            default: break;
-                                        }
-                                    }
-                                    break; // Addressing mode 7
-                                    default: break;
-                                }
+
+				adder = opcodedestregister(opcode);
+
+				if (adder == 0)
+				{
+				    adder = 8;
+				}
+
+				if (opcodesourcemode(opcode) == 7 && opcodesourceregister(opcode) > 1)
+				{
+				    unimplementedopcode(opcode);
+				}
+				else
+				{
+				    addtemp = getsourcereg(opcodesourcemode(opcode), opcodesourceregister(opcode), opcode, 3);
+				}
+
+				overflowtemp = addtemp;
+				setdestreg(opcodesourcemode(opcode), opcodesourceregister(opcode), (addtemp + adder), opcode, 3);
+                                mcycles += 8;
 
 				setnegative(sign(addtemp, 3));
 				setzero((addtemp == 0));
@@ -594,24 +418,7 @@ namespace m68k
                             break; // DBcc
                             default:
                             {
-                                switch (opcodesourcemode(opcode))
-                                {
-                                    case 0: unimplementedopcode(opcode); break; // Data register
-                                    case 2: unimplementedopcode(opcode); break; // Address
-                                    case 3: unimplementedopcode(opcode); break; // Address with postincrement
-                                    case 4: unimplementedopcode(opcode); break; // Address with predecrement
-                                    case 5: unimplementedopcode(opcode); break; // Address with displacement
-                                    case 6: unimplementedopcode(opcode); break; // Address with index
-                                    case 7:
-                                    {
-                                        switch (opcodesourceregister(opcode))
-                                        {
-                                            case 0: unimplementedopcode(opcode); break; // Absolute word
-                                            case 1: unimplementedopcode(opcode); break; // Absolute long
-                                            default: unimplementedopcode(opcode); break;
-                                        }
-                                    }
-                                }
+                                unimplementedopcode(opcode);
                             }
                             break; // Scc
                         }
@@ -666,7 +473,6 @@ namespace m68k
 		{
 		    bool isbyte = false;		    
 
-
 		    if (getcond(opcodecondition(opcode)))
 		    {
                         uint8_t distemp = (opcode & 0xFF);
@@ -680,7 +486,7 @@ namespace m68k
                         }
                         else
                         {
-                           pctemp += (int8_t)distemp;
+                            pctemp += (int8_t)distemp;
                             isbyte = true;
                         }
                         
