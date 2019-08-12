@@ -396,9 +396,9 @@ namespace m68k
                             {
                                 if (!getcond(opcodecondition(opcode)))
 				{
-                                    uint16_t temp = (m68kreg.datareg[opcodesourceregister(opcode)] & 0xFFFF);
-				    temp -= 1;
-                                        
+				    m68kreg.datareg[opcodesourceregister(opcode)] -= 1;
+
+                                    uint32_t temp = (m68kreg.datareg[opcodesourceregister(opcode)]);                                        
                                     int16_t tempreg = (int16_t)(temp);
                                         
                                     if (tempreg != -1)
@@ -413,6 +413,10 @@ namespace m68k
                                     }
                                         
                                     mcycles += 10;
+				}
+				else
+				{
+				    unimplementedopcode(opcode);
 				}
                             }
                             break; // DBcc
