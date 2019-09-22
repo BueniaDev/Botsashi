@@ -464,7 +464,7 @@ string M68K::getm68kmnemonic(uint32_t addr)
                                             switch (opcode)
                                             {
                                                 case 0x4E70: mnemonic = "NAN"; break; // RESET
-                                                case 0x4E71: mnemonic = "NAN"; break; // NOP
+                                                case 0x4E71: mnemonic = "nop"; break; // NOP
                                                 case 0x4E72: mnemonic = "NAN"; break; // STOP
                                                 case 0x4E73: mnemonic = "NAN"; break; // RTE
                                                 case 0x4E75: 

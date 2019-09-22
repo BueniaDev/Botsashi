@@ -309,7 +309,7 @@ namespace m68k
                                                 switch (opcode)
                                                 {
                                                     case 0x4E70: unimplementedopcode(opcode); break; // RESET
-                                                    case 0x4E71: unimplementedopcode(opcode); break; // NOP
+                                                    case 0x4E71: mcycles += 4; break; // NOP
                                                     case 0x4E72: unimplementedopcode(opcode); break; // STOP
                                                     case 0x4E73: unimplementedopcode(opcode); break; // RTE
                                                     case 0x4E75: 
