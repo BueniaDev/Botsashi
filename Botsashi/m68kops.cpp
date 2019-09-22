@@ -408,6 +408,7 @@ namespace m68k
                                     }
                                     else
                                     {
+					m68kreg.datareg[opcodesourceregister(opcode)] &= 0xFFFF; // Proper bit masking
                                         m68kreg.pc += 2;
                                         mcycles += 4;
                                     }
