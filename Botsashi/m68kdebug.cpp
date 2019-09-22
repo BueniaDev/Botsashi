@@ -424,7 +424,7 @@ string M68K::getm68kmnemonic(uint32_t addr)
                                     opsource = "$" + tohexstring(temp);
                                 }
                                 break; // Absolute word
-                                case 1: opsource = "$" + tohexstring(readLong(addr)); break; // Absolute long
+                                case 1: opsource = "$" + tohexstring(readLong(addr + 2)); break; // Absolute long
                                 case 2: unimplementedopcode(opcode); break; // PC with displacement
                                 case 3: unimplementedopcode(opcode); break; // PC with index
                             }

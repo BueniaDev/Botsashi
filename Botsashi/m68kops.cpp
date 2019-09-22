@@ -224,7 +224,7 @@ namespace m68k
                                         mcycles += 8;
                                     }
                                     break; // Absolute word
-                                    case 1: source = readLong(readLong(m68kreg.pc)); m68kreg.pc += 4; mcycles += 12; break; // Absolute long
+                                    case 1: source = readLong(m68kreg.pc); m68kreg.pc += 4; mcycles += 12; break; // Absolute long
                                     case 2: unimplementedopcode(opcode); break; // PC with displacement
                                     case 3: unimplementedopcode(opcode); break; // PC with index
                                 }
