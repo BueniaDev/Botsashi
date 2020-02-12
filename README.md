@@ -1,5 +1,7 @@
 <img src="https://github.com/Buenia0/Botsashi/blob/rewrite/res/logo.png" alt="drawing" width="275"/>
 
+[![Run on Repl.it](https://repl.it/badge/github/Buenia0/Botsashi)](https://repl.it/github/Buenia0/Botsashi)
+
 Motorola 68000 emulation engine, kinda
 
 This was created to emulate the M68K processor. But also, you know, to have a fun challenge ;)
