@@ -285,12 +285,12 @@ namespace botsashi
             {
               case 0:
               {
-                temp = ((temp & ~0xFF) | val);
+                temp = ((temp & ~0xFF) | (val & 0xFF));
               }
               break;
               case 1:
               {
-                temp = ((temp & ~0xFFFF) | val);
+                temp = ((temp & ~0xFFFF) | (val & 0xFFFF));
               }
               break;
               case 2:
