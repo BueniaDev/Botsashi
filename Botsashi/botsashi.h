@@ -1,328 +1,234 @@
+/*
+    This file is part of Botsashi.
+    Copyright (C) 2021 BueniaDev.
+
+    Botsashi is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Botsashi is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Botsashi.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #ifndef BOTSASHI_H
 #define BOTSASHI_H
 
-#include <cstdint>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
+#include <cstdint>
+#include <cstddef>
+#include <vector>
 #include <array>
 #include <functional>
-#include <stddef.h>
+#include <memory>
+#include <bitset>
+#include "botsashi_api.h"
 using namespace std;
-
-#define BYTE_WIDTH 0
-#define WORD_WIDTH 1
-#define LONG_WIDTH 2
+using namespace std::placeholders;
 
 namespace botsashi
 {
+    class Botsashi;
 
-  inline bool TestBit(uint32_t reg, int bit)
-  {
-    return (reg & (1 << bit)) ? true : false;
-  }
+    class BOTSASHI_API BotsashiInterface
+    {
+	friend class Botsashi;
 
-  inline uint32_t BitSet(uint32_t reg, int bit)
-  {
-    return (reg | (1 << bit));
-  }
+	public:
+	    BotsashiInterface();
+	    ~BotsashiInterface();
 
-  inline uint32_t BitReset(uint32_t reg, int bit)
-  {
-    return (reg & ~(1 << bit));
-  }
+	    virtual uint16_t readWord(bool upper, bool lower, uint32_t addr) = 0;
+	    virtual void writeWord(bool upper, bool lower, uint32_t addr, uint16_t val) = 0;
+	    virtual bool istrapOverride(int val) = 0;
+	    virtual void trapException(int val, Botsashi *m68k) = 0;
+	    virtual void stopFunction() = 0;
+    };
 
-  inline uint32_t BitChange(uint32_t reg, int bit, bool cond)
-  {
-    return (cond) ? BitSet(reg, bit) : BitReset(reg, bit);
-  }
+    class BOTSASHI_API Botsashi
+    {
+	public:
+	    Botsashi();
+	    ~Botsashi();
 
-  class BotsashiInterface
-  {
-    public:
-      BotsashiInterface();
-      ~BotsashiInterface();
+	    unique_ptr<BotsashiInterface> inter;
 
-      virtual uint8_t readByte(uint32_t addr) = 0;
-      virtual void writeByte(uint32_t addr, uint8_t val) = 0;
-      virtual uint16_t readWord(uint32_t addr) = 0;
-      virtual void writeWord(uint32_t addr, uint16_t val) = 0;
-      virtual uint32_t readLong(uint32_t addr) = 0;
-      virtual void writeLong(uint32_t addr, uint32_t val) = 0;
-  };
+	    enum : int { Byte, Word, Long };
+	    enum : int { Alu = 1, Logical = 2, Clear = 4 };
 
-  class Botsashi
-  {
-    public:
-      Botsashi();
-      ~Botsashi();
+	    template<int Size>
+	    void setDataReg(int reg, uint32_t val)
+	    {
+		reg &= 7;
+		m68kreg.datareg[reg] = ((m68kreg.datareg[reg] & ~mask<Size>()) | (val & mask<Size>()));	
+	    }
 
-      using trapfunc = function<void(int, Botsashi*)>;
-      trapfunc trapexcep;
+	    template<int Size>
+	    void setAddrReg(int reg, uint32_t val)
+	    {
+		reg &= 7;
+		m68kreg.addrreg[reg] = ((m68kreg.addrreg[reg] & ~mask<Size>()) | (val & mask<Size>()));
+	    }
 
-      inline void settrapfunc(trapfunc cb)
-      {
-        trapexcep = cb;
-      }
+	    struct m68kregisters
+	    {
+		uint32_t datareg[8];
+		uint32_t addrreg[8];
+		uint32_t usp = 0;
+		uint32_t ssp = 0;
+		uint32_t pc = 0;
+		bitset<16> statusreg;
+	    };
 
-      BotsashiInterface *inter = NULL;
+	    m68kregisters m68kreg;
 
-      struct m68kregisters
-      {
-        array<uint32_t, 8> datareg;
-        array<uint32_t, 8> addrreg;
-        uint32_t usp = 0;
-        uint32_t ssp = 0;
-        uint32_t pc = 0;
-        uint16_t sr = 0;
+	    bool iscarry();
 
-        bool getx()
-        {
-          return TestBit(sr, 4);
-        }
+	    void setcarry(bool val);
+	    void setoverflow(bool val);
+	    void setzero(bool val);
+	    void setsign(bool val);
+	    void setextend(bool val);
 
-        bool getz()
-        {
-          return TestBit(sr, 2);
-        }
+	    void init(uint32_t init_pc = 0);
+	    void shutdown();
+	    void executenextinstr();
+	    void executeinstr(uint16_t instr);
+	    void debugoutput(bool printdisassembly = true);
+	    string disassembleinstr(uint32_t pc);
 
-        void setflags(bool x, bool n, bool z, bool v, bool c)
-        {
-          sr = BitChange(sr, 4, x);
-          sr = BitChange(sr, 3, n);
-          sr = BitChange(sr, 2, z);
-          sr = BitChange(sr, 1, v);
-          sr = BitChange(sr, 0, c);
-        }
+	    void setstatusreg(uint16_t val);
 
-        uint32_t getdatareg(int reg)
-        {
-          return datareg[reg];
-        }
+	    void stopFunction();
 
-        uint32_t getaddrreg(int reg)
-        {
-          return addrreg[reg];
-        }
+	    auto getsrcmode(uint16_t instr) -> int;
+	    auto getsrcreg(uint16_t instr) -> int;
+	    auto getdstmode(uint16_t instr) -> int;
+	    auto getdstreg(uint16_t instr) -> int;
 
-        void setdatareg(int reg, uint32_t val)
-        {
-          datareg[reg] = val;
-        }
+	    template<int Size> auto getZero(uint32_t temp) -> bool;
+	    template<int Size> auto getSign(uint32_t temp) -> bool;
 
-        void setaddrreg(int reg, uint32_t val)
-        {
-          if (reg == 7)
-          {
-            usp = val;
-          }
+	    uint16_t currentinstr = 0;
+	    bool stopped = false;
 
-          addrreg[reg] = val;
-        }
-      };
+	    void setinterface(BotsashiInterface &cb);
 
-      m68kregisters m68kreg;
+	    template<int Size>
+	    auto read(uint32_t addr) -> uint32_t
+	    {
+		switch (Size)
+		{
+		    case Byte:
+		    {
+			bool is_odd_addr = (addr & 1);
+			int bit_offs = is_odd_addr ? 0 : 8;
+			return clip<Byte>(interRead(!is_odd_addr, is_odd_addr, addr & ~1) >> bit_offs);
+		    }
+		    break;
+		    case Word:
+		    {
+			return interRead(true, true, addr & ~1);
+		    }
+		    break;
+		    case Long:
+		    {
+			uint32_t hi = interRead(true, true, addr & ~1);
+			uint32_t lo = interRead(true, true, (addr + 2) & ~1);
+			return (hi << 16) | lo;
+		    }
+		    break;
+		}
+	    }
 
-      void init();
-      void executenextinstr();
-      void executeinstr(uint16_t instr);
+	    template<int Size>
+	    auto write(uint32_t addr, uint32_t val) -> void
+	    {
+		switch (Size)
+		{
+		    case Byte:
+		    {
+			bool is_odd_addr = (addr & 1);
+			interWrite(!is_odd_addr, is_odd_addr, addr & ~1, val << 8 | clip<Byte>(val));
+		    }
+		    break;
+		    case Word:
+		    {
+			interWrite(true, true, addr & ~1, val);
+		    }
+		    break;
+		    case Long:
+		    {
+			interWrite(true, true, addr & ~1, val >> 16);
+			interWrite(true, true, (addr + 2) & ~1, val);
+		    }
+		    break;
+		}
+	    }
 
-      uint16_t currentinstr = 0;
-      bool stopped = false;
+	    template<int Size> 
+	    auto extension(uint32_t &pc) -> uint32_t
+	    {
+		switch (Size)
+		{
+		    case Byte:
+		    {
+			uint16_t temp = read<Word>(pc);
+			pc += 2;
+			return clip<Byte>(temp);
+		    }
+		    break;
+		    case Word:
+		    {
+			uint16_t temp = read<Word>(pc);
+			pc += 2;
+			return temp;
+		    }
+		    break;
+		    case Long:
+		    {
+			uint32_t temp = read<Long>(pc);
+			pc += 4;
+			return temp;
+		    }
+		    break;
+		}
+	    }
 
-      void setinterface(BotsashiInterface *connected)
-      {
-        inter = connected;
-      }
+	    #include "disassembly.inl"
+	    #include "instructions.inl"
 
-      uint8_t readByte(uint32_t addr)
-      {
-        if (inter != NULL)
-        {
-          return inter->readByte(addr);
-        }
-        else
-        {
-          return 0xFF;
-        }
-      }
+	    using m68kfunc = function<void()>;
+	    using m68kdasmfunc = function<string(uint32_t, uint16_t)>;
 
-      uint16_t readWord(uint32_t addr)
-      {
-        if (inter != NULL)
-        {
-          return inter->readWord(addr);
-        }
-        else
-        {
-          return 0xFFFF;
-        }
-      }
+	    struct m68kmapping
+	    {
+		uint16_t mask;
+		uint16_t value;
+		m68kfunc function;
+		m68kdasmfunc disfunc;
+	    };
 
-      uint32_t readLong(uint32_t addr)
-      {
-        if (inter != NULL)
-        {
-          return inter->readLong(addr);
-        }
-        else
-        {
-          return 0xFFFFFFFF;
-        }
-      }
+	    #include "instr_tables.inl"
 
-      inline uint32_t srcaddressingmode(int mode, int reg, int buswidth)
-      {
-        uint32_t temp = 0;
+	private:
+	    auto interRead(bool upper, bool lower, uint32_t addr) -> uint16_t;
+	    auto interWrite(bool upper, bool lower, uint32_t addr, uint16_t val) -> void;
+	    auto istrapOverride(int val) -> bool;
+	    auto trapException(int val) -> void;
 
-        switch (mode)
-        {
-          case 0:
-          {
-            uint32_t datareg = m68kreg.getdatareg(reg);
-
-            switch (buswidth)
-            {
-              case 0:
-              {
-                temp = (datareg & 0xFF);
-              }
-              break;
-              case 1:
-              {
-                temp = (datareg & 0xFFFF);
-              }
-              break;
-              case 2:
-              {
-                temp = datareg;
-              }
-              break;
-            }
-          }
-          break;
-          case 3:
-          {
-            uint32_t addr = m68kreg.getaddrreg(reg);
-
-            switch (buswidth)
-            {
-              case 0:
-              {
-                temp = readByte(addr);
-                m68kreg.setaddrreg(reg, (addr + 1));
-              }
-              break;
-              case 1:
-              {
-                temp = readWord(addr);
-                m68kreg.setaddrreg(reg, (addr + 2));
-              }
-              break;
-              case 2:
-              {
-                temp = readLong(addr);
-                m68kreg.setaddrreg(reg, (addr + 4));
-              }
-              break;
-            }
-          }
-          break;
-          case 7:
-          {
-            switch (reg)
-            {
-              case 2:
-              {
-                temp = m68kreg.pc;
-                uint16_t immdis = readWord(m68kreg.pc);
-                m68kreg.pc += 2;
-                temp += (uint32_t)(int16_t)(immdis);
-              }
-              break;
-              case 4:
-              {
-                switch (buswidth)
-                {
-                  case 0:
-                  {
-                    temp = (readWord(m68kreg.pc) & 0xFF);
-                    m68kreg.pc += 2;
-                  }
-                  break;
-                  case 1:
-                  {
-                    temp = (readWord(m68kreg.pc));
-                    m68kreg.pc += 2;
-                  }
-                  break;
-                  case 2:
-                  {
-                    temp = (readLong(m68kreg.pc));
-                    m68kreg.pc += 4;
-                  }
-                  break;
-                }
-              }
-              break;
-              default: cout << "Unrecognized register mode of " << dec << (int)(reg) << endl; exit(1); break;
-            }
-          }
-          break;
-          default: cout << "Unrecognized addressing mode of " << dec << (int)(mode) << endl; exit(1); break;
-        }
-
-        return temp;
-      }
-
-      inline void dstaddressingmode(int mode, int reg, int buswidth, uint32_t val)
-      {
-        switch (mode)
-        {
-          case 0:
-          {
-            uint32_t temp = (m68kreg.getdatareg(reg));
-
-            switch (buswidth)
-            {
-              case 0:
-              {
-                temp = ((temp & ~0xFF) | (val & 0xFF));
-              }
-              break;
-              case 1:
-              {
-                temp = ((temp & ~0xFFFF) | (val & 0xFFFF));
-              }
-              break;
-              case 2:
-              {
-                temp = val;
-              }
-              break;
-            }
-
-            m68kreg.setdatareg(reg, temp);
-          }
-          break;
-          default: cout << "Unrecognized addressing mode of " << dec << (int)(mode) << endl; exit(1); break;
-        }
-      }
-
-      inline bool getcond(int val)
-      {
-        bool temp = false;
-
-        switch (val)
-        {
-          case 0: temp = true; break;
-          case 1: temp = false; break;
-          case 6: temp = !m68kreg.getz(); break;
-          case 7: temp = m68kreg.getz(); break;
-          default: cout << "Unrecognized condition code of " << dec << (int)(val) << endl; exit(1); break;
-        }
-
-        return temp;
-      }
-  };
+	    template<int Size> auto msb() -> uint32_t;
+	    template<int Size> auto clip(uint32_t data) -> uint32_t;
+	    template<int Size> auto sign(uint32_t data) -> int32_t;
+	    template<int Size> auto mask() -> uint32_t;
+    };
 };
 
 #endif // BOTSASHI_H

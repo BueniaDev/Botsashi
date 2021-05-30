@@ -28,13 +28,8 @@ Botsashi is free software: you can redistribute it and/or modify it under the te
 
 # Copyright
 
-(C) 2019 Buenia. The M68K processor architecture is a registered trademark of NXP Semiconductors N.V., and this project is not affiliated with them or Motorola in any way.
-
-For information regarding Botsashi's stance on copyright infringement, see the DISCLAIMER.md file in this repository.
-
-
-# Legal Disclaimer
+(C) 2021 Buenia. This project is not affiliated in any way with NXP or Motorola. Motorola 68000 is a registered trademark of NXP Semiconductors N.V.
 
 All copyrighted material in this repository belongs to their respective owners, and is used under the terms of the "fair use" clause of U.S. and international copyright law. For more information, see the "res/fairuse.txt" file in this repository.
 
-
+For information regarding Botsashi's stance on copyright infringement, see the DISCLAIMER.md file in this repository.

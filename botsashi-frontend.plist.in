@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleIdentifier</key>
+  <string>dev.buenia.bee8086-frontend</string>
+  <key>CFBundleDisplayName</key>
+  <string>example</string>
+  <key>CFBundleExecutable</key>
+  <string>example</string>
+  <key>NSHighResolutionCapable</key>
+  <true/>
+  <key>NSSupportsAutomaticGraphicsSwitching</key>
+  <true/>
+  <key>SDL_FILESYSTEM_BASE_DIR_TYPE</key>
+  <string>parent</string>
+</dict>
+</plist>
