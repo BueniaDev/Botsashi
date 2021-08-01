@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 project(botsashi)
-option(BUILD_BOTSASHI_EXAMPLE "Enables the Botsashi example frontend." OFF)
+option(BUILD_SIMSASHI "Enables the Simsashi frontend (requires SDL2)." ON)
 
 # Require C++17
 set(CMAKE_CXX_STANDARD 17)
@@ -60,8 +60,8 @@ elseif (APPLE)
 	endif()
 endif()
 
-if (BUILD_BOTSASHI_EXAMPLE STREQUAL "ON")
-    add_subdirectory(example)
+if (BUILD_SIMSASHI STREQUAL "ON")
+    add_subdirectory(Simsashi)
 endif()
 
 add_library(botsashi ${BOTSASHI_SOURCES} ${BOTSASHI_HEADERS})

@@ -48,7 +48,7 @@ namespace botsashi
 	    virtual uint16_t readWord(bool upper, bool lower, uint32_t addr) = 0;
 	    virtual void writeWord(bool upper, bool lower, uint32_t addr, uint16_t val) = 0;
 	    virtual bool istrapOverride(int val) = 0;
-	    virtual void trapException(int val, Botsashi *m68k) = 0;
+	    virtual void trapException(int val, Botsashi &m68k) = 0;
 	    virtual void stopFunction() = 0;
     };
 
@@ -64,6 +64,20 @@ namespace botsashi
 	    enum : int { Alu = 1, Logical = 2, Clear = 4 };
 
 	    template<int Size>
+	    uint32_t getDataReg(int reg)
+	    {
+		reg &= 7;
+		return clip<Size>(m68kreg.datareg[reg]);
+	    }
+
+	    template<int Size>
+	    uint32_t getAddrReg(int reg)
+	    {
+		reg &= 7;
+		return clip<Size>(m68kreg.addrreg[reg]);
+	    }
+
+	    template<int Size>
 	    void setDataReg(int reg, uint32_t val)
 	    {
 		reg &= 7;
@@ -77,18 +91,6 @@ namespace botsashi
 		m68kreg.addrreg[reg] = ((m68kreg.addrreg[reg] & ~mask<Size>()) | (val & mask<Size>()));
 	    }
 
-	    struct m68kregisters
-	    {
-		uint32_t datareg[8];
-		uint32_t addrreg[8];
-		uint32_t usp = 0;
-		uint32_t ssp = 0;
-		uint32_t pc = 0;
-		bitset<16> statusreg;
-	    };
-
-	    m68kregisters m68kreg;
-
 	    bool iscarry();
 
 	    void setcarry(bool val);
@@ -99,8 +101,8 @@ namespace botsashi
 
 	    void init(uint32_t init_pc = 0);
 	    void shutdown();
-	    void executenextinstr();
-	    void executeinstr(uint16_t instr);
+	    int executenextinstr();
+	    int executeinstr(uint16_t instr);
 	    void debugoutput(bool printdisassembly = true);
 	    string disassembleinstr(uint32_t pc);
 
@@ -205,7 +207,7 @@ namespace botsashi
 	    #include "disassembly.inl"
 	    #include "instructions.inl"
 
-	    using m68kfunc = function<void()>;
+	    using m68kfunc = function<int()>;
 	    using m68kdasmfunc = function<string(uint32_t, uint16_t)>;
 
 	    struct m68kmapping
@@ -219,6 +221,19 @@ namespace botsashi
 	    #include "instr_tables.inl"
 
 	private:
+	    struct m68kregisters
+	    {
+		uint32_t datareg[8];
+		uint32_t addrreg[8];
+		uint32_t usp = 0;
+		uint32_t ssp = 0;
+		uint32_t pc = 0;
+		bitset<16> statusreg;
+	    };
+
+	    m68kregisters m68kreg;
+
+
 	    auto interRead(bool upper, bool lower, uint32_t addr) -> uint16_t;
 	    auto interWrite(bool upper, bool lower, uint32_t addr, uint16_t val) -> void;
 	    auto istrapOverride(int val) -> bool;

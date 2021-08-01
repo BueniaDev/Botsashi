@@ -102,18 +102,18 @@ namespace botsashi
     {
 	if (inter)
 	{
-	    inter->trapException(val, this);
+	    inter->trapException(val, *this);
 	}
     }
 
-    void Botsashi::executenextinstr()
+    int Botsashi::executenextinstr()
     {
 	currentinstr = read<Word>(m68kreg.pc);
 	m68kreg.pc += 2;
-	executeinstr(currentinstr);
+	return executeinstr(currentinstr);
     }
 
-    void Botsashi::executeinstr(uint16_t instr)
+    int Botsashi::executeinstr(uint16_t instr)
     {
 	for (auto mappingiter = funcmappings.rbegin(); mappingiter != funcmappings.rend(); mappingiter++)
 	{
@@ -124,7 +124,8 @@ namespace botsashi
 	    }
 	}
 
-	return unrecognizedinstr(instr);
+	unrecognizedinstr(instr);
+	return 0;
     }
 
     void Botsashi::debugoutput(bool printdisassembly)

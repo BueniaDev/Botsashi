@@ -174,6 +174,11 @@ auto m68kdis_exgdreg(uint32_t pc, uint16_t instr) -> string
     return ss.str();
 }
 
+auto m68kdis_lea(uint32_t pc, uint16_t instr) -> string
+{
+    return "lea";
+}
+
 auto m68kdis_swap(uint32_t pc, uint16_t instr) -> string
 {
     stringstream ss;
@@ -196,6 +201,18 @@ auto m68kdis_clear(uint32_t pc, uint16_t instr) -> string
     }
 
     ss << " " << dstmodedasm<Size, Clear>(getsrcmode(instr), getsrcreg(instr), pc);
+    return ss.str();
+}
+
+auto m68kdis_bclrimm(uint32_t pc, uint16_t instr) -> string
+{
+    return "bclr.imm";
+}
+
+auto m68kdis_trap(uint32_t pc, uint16_t instr) -> string
+{
+    stringstream ss;
+    ss << "trap #" << dec << (int)(instr & 0xF);
     return ss.str();
 }
 

@@ -7,10 +7,10 @@
 
 mkdir -p dist
 
-if [ -d "example" ]; then
-	for lib in $(ldd example/example.exe | grep mingw | sed "s/.*=> //" | sed "s/(.*)//"); do
+if [ -d "Simsashi" ]; then
+	for lib in $(ldd Simsashi/simsashi.exe | grep mingw | sed "s/.*=> //" | sed "s/(.*)//"); do
 		cp "${lib}" dist
 	done
-	cp example/example.exe dist
+	cp Simsashi/simsashi.exe dist
 fi
 
