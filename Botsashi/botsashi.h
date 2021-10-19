@@ -43,7 +43,7 @@ namespace botsashi
 
 	public:
 	    BotsashiInterface();
-	    ~BotsashiInterface();
+	    virtual ~BotsashiInterface();
 
 	    virtual uint16_t readWord(bool upper, bool lower, uint32_t addr) = 0;
 	    virtual void writeWord(bool upper, bool lower, uint32_t addr, uint16_t val) = 0;
