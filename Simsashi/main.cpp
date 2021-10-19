@@ -608,10 +608,13 @@ int main(int argc, char *argv[])
 	if (!stopped)
 	{
 	    uint64_t prev_cycles = total_cycles;
+	    // Uncomment the below line to enable debug output
 	    // m68k.debugoutput();
+	    cout << m68k.disassembleinstr(m68k.getPC()) << endl;
 	    total_cycles += m68k.executenextinstr();
 	    cycles = (total_cycles - prev_cycles);
 	    cout << "Cycles taken: " << dec << cycles << endl;
+	    cout << endl;
 	}
 
 	inter.render_sdl2();

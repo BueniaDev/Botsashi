@@ -77,7 +77,7 @@ namespace botsashi
 
     void Botsashi::setstatusreg(uint16_t val)
     {
-	m68kreg.statusreg = bitset<16>(val);
+	m68kreg.statusreg = val;
     }
 
     void Botsashi::stopFunction()
@@ -108,7 +108,7 @@ namespace botsashi
 
     int Botsashi::executenextinstr()
     {
-	currentinstr = read<Word>(m68kreg.pc);
+	uint16_t currentinstr = read<Word>(m68kreg.pc);
 	m68kreg.pc += 2;
 	return executeinstr(currentinstr);
     }
@@ -120,7 +120,7 @@ namespace botsashi
 	    auto mapping = *mappingiter;
 	    if ((instr & mapping.mask) == mapping.value)
 	    {
-		return mapping.function();
+		return mapping.function(instr);
 	    }
 	}
 
@@ -143,11 +143,12 @@ namespace botsashi
 	cout << "USP: " << hex << m68kreg.usp << endl;
 	cout << "SSP: " << hex << m68kreg.ssp << endl;
 	cout << "PC: " << hex << m68kreg.pc << endl;
-	cout << "Status: " << hex << (int)m68kreg.statusreg.to_ulong() << endl;
+	cout << "Status: " << hex << int(m68kreg.statusreg) << endl;
+	cout << "Current instruction (in hex): " << hex << (int)read<Word>(m68kreg.pc) << endl;
 
 	if (printdisassembly)
 	{
-	    cout << "Current instruction: " << disassembleinstr(m68kreg.pc) << endl;
+	    cout << "Current instruction (disassembly): " << disassembleinstr(m68kreg.pc) << endl;
 	}
 
 	cout << endl;

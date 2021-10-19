@@ -38,40 +38,84 @@ auto Botsashi::getdstreg(uint16_t instr) -> int
 
 bool Botsashi::iscarry()
 {
-    return m68kreg.statusreg.test(0);
+    return testbit(m68kreg.statusreg, 0);
 }
 
 void Botsashi::setcarry(bool val)
 {
-    m68kreg.statusreg.set(0, val);
+    m68kreg.statusreg = changebit(m68kreg.statusreg, 0, val);
 }
 
 void Botsashi::setoverflow(bool val)
 {
-    m68kreg.statusreg.set(1, val);
+    m68kreg.statusreg = changebit(m68kreg.statusreg, 1, val);
 }
 
 void Botsashi::setzero(bool val)
 {
-    m68kreg.statusreg.set(2, val);
+    m68kreg.statusreg = changebit(m68kreg.statusreg, 2, val);
 }
 
 void Botsashi::setsign(bool val)
 {
-    m68kreg.statusreg.set(3, val);
+    m68kreg.statusreg = changebit(m68kreg.statusreg, 3, val);
 }
 
 void Botsashi::setextend(bool val)
 {
-    m68kreg.statusreg.set(4, val);
+    m68kreg.statusreg = changebit(m68kreg.statusreg, 4, val);
 }
 
-template<int Size> auto Botsashi::getZero(uint32_t temp) -> bool
+auto Botsashi::count_bits(uint64_t source) -> uint32_t
+{
+    uint32_t count = 0;
+    while (source > 0)
+    {
+	source = resetbit(source, count);
+	count += 1;
+    }
+
+    return count;
+}
+
+template<int Size>
+auto Botsashi::getZero(uint32_t temp) -> bool
 {
     return (clip<Size>(temp) == 0);
 }
 
-template<int Size> auto Botsashi::getSign(uint32_t temp) -> bool
+template<int Size>
+auto Botsashi::getSign(uint32_t temp) -> bool
 {
     return (sign<Size>(temp) < 0);
+}
+
+template<typename T>
+bool Botsashi::testbit(T reg, int bit)
+{
+    return ((reg >> bit) & 1) ? true : false;
+}
+
+template<typename T>
+T Botsashi::setbit(T reg, int bit)
+{
+    return (reg | (1 << bit));
+}
+
+template<typename T>
+T Botsashi::resetbit(T reg, int bit)
+{
+    return (reg & ~(1 << bit));
+}
+
+template<typename T>
+T Botsashi::changebit(T reg, int bit, bool val)
+{
+    return (val) ? setbit(reg, bit) : resetbit(reg, bit);
+}
+
+template<typename T>
+T Botsashi::togglebit(T reg, int bit)
+{
+    return testbit(reg, bit) ? resetbit(reg, bit) : setbit(reg, bit);
 }

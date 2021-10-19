@@ -63,6 +63,11 @@ namespace botsashi
 	    enum : int { Byte, Word, Long };
 	    enum : int { Alu = 1, Logical = 2, Clear = 4 };
 
+	    uint32_t getPC()
+	    {
+		return m68kreg.pc;
+	    }
+
 	    template<int Size>
 	    uint32_t getDataReg(int reg)
 	    {
@@ -118,7 +123,12 @@ namespace botsashi
 	    template<int Size> auto getZero(uint32_t temp) -> bool;
 	    template<int Size> auto getSign(uint32_t temp) -> bool;
 
-	    uint16_t currentinstr = 0;
+	    template<typename T> bool testbit(T reg, int bit);
+	    template<typename T> T setbit(T reg, int bit);
+	    template<typename T> T resetbit(T reg, int bit);
+	    template<typename T> T changebit(T reg, int bit, bool val);
+	    template<typename T> T togglebit(T reg, int bit);
+
 	    bool stopped = false;
 
 	    void setinterface(BotsashiInterface &cb);
@@ -207,7 +217,7 @@ namespace botsashi
 	    #include "disassembly.inl"
 	    #include "instructions.inl"
 
-	    using m68kfunc = function<int()>;
+	    using m68kfunc = function<int(uint16_t)>;
 	    using m68kdasmfunc = function<string(uint32_t, uint16_t)>;
 
 	    struct m68kmapping
@@ -228,11 +238,12 @@ namespace botsashi
 		uint32_t usp = 0;
 		uint32_t ssp = 0;
 		uint32_t pc = 0;
-		bitset<16> statusreg;
+		uint16_t statusreg;
 	    };
 
 	    m68kregisters m68kreg;
 
+	    auto count_bits(uint64_t source) -> uint32_t;
 
 	    auto interRead(bool upper, bool lower, uint32_t addr) -> uint16_t;
 	    auto interWrite(bool upper, bool lower, uint32_t addr, uint16_t val) -> void;

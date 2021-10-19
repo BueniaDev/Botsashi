@@ -14,6 +14,7 @@ include_directories(simsashi ${BOTSASHI_INCLUDE_DIR})
 target_link_libraries(simsashi botsashi)
 
 find_package(SDL2 REQUIRED)
+include_directories(${SDL2_INCLUDE_DIRS})
 
 if (TARGET SDL2::SDL2)
     target_link_libraries(simsashi SDL2::SDL2)

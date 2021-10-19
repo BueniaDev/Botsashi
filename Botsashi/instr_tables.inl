@@ -1,4 +1,4 @@
-#define instruction(mask, val, func, dasm) {mask, val, bind(&Botsashi::m68k_##func, this), bind(&Botsashi::m68kdis_##dasm, this, _1, _2)}
+#define instruction(mask, val, func, dasm) {mask, val, bind(&Botsashi::m68k_##func, this, _1), bind(&Botsashi::m68kdis_##dasm, this, _1, _2)}
 
 /*
   Inspired partly by 'dis68k' (https://github.com/wrm-za/dis68k), the following instruction
@@ -9,7 +9,7 @@
   instruction mapping can be found, followed by the corresponding page number within the PDF
   linked above.
 
-  Note: Using an initializer_list causes obscure compilation errors, so an array is used here instead.
+  Note: Using an initializer_list causes obscure compilation errors, so a vector is used here instead.
 */
 
 vector<m68kmapping> funcmappings =
@@ -18,17 +18,17 @@ vector<m68kmapping> funcmappings =
     instruction(0xF1F0, 0x8100, unknown, unknown), // 4-171 (p275)
     instruction(0xFFC0, 0x4800, unknown, unknown), // 4-142 (p246)
 
-    instruction(0xF1C0, 0xC000, unknown, unknown), // 4-15 (p119)
-    instruction(0xF1C0, 0xC040, unknown, unknown), // 4-15 (p119)
-    instruction(0xF1C0, 0xC080, unknown, unknown), // 4-15 (p119)
+    instruction(0xF1C0, 0xC000, and<Byte>, and<Byte>), // 4-15 (p119)
+    instruction(0xF1C0, 0xC040, and<Word>, and<Word>), // 4-15 (p119)
+    instruction(0xF1C0, 0xC080, and<Long>, and<Long>), // 4-15 (p119)
 
     instruction(0xF1C0, 0xC100, unknown, unknown), // 4-15 (p119)
     instruction(0xF1C0, 0xC140, unknown, unknown), // 4-15 (p119)
     instruction(0xF1C0, 0xC180, unknown, unknown), // 4-15 (p119)
 
-    instruction(0xF1C0, 0x8000, unknown, unknown), // 4-150 (p254)
-    instruction(0xF1C0, 0x8040, unknown, unknown), // 4-150 (p254)
-    instruction(0xF1C0, 0x8080, unknown, unknown), // 4-150 (p254)
+    instruction(0xF1C0, 0x8000, or<Byte>, or<Byte>), // 4-150 (p254)
+    instruction(0xF1C0, 0x8040, or<Word>, or<Word>), // 4-150 (p254)
+    instruction(0xF1C0, 0x8080, or<Long>, or<Long>), // 4-150 (p254)
 
     instruction(0xF1C0, 0x8100, unknown, unknown), // 4-150 (p254)
     instruction(0xF1C0, 0x8140, unknown, unknown), // 4-150 (p254)
@@ -46,13 +46,13 @@ vector<m68kmapping> funcmappings =
     instruction(0xFFC0, 0x0240, unknown, unknown), // 4-18 (p122)
     instruction(0xFFC0, 0x0280, unknown, unknown), // 4-18 (p122)
 
-    instruction(0xFFC0, 0x0000, unknown, unknown), // 4-153 (p257)
-    instruction(0xFFC0, 0x0040, unknown, unknown), // 4-153 (p257)
-    instruction(0xFFC0, 0x0080, unknown, unknown), // 4-153 (p257)
+    instruction(0xFFC0, 0x0000, ori<Byte>, ori<Byte>), // 4-153 (p257)
+    instruction(0xFFC0, 0x0040, ori<Word>, ori<Word>), // 4-153 (p257)
+    instruction(0xFFC0, 0x0080, ori<Long>, ori<Long>), // 4-153 (p257)
 
-    instruction(0xFFC0, 0x0A00, unknown, unknown), // 4-102 (p206)
-    instruction(0xFFC0, 0x0A40, unknown, unknown), // 4-102 (p206)
-    instruction(0xFFC0, 0x0A80, unknown, unknown), // 4-102 (p206)
+    instruction(0xFFC0, 0x0A00, eori<Byte>, eori<Byte>), // 4-102 (p206)
+    instruction(0xFFC0, 0x0A40, eori<Word>, eori<Word>), // 4-102 (p206)
+    instruction(0xFFC0, 0x0A80, eori<Long>, eori<Long>), // 4-102 (p206)
 
     instruction(0xFFC0, 0x0400, unknown, unknown), // 4-179 (p283)
     instruction(0xFFC0, 0x0440, unknown, unknown), // 4-179 (p283)
@@ -134,7 +134,7 @@ vector<m68kmapping> funcmappings =
     instruction(0xF1C0, 0x0100, unknown, unknown), // 4-62 (p166)
     instruction(0xFFC0, 0x0800, unknown, unknown), // 4-63 (p167)
 
-    instruction(0xF1C0, 0x0180, unknown, unknown), // 4-31 (p135)
+    instruction(0xF1C0, 0x0180, bclr, bclr), // 4-31 (p135)
     instruction(0xFFC0, 0x0880, bclrimm, bclrimm), // 4-32 (p136)
 
     instruction(0xF0C0, 0x50C0, unknown, unknown), // Scc: 4-173 (p276), DBcc: 4-91 (p195)
@@ -148,9 +148,9 @@ vector<m68kmapping> funcmappings =
     instruction(0xFFC0, 0x4000, unknown, unknown), // 4-146 (p250)
     instruction(0xFFC0, 0x4040, unknown, unknown), // 4-146 (p250)
     instruction(0xFFC0, 0x4080, unknown, unknown), // 4-146 (p250)
-    instruction(0xFFC0, 0x4600, unknown, unknown), // 4-148 (p248)
-    instruction(0xFFC0, 0x4640, unknown, unknown), // 4-148 (p250)
-    instruction(0xFFC0, 0x4680, unknown, unknown), // 4-148 (p250)
+    instruction(0xFFC0, 0x4600, not<Byte>, not<Byte>), // 4-148 (p252)
+    instruction(0xFFC0, 0x4640, not<Word>, not<Word>), // 4-148 (p252)
+    instruction(0xFFC0, 0x4680, not<Long>, not<Long>), // 4-148 (p252)
 
     instruction(0xF1D8, 0xE100, unknown, unknown), // 4-22 (p126)
     instruction(0xF1D8, 0xE140, unknown, unknown), // 4-22 (p126)
@@ -206,7 +206,7 @@ vector<m68kmapping> funcmappings =
     instruction(0xFFC0, 0x4A40, unknown, unknown), // 4-192 (p296)
     instruction(0xFFC0, 0x4A80, unknown, unknown), // 4-192 (p296)
 
-    instruction(0xF1C0, 0xC0C0, unknown, unknown), // 4-139 (p243)
+    instruction(0xF1C0, 0xC0C0, mulu, mulu), // 4-139 (p243)
     instruction(0xF1C0, 0xC1C0, unknown, unknown), // 4-136 (p240)
 
     instruction(0xF1C0, 0x80C0, unknown, unknown), // 4-97 (p201)
@@ -236,10 +236,10 @@ vector<m68kmapping> funcmappings =
     instruction(0xFFFF, 0x007C, unknown, unknown),
     instruction(0xFFFF, 0x003C, unknown, unknown),
 
-    instruction(0xF1C0, 0x0140, unknown, unknown), // 4-28 (p132)
-    instruction(0xFFC0, 0x0840, unknown, unknown), // 4-29 (p133)
-    instruction(0xF1C0, 0x01C0, unknown, unknown), // 4-57 (p161)
-    instruction(0xFFC0, 0x08C0, unknown, unknown), // 4-58 (p162)
+    instruction(0xF1C0, 0x0140, bchg, bchg), // 4-28 (p132)
+    instruction(0xFFC0, 0x0840, bchgimm, bchgimm), // 4-29 (p133)
+    instruction(0xF1C0, 0x01C0, bset, bset), // 4-57 (p161)
+    instruction(0xFFC0, 0x08C0, bsetimm, bsetimm), // 4-58 (p162)
 
     instruction(0xFFC0, 0x4AC0, unknown, unknown), // 4-186 (p290)
 
