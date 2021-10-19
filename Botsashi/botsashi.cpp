@@ -60,6 +60,12 @@ namespace botsashi
 	cout << "Botsashi::Initialized" << endl;
     }
 
+    void Botsashi::reset_exception(uint32_t vector_offs)
+    {
+	m68kreg.addrreg[7] = read<Long>(vector_offs);
+	m68kreg.pc = read<Long>((vector_offs + 4));
+    }
+
     void Botsashi::shutdown()
     {
 	if (inter)

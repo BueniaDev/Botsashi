@@ -106,6 +106,7 @@ namespace botsashi
 
 	    void init(uint32_t init_pc = 0);
 	    void shutdown();
+	    void reset_exception(uint32_t vector_offs = 0);
 	    int executenextinstr();
 	    int executeinstr(uint16_t instr);
 	    void debugoutput(bool printdisassembly = true);

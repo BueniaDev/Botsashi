@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-option(BUILD_SIMSASHI "Enables the Simsashi frontend (requires SDL2)." ON)
+option(BUILD_SIMSASHI "Enables the Simsashi frontend (requires SDL2)." OFF)
 
 set(BOTSASHI_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 

@@ -515,17 +515,17 @@ class SimsashiInterface : public BotsashiInterface
 	    uint32_t window_height = 480;
 };
 
-template<size_t arr_size>
-void copyprogram(array<uint8_t, arr_size> program, uint32_t offset = 0)
+void copyprogram(vector<uint8_t> program)
 {
-    auto membegin = memory.begin() + offset;
+    auto membegin = memory.begin();
     copy(program.begin(), program.end(), membegin);
 }
 
-void copyprogram(vector<uint8_t> program, uint32_t offset = 0)
+template<size_t arr_size>
+void copyprogram(array<uint8_t, arr_size> program)
 {
-    auto membegin = memory.begin() + offset;
-    copy(program.begin(), program.end(), membegin);
+    vector<uint8_t> prog = vector<uint8_t>(program.begin(), program.end());
+    copyprogram(prog);
 }
 
 void print_datareg(Botsashi &m68k, int reg)
