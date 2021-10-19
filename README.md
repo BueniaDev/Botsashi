@@ -1,14 +1,21 @@
-<img src="https://github.com/BueniaDev/Botsashi/blob/rewrite/res/logo.png" alt="drawing" width="275"/>
+<img src="https://github.com/BueniaDev/Botsashi/blob/main/res/logo.png" alt="drawing" width="275"/>
 
 [![Run on Repl.it](https://repl.it/badge/github/BueniaDev/Botsashi)](https://repl.it/github/BueniaDev/Botsashi)
+[![CircleCI](https://circleci.com/gh/BueniaDev/Botsashi.svg?style=svg)](https://circleci.com/gh/BueniaDev/Botsashi)
 
 Motorola 68000 emulation engine, kinda
 
-This was created to emulate the M68K processor. But also, you know, to have a fun challenge ;)
+A (currently WIP) emulation of the iconic Motorola 68000 processor, written in C++17.
 
-## History
+## Features
 
-This was originally created back in 2018, when I was still a high-school student. However, in order to modernize and improve the codebase, the Botsashi engine is currently being rewritten at the moment. If you wish to look at the code from before the rewrite, check out the current master branch.
+Platform-independent and architecture-independent code
+
+Easily customizable interface
+
+Dynamic disassembly (from any memory address) and simple debug output
+
+And more to come!
 
 ## Simsashi
 
@@ -16,7 +23,7 @@ This repo comes with a custom (and currently WIP) reimplementation of the EASy68
 
 # Building Instructions
 
-The core Botsashi library does not have any dependencies and can be compiled with MinGW on Windows, and both GCC and (presumably) Clang on Linux, as well as (presumably) AppleClang on OSX. However, the Simsashi simulator in this repo does have additional dependencies that need to be installed. All dependencies should be findable via CMake.
+The core Botsashi library does not have any dependencies and can be compiled with MinGW and Clang on Windows, both GCC and Clang on Linux, and (presumably) AppleClang on OSX. However, the Simsashi simulator in this repo does have additional dependencies that need to be installed. All dependencies should be findable via CMake.
 
 In order to build the Simsashi simulator, simply pass `-DBUILD_SIMSASHI="ON"` to CMake.
 
@@ -38,15 +45,15 @@ Core dependencies:
 
         * OpenSUSE (not tested): `sudo zypper in gcc-c++`
 
-    * Clang (not tested):
+    * Clang:
 
         * Debian: `sudo apt-get install clang clang-format libc++-dev` (in some distros, clang-5.0)
 
-        * Arch: `pacman -S clang`, `libc++` is in the AUR. Use pacaur or yaourt to install it.
+        * Arch (not tested): `pacman -S clang`, `libc++` is in the AUR. Use pacaur or yaourt to install it.
 
-        * Fedora: `dnf install clang libcxx-devel`
+        * Fedora (not tested): `dnf install clang libcxx-devel`
 
-        * OpenSUSE: `zypper in clang`
+        * OpenSUSE (not tested): `zypper in clang`
 
 * Git (if not installed already) and CMake 3.15+:
 
@@ -138,7 +145,17 @@ Step 3: Compile:
 
 ## Near-term
 
-Complete Motorola 68000 support (as of right now, this engine supports only a tiny subset of the M68K instruction set without any interrupt support)
+Complete Motorola 68000 support (as of right now, this engine supports only a subset of the M68K instruction set with only extremely bare-bones exception support)
+
+## Medium-term
+
+Feature parity with the [Musashi engine](https://github.com/kstenerud/Musashi)
+
+## Long-term
+
+Motorola 68010/68020 support
+
+Graphical debugger (possibly via Qt5?)
 
 # License
 
