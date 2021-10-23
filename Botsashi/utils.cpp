@@ -41,6 +41,26 @@ bool Botsashi::iscarry()
     return testbit(m68kreg.statusreg, 0);
 }
 
+bool Botsashi::isoverflow()
+{
+    return testbit(m68kreg.statusreg, 1);
+}
+
+bool Botsashi::iszero()
+{
+    return testbit(m68kreg.statusreg, 2);
+}
+
+bool Botsashi::issign()
+{
+    return testbit(m68kreg.statusreg, 3);
+}
+
+bool Botsashi::isextend()
+{
+    return testbit(m68kreg.statusreg, 4);
+}
+
 void Botsashi::setcarry(bool val)
 {
     m68kreg.statusreg = changebit(m68kreg.statusreg, 0, val);
@@ -79,9 +99,19 @@ auto Botsashi::count_bits(uint64_t source) -> uint32_t
 }
 
 template<int Size>
-auto Botsashi::getZero(uint32_t temp) -> bool
+auto Botsashi::getZero(uint32_t temp, bool is_extend) -> bool
 {
-    return (clip<Size>(temp) == 0);
+    bool is_val_zero = (clip<Size>(temp) == 0);
+
+    if (is_extend && is_val_zero)
+    {
+	// Zero flag is unchanged in ADDX/SUBX mode
+	return iszero();
+    }
+    else
+    {
+	return is_val_zero;
+    }
 }
 
 template<int Size>

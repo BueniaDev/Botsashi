@@ -61,7 +61,48 @@ namespace botsashi
 	    unique_ptr<BotsashiInterface> inter;
 
 	    enum : int { Byte, Word, Long };
-	    enum : int { Alu = 1, Logical = 2, Clear = 4 };
+
+	    enum : int
+	    {
+		BusError = 2,
+		AddrError = 3,
+		IllegalInst = 4,
+		DivByZero = 5,
+		BoundsChl = 6,
+		Overflow = 7,
+		Unprivileged = 8,
+		Trace = 9,
+		IllegalLineA = 10,
+		IllegalLineF = 11,
+	    };
+
+	    // Possible addressing modes permitted by an instruction.
+	    // Each bit represents a different addressing mode.
+	    // For example ControlAddr = 0x7E4 which means
+	    // the addressing modes are allowed as follows:
+	    // Dn = Prohibited
+	    // An = Prohibited
+	    // (An) = Permitted
+	    // (An)+ = Prohibited
+	    // -(An) = Prohibited
+	    // (d16,An) = Permitted
+	    // (d8,An,Xn) = Permitted
+	    // (xxx).W = Permitted
+	    // (xxx).L = Permitted
+	    // (d16,PC) = Permitted
+	    // (d8,PC,Xn) = Permitted
+	    // #<data> = Prohibited
+	    enum : uint16_t 
+	    {
+		DataAddr = 0xFFD,
+		MemAddr = 0xFFC,
+		ControlAddr = 0x7E4,
+		AlterableAddr = 0x1FF,
+		AllAddr = 0xFFF,
+		DataAltAddr = 0x1FD,
+		MemAltAddr = 0x1FC,
+		ControlAltAddr = 0x1E4
+	    };
 
 	    uint32_t getPC()
 	    {
@@ -97,6 +138,10 @@ namespace botsashi
 	    }
 
 	    bool iscarry();
+	    bool isoverflow();
+	    bool iszero();
+	    bool issign();
+	    bool isextend();
 
 	    void setcarry(bool val);
 	    void setoverflow(bool val);
@@ -121,7 +166,7 @@ namespace botsashi
 	    auto getdstmode(uint16_t instr) -> int;
 	    auto getdstreg(uint16_t instr) -> int;
 
-	    template<int Size> auto getZero(uint32_t temp) -> bool;
+	    template<int Size> auto getZero(uint32_t temp, bool is_extend = false) -> bool;
 	    template<int Size> auto getSign(uint32_t temp) -> bool;
 
 	    template<typename T> bool testbit(T reg, int bit);
@@ -215,6 +260,40 @@ namespace botsashi
 		}
 	    }
 
+	private:
+	    struct m68kregisters
+	    {
+		uint32_t datareg[8];
+		uint32_t addrreg[8];
+		uint32_t usp = 0;
+		uint32_t ssp = 0;
+		uint32_t pc = 0;
+		uint16_t statusreg;
+	    };
+
+	    struct m68kexceptions
+	    {
+		bool is_exception = false;
+		int exception_type = -1;
+	    };
+
+	    m68kexceptions m68kexcept;
+
+	    bool is_m68k_exception()
+	    {
+		return m68kexcept.is_exception;
+	    }
+
+	    void set_m68k_exception(int type)
+	    {
+		m68kexcept.is_exception = true;
+		m68kexcept.exception_type = type;
+	    }
+
+	    m68kregisters m68kreg;
+
+	    #include "traits.inl"
+
 	    #include "disassembly.inl"
 	    #include "instructions.inl"
 
@@ -231,30 +310,13 @@ namespace botsashi
 
 	    #include "instr_tables.inl"
 
-	private:
-	    struct m68kregisters
-	    {
-		uint32_t datareg[8];
-		uint32_t addrreg[8];
-		uint32_t usp = 0;
-		uint32_t ssp = 0;
-		uint32_t pc = 0;
-		uint16_t statusreg;
-	    };
-
-	    m68kregisters m68kreg;
-
 	    auto count_bits(uint64_t source) -> uint32_t;
 
+	    auto clipAddr(uint32_t addr) -> uint32_t;
 	    auto interRead(bool upper, bool lower, uint32_t addr) -> uint16_t;
 	    auto interWrite(bool upper, bool lower, uint32_t addr, uint16_t val) -> void;
 	    auto istrapOverride(int val) -> bool;
 	    auto trapException(int val) -> void;
-
-	    template<int Size> auto msb() -> uint32_t;
-	    template<int Size> auto clip(uint32_t data) -> uint32_t;
-	    template<int Size> auto sign(uint32_t data) -> int32_t;
-	    template<int Size> auto mask() -> uint32_t;
     };
 };
 

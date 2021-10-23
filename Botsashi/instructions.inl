@@ -42,6 +42,19 @@ array<int, 12> effective_address_l_cycles =
     14, 12, 16, 12, 14,  8
 };
 
+template<int Size>
+auto effective_address_cycles(int mode) -> int
+{
+    if (Size == Long)
+    {
+	return effective_address_l_cycles[mode];
+    }
+    else
+    {
+	return effective_address_bw_cycles[mode];
+    }
+}
+
 auto calc_mode(int mode, int reg) -> int
 {
     int mode_calc = mode;
@@ -54,167 +67,58 @@ auto calc_mode(int mode, int reg) -> int
     return mode_calc;
 }
 
-template<int Size, int Flags = 0>
+template<int Size, bool is_extend_mode = false>
+auto add_internal(uint32_t source, uint32_t operand) -> uint32_t
+{
+    bool extend_flag = (is_extend_mode) ? isextend() : false;
+    operand = clip<Size>(operand);
+    source = clip<Size>(source);
+    uint32_t result = (source + operand + extend_flag);
+    uint32_t carries = (source ^ operand ^ result);
+    uint32_t overflow = ((source ^ result) & (operand ^ result));
+    setcarry((carries ^ overflow) & msb<Size>());
+    setoverflow(overflow & msb<Size>());
+    setzero(getZero<Size>(result, is_extend_mode));
+    setsign(getSign<Size>(result));
+    setextend(iscarry());
+    return clip<Size>(result);
+}
+
+template<int Size, uint16_t mask = AllAddr, bool is_bit_instr = false>
 auto srcaddrmode(int mode, int reg) -> uint32_t
 {
     mode &= 7;
     reg &= 7;
 
-    if ((Size == Byte) && (mode == 1))
-    {
-	cout << "[warning] Invalid access of address registers, ignoring transfer..." << endl;
-	return 0;
-    }
+    bool is_inst_legal = false;
 
-    switch (mode)
-    {
-	case 0: return getDataReg<Size>(reg); break;
-	case 2: return read<Size>(m68kreg.addrreg[reg]); break;
-	case 7:
-	{
-	    switch (reg)
-	    {
-		case 0:
-		{
-		    // Fetch extension word
-		    uint16_t temp = extension<Word>(m68kreg.pc);
-
-		    // Sign-extended word to 32-bits
-		    uint32_t addr = clip<Long>(sign<Word>(temp));
-		    return read<Size>(addr);
-		}
-		break;
-		case 4: return extension<Size>(m68kreg.pc); break;
-		default: cout << "Unrecognized mode 7 source register index of " << dec << (int)(reg) << endl; exit(1); break;
-	    }
-	}
-	break;
-	default: cout << "Unrecognized source mode index of " << dec << (int)(mode) << endl; exit(1); break;
-    }
-
-    return 0;
-}
-
-template<int Size, bool is_bit_instr = false>
-auto addrmodedata(int mode, int reg) -> uint32_t
-{
-    mode &= 7;
-    reg &= 7;
-
-    switch (mode)
-    {
-	case 0: 
-	{
-	    if (is_bit_instr)
-	    {
-		return getDataReg<Long>(reg);
-	    }
-	    else
-	    {
-		return getDataReg<Size>(reg);
-	    }
-	}
-	break;
-	case 7:
-	{
-	    switch (reg)
-	    {
-		case 0:
-		{
-		    // Fetch extension word
-		    uint16_t ext_word = read<Word>(m68kreg.pc);
-
-		    // Sign-extended word to 32-bits
-		    uint32_t addr = clip<Long>(sign<Word>(ext_word));
-		    return read<Size>(addr);
-		}
-		break;
-		case 1:
-		{
-		    // Fetch extension long
-		    uint32_t addr = extension<Long>(m68kreg.pc);
-		    return read<Size>(addr);
-		}
-		break;
-		case 4: return extension<Size>(m68kreg.pc); break;
-		default: cout << "Unrecognized mode 7 register index of " << dec << (int)(reg) << endl; exit(1); break;
-	    }
-	}
-	break;
-	default: cout << "Unrecognized data address mode index of " << dec << (int)(mode) << endl; exit(1); break;
-    }
-
-    return 0;
-}
-
-template<int Size, bool is_bit_instr = false>
-auto addrmodedataload(int mode, int reg) -> uint32_t
-{
-    mode &= 7;
-    reg &= 7;
-
-    switch (mode)
-    {
-	case 0: 
-	{
-	    if (is_bit_instr)
-	    {
-		return getDataReg<Long>(reg);
-	    }
-	    else
-	    {
-		return getDataReg<Size>(reg);
-	    }
-	}
-	break;
-	case 7:
-	{
-	    switch (reg)
-	    {
-		case 0:
-		{
-		    // Fetch extension word
-		    uint16_t ext_word = read<Word>(m68kreg.pc);
-
-		    // Sign-extended word to 32-bits
-		    uint32_t addr = clip<Long>(sign<Word>(ext_word));
-		    return read<Size>(addr);
-		}
-		break;
-		case 1:
-		{
-		    // Fetch extension long
-		    uint32_t addr = extension<Long>(m68kreg.pc);
-		    return read<Size>(addr);
-		}
-		break;
-		default: cout << "Unrecognized mode 7 register index of " << dec << (int)(reg) << endl; exit(1); break;
-	    }
-	}
-	break;
-	default: cout << "Unrecognized data address mode index of " << dec << (int)(mode) << endl; exit(1); break;
-    }
-
-    return 0;
-}
-
-template<int Size, bool is_bit_instr = false>
-auto addrmodedatastore(int mode, int reg, uint32_t val) -> void
-{
-    mode &= 7;
-    reg &= 7;
+    uint32_t temp = 0;
 
     switch (mode)
     {
 	case 0:
 	{
-	    if (is_bit_instr)
+	    if (testbit(mask, 0))
 	    {
-		setDataReg<Long>(reg, val);
+		if (is_bit_instr)
+		{
+		    temp = getDataReg<Long>(reg);
+		}
+		else
+		{
+		    temp = getDataReg<Size>(reg);
+		}
+
+		is_inst_legal = true;
 	    }
-	    else
+	}
+	break;
+	case 2:
+	{
+	    if (testbit(mask, 2))
 	    {
-		setDataReg<Size>(reg, val);
+		temp = read<Size>(getAddrReg<Long>(reg));
+		is_inst_legal = true;
 	    }
 	}
 	break;
@@ -224,33 +128,70 @@ auto addrmodedatastore(int mode, int reg, uint32_t val) -> void
 	    {
 		case 0:
 		{
-		    // Fetch extension word
-		    uint16_t ext_word = extension<Word>(m68kreg.pc);
-
-		    // Sign-extended word to 32-bits
-		    uint32_t addr = clip<Long>(sign<Word>(ext_word));
-		    write<Size>(addr, val);
+		    if (testbit(mask, 8))
+		    {
+			uint16_t ext_word = extension<Word>(m68kreg.pc);
+			uint32_t addr =  clip<Long>(sign<Word>(ext_word));
+			temp = read<Size>(addr);
+			is_inst_legal = true;
+		    }
 		}
 		break;
 		case 1:
 		{
-		    // Fetch extension long
-		    uint32_t addr = extension<Long>(m68kreg.pc);
-		    write<Size>(addr, val);
+		    if (testbit(mask, 9))
+		    {
+			uint32_t addr = extension<Long>(m68kreg.pc);
+			temp = read<Size>(addr);
+			is_inst_legal = true;
+		    }
 		}
 		break;
-		default: cout << "Unrecognized mode 7 register store index of " << dec << (int)(reg) << endl; exit(1); break;
+		case 4:
+		{
+		    if (testbit(mask, 11))
+		    {
+			temp = extension<Size>(m68kreg.pc);
+			is_inst_legal = true;
+		    }
+		}
+		break;
+		default:
+		{
+		    cout << "Unrecognized mode 7 source addressing mode of " << dec << int(reg) << endl;
+		    exit(1);
+		}
+		break;
 	    }
 	}
 	break;
-	default: cout << "Unrecognized data address store mode index of " << dec << (int)(mode) << endl; exit(1); break;
+	default:
+	{
+	    cout << "Unrecognized source addressing mode of " << dec << int(mode) << endl;
+	    exit(1);
+	}
+	break;
     }
+
+    if (!is_inst_legal)
+    {
+	cout << "Illegal instruction" << endl;
+	exit(1);
+	set_m68k_exception(IllegalInst);
+    }
+
+    return temp;
 }
 
-auto loadaddrmode(int mode, int reg) -> uint32_t
+template<int Size, uint16_t mask = AllAddr, bool is_bit_instr = false>
+auto rawaddrmode(int mode, int reg) -> uint32_t
 {
     mode &= 7;
     reg &= 7;
+
+    bool is_inst_legal = false;
+
+    uint32_t temp = 0;
 
     switch (mode)
     {
@@ -258,52 +199,134 @@ auto loadaddrmode(int mode, int reg) -> uint32_t
 	{
 	    switch (reg)
 	    {
-		case 1: return extension<Long>(m68kreg.pc); break;
+		case 1:
+		{
+		    if (testbit(mask, 8))
+		    {
+			temp = extension<Long>(m68kreg.pc);
+			is_inst_legal = true;
+		    }
+		}
+		break;
+		default:
+		{
+		    cout << "Unrecognized mode 7 raw addressing mode of " << dec << int(reg) << endl;
+		    exit(1);
+		}
+		break;
 	    }
 	}
 	break;
-	default: cout << "Unrecognized loading mode index of " << dec << (int)(mode) << endl; exit(1); break;
+	default:
+	{
+	    cout << "Unrecognized raw addressing mode of " << dec << int(mode) << endl;
+	    exit(1);
+	}
+	break;
     }
 
-    return 0;
+    if (!is_inst_legal)
+    {
+	cout << "Illegal instruction" << endl;
+	exit(1);
+	set_m68k_exception(IllegalInst);
+    }
+
+    return temp;
 }
 
-template<int Size, int Flags = 0>
+template<int Size, uint16_t mask = AllAddr, bool is_bit_instr = false>
 auto dstaddrmode(int mode, int reg, uint32_t val) -> void
 {
     mode &= 7;
     reg &= 7;
 
-    if ((Size == Byte) && (mode == 1))
-    {
-	cout << "[warning] Invalid access of address registers, ignoring transfer..." << endl;
-	return;
-    }
+    bool is_inst_legal = false;
 
     switch (mode)
     {
-	case 0: setDataReg<Size>(reg, val); break;
-	case 1: setAddrReg<Size>(reg, val); break;
-	case 2: write<Size>(m68kreg.addrreg[reg], val); break;
+	case 0:
+	{
+	    if (testbit(mask, 0))
+	    {
+		if (is_bit_instr)
+		{
+		    setDataReg<Long>(reg, val);
+		}
+		else
+		{
+		    setDataReg<Size>(reg, val);
+		}
+
+		is_inst_legal = true;
+	    }
+	}
+	break;
+	case 1:
+	{
+	    if (testbit(mask, 1) && (Size != Byte))
+	    {
+		setAddrReg<Size>(reg, val);
+		is_inst_legal = true;
+	    }
+	}
+	break;
+	case 2:
+	{
+	    if (testbit(mask, 2))
+	    {
+		write<Size>(getAddrReg<Long>(reg), val);
+		is_inst_legal = true;
+	    }
+	}
+	break;
 	case 7:
 	{
 	    switch (reg)
 	    {
 		case 0:
 		{
-		    // Fetch extension word
-		    uint16_t ext_word = extension<Word>(m68kreg.pc);
-
-		    // Sign-extended word to 32-bits
-		    uint32_t addr = clip<Long>(sign<Word>(ext_word));
-		    write<Size>(addr, val);
+		    if (testbit(mask, 8))
+		    {
+			uint16_t ext_word = extension<Word>(m68kreg.pc);
+			uint32_t addr = clip<Long>(sign<Word>(ext_word));
+			write<Size>(addr, val);
+			is_inst_legal = true;
+		    }
 		}
 		break;
-		default: cout << "Unrecognized mode 7 destination register index of " << dec << (int)(reg) << endl; exit(1); break;
+		case 1:
+		{
+		    if (testbit(mask, 9))
+		    {
+			uint32_t addr = extension<Long>(m68kreg.pc);
+			write<Size>(addr, val);
+			is_inst_legal = true;
+		    }
+		}
+		break;
+		default:
+		{
+		    cout << "Unrecognized mode 7 destination addressing mode of " << dec << int(reg) << endl;
+		    exit(1);
+		}
+		break;
 	    }
 	}
 	break;
-	default: cout << "Unrecognized destination mode index of " << dec << (int)(mode) << endl; exit(1); break;
+	default:
+	{
+	    cout << "Unrecognized destination addressing mode of " << dec << int(mode) << endl;
+	    exit(1);
+	}
+	break;
+    }
+
+    if (!is_inst_legal)
+    {
+	cout << "Illegal instruction" << endl;
+	exit(1);
+	set_m68k_exception(IllegalInst);
     }
 }
 
@@ -329,12 +352,22 @@ auto m68k_move(uint16_t instr) -> int
 
     uint32_t srcvalue = srcaddrmode<Size>(srcmode, srcreg);
 
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
     setzero(getZero<Size>(srcvalue));
     setsign(getSign<Size>(srcvalue));
     setcarry(false);
     setoverflow(false);
 
     dstaddrmode<Size>(dstmode, dstreg, srcvalue);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
 
     int dest_mode = calc_mode(dstmode, dstreg);
     int source_mode = calc_mode(srcmode, srcreg);
@@ -349,6 +382,20 @@ auto m68k_move(uint16_t instr) -> int
     }
 }
 
+auto m68k_moveq(uint16_t instr) -> int
+{
+    int dstreg = getdstreg(instr);
+    uint32_t result = sign<Byte>(instr & 0xFF);
+    
+    setcarry(false);
+    setoverflow(false);
+    setzero(getZero<Byte>(result));
+    setsign(getSign<Byte>(result));
+
+    setDataReg<Long>(dstreg, result);
+    return 4;
+}
+
 template<int Size> 
 auto m68k_add(uint16_t instr) -> int
 {
@@ -359,13 +406,12 @@ auto m68k_add(uint16_t instr) -> int
     uint64_t target = clip<Size>(srcaddrmode<Size>(srcmode, srcreg));
     uint64_t source = getDataReg<Size>(dstreg);
 
-    auto result = source + target;
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
 
-    setcarry(sign<Size>(result >> 1) < 0);
-    setoverflow(sign<Size>(~(target ^ source) & (target ^ result)) < 0);
-    setzero(getZero<Size>(result));
-    setsign(getSign<Size>(result));
-    setextend(iscarry());
+    auto result = add_internal<Size>(source, target);
 
     setDataReg<Size>(dstreg, result);
 
@@ -402,6 +448,66 @@ auto m68k_addr(uint16_t instr) -> int
     return 0;
 }
 
+template<int Size>
+auto m68k_addq(uint16_t instr) -> int
+{
+    // NOTE: getdstreg(instr) is equivalent to
+    // bits 9-11 of instr (aka. ((instr >> 9) & 0x7)),
+    // where the immediate value is stored
+    int imm_val = getdstreg(instr);
+
+    // The immediate value of 0 represents a value of 8
+    if (imm_val == 0)
+    {
+	imm_val = 8;
+    }
+
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    uint32_t source_val = srcaddrmode<Size, AlterableAddr>(srcmode, srcreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    uint32_t result = 0;
+
+    if (srcmode == 1)
+    {
+	result = (source_val + imm_val);
+    }
+    else
+    {
+	result = add_internal<Size>(source_val, imm_val);
+    }
+
+    dstaddrmode<Size, AlterableAddr>(srcmode, srcreg, result);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    int source_mode = calc_mode(srcmode, srcreg);
+
+    int cycles = 0;
+
+    if (Size == Long)
+    {
+	cycles = (srcmode <= 1) ? 8 : 12;
+	cycles += effective_address_l_cycles[source_mode];
+    }
+    else
+    {
+	cycles = (srcmode == 0) ? 4 : 8;
+	cycles += effective_address_bw_cycles[source_mode];
+    }
+
+    return cycles;
+}
+
 template<int Size> 
 auto m68k_sub(uint16_t instr) -> int
 {
@@ -409,8 +515,13 @@ auto m68k_sub(uint16_t instr) -> int
     int srcmode = getsrcmode(instr);
     int srcreg = getsrcreg(instr);
 
-    uint32_t target = clip<Size>(srcaddrmode<Size>(srcmode, srcreg));
-    uint32_t source = getDataReg<Size>(dstreg);
+    uint64_t target = clip<Size>(srcaddrmode<Size>(srcmode, srcreg));
+    uint64_t source = getDataReg<Size>(dstreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
 
     auto result = source - target;
 
@@ -420,7 +531,7 @@ auto m68k_sub(uint16_t instr) -> int
     setsign(getSign<Size>(result));
     setextend(iscarry());
 
-    m68kreg.datareg[dstreg] = (m68kreg.datareg[dstreg] & ~mask<Size>()) | (result & mask<Size>());
+    setDataReg<Size>(dstreg, result);
 
     int source_mode = calc_mode(srcmode, srcreg);
 
@@ -461,8 +572,14 @@ auto m68k_lea(uint16_t instr) -> int
     int srcmode = getsrcmode(instr);
     int srcreg = getsrcreg(instr);
 
-    uint32_t temp = loadaddrmode(srcmode, srcreg);
-    m68kreg.addrreg[dstreg] = temp;
+    uint32_t address = rawaddrmode<Long, ControlAddr>(srcmode, srcreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    setAddrReg<Long>(dstreg, address);
 
     int source_mode = calc_mode(srcmode, srcreg);
 
@@ -482,13 +599,103 @@ auto m68k_lea(uint16_t instr) -> int
     return cycles;
 }
 
-template<int Size>
+auto m68k_jmp(uint16_t instr) -> int
+{
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    uint32_t subroutine_addr = rawaddrmode<Long, ControlAddr>(srcmode, srcreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    m68kreg.pc = clipAddr(subroutine_addr);
+
+    int source_mode = calc_mode(srcmode, srcreg);
+
+    int cycles = 0;
+
+    switch (source_mode)
+    {
+	case 2: cycles = 8; break;
+	case 5: cycles = 10; break;
+	case 6: cycles = 14; break;
+	case 7: cycles = 10; break;
+	case 8: cycles = 12; break;
+	case 9: cycles = 10; break;
+	case 10: cycles = 14; break;
+	default: break;
+    }
+
+    return cycles;
+}
+
+auto m68k_jsr(uint16_t instr) -> int
+{
+    uint32_t stack_pointer = getAddrReg<Long>(7);
+
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    uint32_t subroutine_addr = rawaddrmode<Long, ControlAddr>(srcmode, srcreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    stack_pointer -= 4;
+    write<Long>(stack_pointer, m68kreg.pc);
+    setAddrReg<Long>(7, stack_pointer);
+
+    m68kreg.pc = clipAddr(subroutine_addr);
+
+    int cycles = 0;
+
+    int source_mode = calc_mode(srcmode, srcreg);
+
+    switch (source_mode)
+    {
+	case 2: cycles = 16; break;
+	case 5: cycles = 18; break;
+	case 6: cycles = 22; break;
+	case 7: cycles = 18; break;
+	case 8: cycles = 20; break;
+	case 9: cycles = 18; break;
+	case 10: cycles = 22; break;
+	default: break;
+    }
+
+    return cycles;
+}
+
+auto m68k_rts(uint16_t instr) -> int
+{
+    uint32_t stack_pointer = getAddrReg<Long>(7);
+    uint32_t pc_val = read<Long>(stack_pointer);
+    stack_pointer += 4;
+    setAddrReg<Long>(7, stack_pointer);
+    m68kreg.pc = pc_val;
+    return 16;
+}
+
+template<int Size, bool is_rev = false>
 auto m68k_and(uint16_t instr) -> int
 {
+    constexpr uint16_t addr_mode_mask = is_rev ? MemAltAddr : DataAddr;
     int dstreg = getdstreg(instr);
     int srcmode = getsrcmode(instr);
     int srcreg = getsrcreg(instr);
-    uint32_t res_val = addrmodedata<Size>(srcmode, srcreg);
+
+    uint32_t res_val = srcaddrmode<Size, addr_mode_mask>(srcmode, srcreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
     uint32_t reg_val = getDataReg<Size>(dstreg);
 
     uint32_t result = (reg_val & res_val);
@@ -498,40 +705,67 @@ auto m68k_and(uint16_t instr) -> int
     setcarry(false);
     setoverflow(false);
 
-    setDataReg<Size>(dstreg, result);
+    if (is_rev)
+    {
+	dstaddrmode<Size, addr_mode_mask>(srcmode, srcreg, result);
+
+	if (is_m68k_exception())
+	{
+	    return -1;
+	}
+    }
+    else
+    {
+	setDataReg<Size>(dstreg, result);
+    }
 
     int cycles = 0;
 
     int source_mode = calc_mode(srcmode, srcreg);
 
-    if (Size == Long)
+    if (is_rev)
     {
-	if (((instr & 0x30) == 0) || ((instr & 0x3F) == 0x3C))
-	{
-	    cycles = 8;
-	}
-	else
-	{
-	    cycles = 6;
-	}
-
-	cycles += effective_address_l_cycles[source_mode];
+	cycles = (Size == Long) ? 12 : 8;
     }
     else
     {
-	cycles = (4 + effective_address_bw_cycles[source_mode]);
+	if (Size == Long)
+	{
+	    if ((source_mode == 0) || (source_mode == 11))
+	    {
+		cycles = 8;
+	    }
+	    else
+	    {
+		cycles = 6;
+	    }
+	}
+	else
+	{
+	    cycles = 4;
+	}
     }
+
+    cycles += effective_address_cycles<Size>(source_mode);
 
     return cycles;
 }
 
-template<int Size>
+template<int Size, bool is_rev = false>
 auto m68k_or(uint16_t instr) -> int
 {
+    constexpr uint16_t addr_mode_mask = is_rev ? MemAltAddr : DataAddr;
     int dstreg = getdstreg(instr);
     int srcmode = getsrcmode(instr);
     int srcreg = getsrcreg(instr);
-    uint32_t res_val = addrmodedata<Size>(srcmode, srcreg);
+
+    uint32_t res_val = srcaddrmode<Size, addr_mode_mask>(srcmode, srcreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
     uint32_t reg_val = getDataReg<Size>(dstreg);
 
     uint32_t result = (reg_val | res_val);
@@ -541,29 +775,48 @@ auto m68k_or(uint16_t instr) -> int
     setcarry(false);
     setoverflow(false);
 
-    setDataReg<Size>(dstreg, result);
+    if (is_rev)
+    {
+	dstaddrmode<Size, addr_mode_mask>(srcmode, srcreg, result);
+
+	if (is_m68k_exception())
+	{
+	    return -1;
+	}
+    }
+    else
+    {
+	setDataReg<Size>(dstreg, result);
+    }
 
     int cycles = 0;
 
     int source_mode = calc_mode(srcmode, srcreg);
 
-    if (Size == Long)
+    if (is_rev)
     {
-	if (((instr & 0x30) == 0) || ((instr & 0x3F) == 0x3C))
-	{
-	    cycles = 8;
-	}
-	else
-	{
-	    cycles = 6;
-	}
-
-	cycles += effective_address_l_cycles[source_mode];
+	cycles = (Size == Long) ? 12 : 8;
     }
     else
     {
-	cycles = (4 + effective_address_bw_cycles[source_mode]);
+	if (Size == Long)
+	{
+	    if ((source_mode == 0) || (source_mode == 11))
+	    {
+		cycles = 8;
+	    }
+	    else
+	    {
+		cycles = 6;
+	    }
+	}
+	else
+	{
+	    cycles = 4;
+	}
     }
+
+    cycles += effective_address_cycles<Size>(source_mode);
 
     return cycles;
 }
@@ -574,7 +827,12 @@ auto m68k_not(uint16_t instr) -> int
     int dstmode = getsrcmode(instr);
     int dstreg = getsrcreg(instr);
 
-    uint32_t reg_val = addrmodedataload<Size>(dstmode, dstreg);
+    uint32_t reg_val = srcaddrmode<Size, DataAltAddr>(dstmode, dstreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
 
     uint32_t result = clip<Size>(~reg_val);
 
@@ -583,7 +841,12 @@ auto m68k_not(uint16_t instr) -> int
     setcarry(false);
     setoverflow(false);
 
-    addrmodedatastore<Size>(dstmode, dstreg, result);
+    dstaddrmode<Size, DataAltAddr>(dstmode, dstreg, result);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
 
     int cycles = 0;
 
@@ -592,12 +855,96 @@ auto m68k_not(uint16_t instr) -> int
     if (Size == Long)
     {
 	cycles = (dest_mode == 0) ? 6 : 12;
-	cycles += effective_address_l_cycles[dest_mode];
     }
     else
     {
 	cycles = (dest_mode == 0) ? 4 : 8;
-	cycles += (effective_address_bw_cycles[dest_mode]);
+    }
+
+    cycles += effective_address_cycles<Size>(dest_mode);
+    return cycles;
+}
+
+template<int Size>
+auto m68k_addi(uint16_t instr) -> int
+{
+    int dstmode = getsrcmode(instr);
+    int dstreg = getsrcreg(instr);
+    auto imm_val = extension<Size>(m68kreg.pc);
+
+    uint32_t reg_val = srcaddrmode<Size, DataAltAddr>(dstmode, dstreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    uint32_t result = add_internal<Size>(reg_val, imm_val);
+
+    dstaddrmode<Size, DataAltAddr>(dstmode, dstreg, result);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    int dest_mode = calc_mode(dstmode, dstreg);
+
+    int cycles = 0;
+
+    if (dstmode == 0)
+    {
+	cycles = (Size == Long) ? 16 : 8;
+    }
+    else
+    {
+	cycles = (Size == Long) ? 20 : 12;
+	cycles += effective_address_cycles<Size>(dest_mode);
+    }
+
+    return cycles;
+}
+
+template<int Size>
+auto m68k_andi(uint16_t instr) -> int
+{
+    int dstmode = getsrcmode(instr);
+    int dstreg = getsrcreg(instr);
+    auto imm_val = extension<Size>(m68kreg.pc);
+
+    uint32_t reg_val = srcaddrmode<Size, DataAltAddr>(dstmode, dstreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    uint32_t result = (reg_val & imm_val);
+
+    setzero(getZero<Size>(result));
+    setsign(getSign<Size>(result));
+    setcarry(false);
+    setoverflow(false);
+
+    dstaddrmode<Size, DataAltAddr>(dstmode, dstreg, result);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    int dest_mode = calc_mode(dstmode, dstreg);
+
+    int cycles = 0;
+
+    if (dstmode == 0)
+    {
+	cycles = (Size == Long) ? 16 : 8;
+    }
+    else
+    {
+	cycles = (Size == Long) ? 20 : 12;
+	cycles += effective_address_cycles<Size>(dest_mode);
     }
 
     return cycles;
@@ -610,7 +957,12 @@ auto m68k_ori(uint16_t instr) -> int
     int dstreg = getsrcreg(instr);
     auto imm_val = extension<Size>(m68kreg.pc);
 
-    uint32_t reg_val = addrmodedataload<Size>(dstmode, dstreg);
+    uint32_t reg_val = srcaddrmode<Size, DataAltAddr>(dstmode, dstreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
 
     uint32_t result = (reg_val | imm_val);
 
@@ -619,7 +971,12 @@ auto m68k_ori(uint16_t instr) -> int
     setcarry(false);
     setoverflow(false);
 
-    addrmodedatastore<Size>(dstmode, dstreg, result);
+    dstaddrmode<Size, DataAltAddr>(dstmode, dstreg, result);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
 
     int dest_mode = calc_mode(dstmode, dstreg);
 
@@ -632,15 +989,7 @@ auto m68k_ori(uint16_t instr) -> int
     else
     {
 	cycles = (Size == Long) ? 20 : 12;
-
-	if (Size == Long)
-	{
-	    cycles += effective_address_l_cycles[dest_mode];
-	}
-	else
-	{
-	    cycles += effective_address_bw_cycles[dest_mode];
-	}
+	cycles += effective_address_cycles<Size>(dest_mode);
     }
 
     return cycles;
@@ -653,7 +1002,12 @@ auto m68k_eori(uint16_t instr) -> int
     int dstreg = getsrcreg(instr);
     auto imm_val = extension<Size>(m68kreg.pc);
 
-    uint32_t reg_val = addrmodedataload<Size>(dstmode, dstreg);
+    uint32_t reg_val = srcaddrmode<Size, DataAltAddr>(dstmode, dstreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
 
     uint32_t result = (reg_val ^ imm_val);
 
@@ -662,7 +1016,12 @@ auto m68k_eori(uint16_t instr) -> int
     setcarry(false);
     setoverflow(false);
 
-    addrmodedatastore<Size>(dstmode, dstreg, result);
+    dstaddrmode<Size, DataAltAddr>(dstmode, dstreg, result);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
 
     int dest_mode = calc_mode(dstmode, dstreg);
 
@@ -675,15 +1034,7 @@ auto m68k_eori(uint16_t instr) -> int
     else
     {
 	cycles = (Size == Long) ? 20 : 12;
-
-	if (Size == Long)
-	{
-	    cycles += effective_address_l_cycles[dest_mode];
-	}
-	else
-	{
-	    cycles += effective_address_bw_cycles[dest_mode];
-	}
+	cycles += effective_address_cycles<Size>(dest_mode);
     }
 
     return cycles;
@@ -735,29 +1086,27 @@ auto m68k_clear(uint16_t instr) -> int
     setoverflow(false);
 
     // ...and clear the appropriate portion of the destination operand to zero
-    addrmodedatastore<Size>(dstmode, dstreg, 0);
+    dstaddrmode<Size, DataAltAddr>(dstmode, dstreg, 0);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
 
     int cycles = 0;
 
     int dest_mode = calc_mode(dstmode, dstreg);
 
-    if (instr & 0x0030)
+    if (Size == Long)
     {
-	cycles = (Size == Long) ? 12 : 8;
-
-	if (Size == Long)
-	{
-	    cycles += effective_address_l_cycles[dest_mode];
-	}
-	else
-	{
-	    cycles += effective_address_bw_cycles[dest_mode];
-	}
+	cycles = (dest_mode == 0) ? 6 : 12;
     }
     else
     {
-	cycles = (Size == Long) ? 6 : 4;
+	cycles = (dest_mode == 0) ? 4 : 8;
     }
+
+    cycles += effective_address_cycles<Size>(dest_mode);
 
     return cycles;
 }
@@ -769,15 +1118,40 @@ auto m68k_bchg(uint16_t instr) -> int
     int dstreg = getdstreg(instr);
     int bit_num = getDataReg<Long>(dstreg);
     bit_num &= (srcmode == 0) ? 31 : 7; // Mask to 32-bits for EA mode 0, and 8-bits for the others
-    uint32_t data_addr = addrmodedataload<Byte, true>(srcmode, srcreg);
+
+    uint32_t data_addr = srcaddrmode<Byte, DataAddr, true>(srcmode, srcreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
     setzero(!testbit(data_addr, bit_num));
 
     // Invert the selected bit of the destination operand
     data_addr = togglebit(data_addr, bit_num);
-    addrmodedatastore<Byte, true>(srcmode, srcreg, data_addr);
 
-    // TODO: Cycle timings
-    return 0;
+    dstaddrmode<Byte, DataAddr, true>(srcmode, srcreg, data_addr);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    int cycles = 0;
+
+    int source_mode = calc_mode(srcmode, srcreg);
+
+    if (source_mode == 0)
+    {
+	cycles = (bit_num < 16) ? 6 : 8;
+    }
+    else
+    {
+	cycles = (8 + effective_address_bw_cycles[source_mode]);
+    }
+
+    return cycles;
 }
 
 auto m68k_bclr(uint16_t instr) -> int
@@ -787,13 +1161,38 @@ auto m68k_bclr(uint16_t instr) -> int
     int dstreg = getdstreg(instr);
     int bit_num = getDataReg<Long>(dstreg);
     bit_num &= (srcmode == 0) ? 31 : 7; // Mask to 32-bits for EA mode 0, and 8-bits for the others
-    uint32_t data_addr = addrmodedataload<Byte, true>(srcmode, srcreg);
+
+    uint32_t data_addr = srcaddrmode<Byte, DataAddr, true>(srcmode, srcreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
     setzero(!testbit(data_addr, bit_num));
     data_addr = resetbit(data_addr, bit_num);
-    addrmodedatastore<Byte, true>(srcmode, srcreg, data_addr);
 
-    // TODO: Cycle timings
-    return 0;
+    dstaddrmode<Byte, DataAddr, true>(srcmode, srcreg, data_addr);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    int cycles = 0;
+
+    int source_mode = calc_mode(srcmode, srcreg);
+
+    if (source_mode == 0)
+    {
+	cycles = (bit_num < 16) ? 8 : 10;
+    }
+    else
+    {
+	cycles = (8 + effective_address_bw_cycles[source_mode]);
+    }
+
+    return cycles;
 }
 
 auto m68k_bset(uint16_t instr) -> int
@@ -803,37 +1202,75 @@ auto m68k_bset(uint16_t instr) -> int
     int dstreg = getdstreg(instr);
     int bit_num = getDataReg<Long>(dstreg);
     bit_num &= (srcmode == 0) ? 31 : 7; // Mask to 32-bits for EA mode 0, and 8-bits for the others
-    uint32_t data_addr = addrmodedataload<Byte, true>(srcmode, srcreg);
+
+    uint32_t data_addr = srcaddrmode<Byte, DataAddr, true>(srcmode, srcreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
     setzero(!testbit(data_addr, bit_num));
     data_addr = setbit(data_addr, bit_num);
-    addrmodedatastore<Byte, true>(srcmode, srcreg, data_addr);
 
-    // TODO: Cycle timings
-    return 0;
+    dstaddrmode<Byte, DataAddr, true>(srcmode, srcreg, data_addr);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    int cycles = 0;
+
+    int source_mode = calc_mode(srcmode, srcreg);
+
+    if (source_mode == 0)
+    {
+	cycles = (bit_num < 16) ? 6 : 8;
+    }
+    else
+    {
+	cycles = (8 + effective_address_bw_cycles[source_mode]);
+    }
+
+    return cycles;
 }
 
 auto m68k_bclrimm(uint16_t instr) -> int
 {
-    int dstmode = getsrcmode(instr);
-    int dstreg = getsrcreg(instr);
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
     int bit_num = extension<Byte>(m68kreg.pc);
-    uint32_t data_addr = addrmodedataload<Byte, true>(dstmode, dstreg);
-    bit_num &= (dstmode == 0) ? 31 : 7; // Mask to 32-bits for EA mode 0, and to 8-bits for the others
+    bit_num &= (srcmode == 0) ? 31 : 7; // Mask to 32-bits for EA mode 0, and 8-bits for the others
+
+    uint32_t data_addr = srcaddrmode<Byte, DataAddr, true>(srcmode, srcreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
     setzero(!testbit(data_addr, bit_num));
     data_addr = resetbit(data_addr, bit_num);
-    addrmodedatastore<Byte, true>(dstmode, dstreg, data_addr);
+
+    dstaddrmode<Byte, DataAddr, true>(srcmode, srcreg, data_addr);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
 
     int cycles = 0;
 
-    int dest_mode = calc_mode(dstmode, dstreg);
+    int source_mode = calc_mode(srcmode, srcreg);
 
-    if (dstmode == 0)
+    if (source_mode == 0)
     {
 	cycles = (bit_num < 16) ? 12 : 14;
     }
     else
     {
-	cycles = (12 + effective_address_bw_cycles[dest_mode]);
+	cycles = (12 + effective_address_bw_cycles[source_mode]);
     }
 
     return cycles;
@@ -841,26 +1278,39 @@ auto m68k_bclrimm(uint16_t instr) -> int
 
 auto m68k_bsetimm(uint16_t instr) -> int
 {
-    int dstmode = getsrcmode(instr);
-    int dstreg = getsrcreg(instr);
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
     int bit_num = extension<Byte>(m68kreg.pc);
-    uint32_t data_addr = addrmodedataload<Byte, true>(dstmode, dstreg);
-    bit_num &= (dstmode == 0) ? 31 : 7; // Mask to 32-bits for EA mode 0, and 8-bits for the others
+    bit_num &= (srcmode == 0) ? 31 : 7; // Mask to 32-bits for EA mode 0, and 8-bits for the others
+
+    uint32_t data_addr = srcaddrmode<Byte, DataAddr, true>(srcmode, srcreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
     setzero(!testbit(data_addr, bit_num));
     data_addr = setbit(data_addr, bit_num);
-    addrmodedatastore<Byte, true>(dstmode, dstreg, data_addr);
+
+    dstaddrmode<Byte, DataAddr, true>(srcmode, srcreg, data_addr);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
 
     int cycles = 0;
 
-    int dest_mode = calc_mode(dstmode, dstreg);
+    int source_mode = calc_mode(srcmode, srcreg);
 
-    if (dstmode == 0)
+    if (source_mode == 0)
     {
 	cycles = (bit_num < 16) ? 10 : 12;
     }
     else
     {
-	cycles = (12 + effective_address_bw_cycles[dest_mode]);
+	cycles = (12 + effective_address_bw_cycles[source_mode]);
     }
 
     return cycles;
@@ -868,28 +1318,41 @@ auto m68k_bsetimm(uint16_t instr) -> int
 
 auto m68k_bchgimm(uint16_t instr) -> int
 {
-    int dstmode = getsrcmode(instr);
-    int dstreg = getsrcreg(instr);
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
     int bit_num = extension<Byte>(m68kreg.pc);
-    uint32_t data_addr = addrmodedataload<Byte, true>(dstmode, dstreg);
-    bit_num &= (dstmode == 0) ? 31 : 7; // Mask to 32-bits for EA mode 0, and 8-bits for the others
+    bit_num &= (srcmode == 0) ? 31 : 7; // Mask to 32-bits for EA mode 0, and 8-bits for the others
+
+    uint32_t data_addr = srcaddrmode<Byte, DataAddr, true>(srcmode, srcreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
     setzero(!testbit(data_addr, bit_num));
 
     // Invert the selected bit of the destination operand
     data_addr = togglebit(data_addr, bit_num);
-    addrmodedatastore<Byte, true>(dstmode, dstreg, data_addr);
+
+    dstaddrmode<Byte, DataAddr, true>(srcmode, srcreg, data_addr);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
 
     int cycles = 0;
 
-    int dest_mode = calc_mode(dstmode, dstreg);
+    int source_mode = calc_mode(srcmode, srcreg);
 
-    if (dstmode == 0)
+    if (source_mode == 0)
     {
 	cycles = (bit_num < 16) ? 10 : 12;
     }
     else
     {
-	cycles = (12 + effective_address_bw_cycles[dest_mode]);
+	cycles = (12 + effective_address_bw_cycles[source_mode]);
     }
 
     return cycles;
@@ -901,7 +1364,13 @@ auto m68k_mulu(uint16_t instr) -> int
     int srcmode = getsrcmode(instr);
     int srcreg = getsrcreg(instr);
 
-    uint32_t data_addr = addrmodedata<Word>(srcmode, srcreg);
+    uint32_t data_addr = srcaddrmode<Word, DataAddr>(srcmode, srcreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
     uint32_t dstreg_addr = getDataReg<Word>(dstreg);
     uint32_t result = (dstreg_addr * data_addr);
     
@@ -923,7 +1392,7 @@ auto m68k_mulu(uint16_t instr) -> int
     int cycles = (38 + (2 * count));
     cycles += effective_address_bw_cycles[source_mode];
     return cycles;
-};
+}
 
 auto m68k_trap(uint16_t instr) -> int
 {

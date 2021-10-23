@@ -1,121 +1,196 @@
-template<int Size>
+template<int Size, uint16_t mask = AllAddr>
 auto srcmodedasm(int mode, int reg, uint32_t &pc) -> string
 {
     mode &= 7;
     reg &= 7;
 
-    if ((Size == Byte) && (mode == 1))
-    {
-	return "und";
-    }
-
     stringstream ss;
+
+    bool is_inst_legal = false;
+
     switch (mode)
     {
-	case 0: ss << "d" << dec << (int)(reg); break;
-	case 2: ss << "(a" << dec << (int)(reg) << ")"; break;
+	case 0:
+	{
+	    if (testbit(mask, 0))
+	    {
+		ss << "d" << dec << reg;
+		is_inst_legal = true;
+	    }
+	}
+	break;
+	case 1:
+	{
+	    if (testbit(mask, 1) && (Size != Byte))
+	    {
+		ss << "a" << dec << reg;
+		is_inst_legal = true;
+	    }
+	}
+	break;
+	case 2:
+	{
+	    if (testbit(mask, 2))
+	    {
+		ss << "(a" << dec << reg << ")";
+		is_inst_legal = true;
+	    }
+	}
+	break;
 	case 7:
 	{
 	    switch (reg)
 	    {
 		case 0:
 		{
-		    // Fetch extension word
-		    uint16_t temp = extension<Word>(pc);
-
-		    // Sign-extended word to 32-bits
-		    uint32_t addr = clip<Long>(sign<Word>(temp));
-
-		    ss << "$" << setfill('0') << setw(8) << hex << (int)(addr);
+		    if (testbit(mask, 7))
+		    {
+			uint16_t ext_word = extension<Word>(pc);
+			uint32_t addr = clip<Long>(sign<Word>(ext_word));
+			ss << "$" << hex << int(addr);
+			is_inst_legal = true;
+		    }
 		}
 		break;
-		case 4: ss << "#$" << setfill('0') << setw((Size << 1)) << hex << (int)(extension<Size>(pc)); break;
-		default: ss << "m7und"; break;
+		case 1:
+		{
+		    if (testbit(mask, 8))
+		    {
+			uint32_t addr = extension<Long>(pc);
+			ss << "$" << hex << int(addr);
+			is_inst_legal = true;
+		    }
+		}
+		break;
+		case 4:
+		{
+		    if (testbit(mask, 11))
+		    {
+			uint32_t imm_val = extension<Size>(pc);
+			ss << "#$" << hex << int(imm_val);
+			is_inst_legal = true;
+		    }
+		}
+		break;
+		default: break;
 	    }
 	}
 	break;
-	default: ss << "und"; break;
+	default: break;
     }
 
-    return ss.str();
+    if (is_inst_legal)
+    {
+	return ss.str();
+    }
+    else
+    {
+	ss << "und ";
+
+	if (mode == 7)
+	{
+	    ss << "m7, r" << dec << reg;
+	}
+	else
+	{
+	    ss << "m" << dec << mode;
+	}
+
+	return ss.str();
+    }
 }
 
-template<int Size>
+template<int Size, uint16_t mask = AllAddr>
 auto dstmodedasm(int mode, int reg, uint32_t &pc) -> string
 {
     mode &= 7;
     reg &= 7;
 
-    if ((Size == Byte) && (mode == 1))
-    {
-	return "und";
-    }
-
     stringstream ss;
+
+    bool is_inst_legal = false;
+
     switch (mode)
     {
-	case 0: ss << "d" << reg; break;
-	case 1: ss << "a" << reg; break;
-	case 2: ss << "(a" << reg << ")"; break;
+	case 0:
+	{
+	    if (testbit(mask, 0))
+	    {
+		ss << "d" << dec << reg;
+		is_inst_legal = true;
+	    }
+	}
+	break;
+	case 1:
+	{
+	    if (testbit(mask, 1) && (Size != Byte))
+	    {
+		ss << "a" << dec << reg;
+		is_inst_legal = true;
+	    }
+	}
+	break;
+	case 2:
+	{
+	    if (testbit(mask, 2))
+	    {
+		ss << "(a" << dec << reg << ")";
+		is_inst_legal = true;
+	    }
+	}
+	break;
 	case 7:
 	{
 	    switch (reg)
 	    {
 		case 0:
 		{
-		    // Fetch extension word
-		    uint16_t temp = extension<Word>(pc);
-
-		    // Sign-extended word to 32-bits
-		    uint32_t addr = clip<Long>(sign<Word>(temp));
-
-		    ss << "$" << setfill('0') << setw(8) << hex << addr;
+		    if (testbit(mask, 7))
+		    {
+			uint16_t ext_word = extension<Word>(pc);
+			uint32_t addr = clip<Long>(sign<Word>(ext_word));
+			ss << "$" << hex << int(addr);
+			is_inst_legal = true;
+		    }
 		}
 		break;
-		default: ss << "m7und"; break;
+		case 1:
+		{
+		    if (testbit(mask, 8))
+		    {
+			uint32_t addr = extension<Long>(pc);
+			ss << "$" << hex << int(addr);
+			is_inst_legal = true;
+		    }
+		}
+		break;
+		default: break;
 	    }
 	}
 	break;
-	default: ss << "und"; break;
+	default: break;
     }
 
-    return ss.str();
+    if (is_inst_legal)
+    {
+	return ss.str();
+    }
+    else
+    {
+	ss << "und ";
+
+	if (mode == 7)
+	{
+	    ss << "m7, r" << dec << reg;
+	}
+	else
+	{
+	    ss << "m" << dec << mode;
+	}
+
+	return ss.str();
+    }
 }
-
-template<int Size, bool is_bit_instr = false>
-auto addrmodedatadasm(int mode, int reg, uint32_t &pc) -> string
-{
-    mode &= 7;
-    reg &= 7;
-
-    stringstream ss;
-    switch (mode)
-    {
-	case 0: ss << "d" << reg; break;
-	case 7:
-	{
-	    switch (reg)
-	    {
-		case 0:
-		{
-		    // Fetch extension word
-		    uint16_t temp = extension<Word>(pc);
-
-		    // Sign-extended word to 32-bits
-		    uint32_t addr = clip<Long>(sign<Word>(temp));
-
-		    ss << "$" << setfill('0') << setw(8) << hex << addr;
-		}
-		break;
-		default: ss << "m7und" << reg; break;
-	    }
-	}
-	break;
-	default: ss << "und" << mode; break;
-    }
-
-    return ss.str();
-};
 
 auto m68kdis_unknown(uint32_t pc, uint16_t instr) -> string
 {
@@ -150,6 +225,13 @@ auto m68kdis_move(uint32_t pc, uint16_t instr) -> string
     return ss.str();
 }
 
+auto m68kdis_moveq(uint32_t pc, uint16_t instr) -> string
+{
+    stringstream ss;
+    ss << "moveq #$" << hex << int(instr & 0xFF) << ", d" << getdstreg(instr);
+    return ss.str();
+}
+
 template<int Size>
 auto m68kdis_add(uint32_t pc, uint16_t instr) -> string
 {
@@ -174,6 +256,12 @@ template<int Size>
 auto m68kdis_addr(uint32_t pc, uint16_t instr) -> string
 {
     return "addr";
+}
+
+template<int Size>
+auto m68kdis_addq(uint32_t pc, uint16_t instr) -> string
+{
+    return "addq";
 }
 
 template<int Size>
@@ -214,6 +302,29 @@ auto m68kdis_lea(uint32_t pc, uint16_t instr) -> string
     return "lea";
 }
 
+auto m68kdis_jsr(uint32_t pc, uint16_t instr) -> string
+{
+    stringstream ss;
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+    ss << "jsr " << dstmodedasm<Long, ControlAddr>(srcmode, srcreg, pc);
+    return ss.str();
+}
+
+auto m68kdis_jmp(uint32_t pc, uint16_t instr) -> string
+{
+    stringstream ss;
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+    ss << "jmp " << dstmodedasm<Long, ControlAddr>(srcmode, srcreg, pc);
+    return ss.str();
+}
+
+auto m68kdis_rts(uint32_t pc, uint16_t instr) -> string
+{
+    return "rts";
+}
+
 template<int Size>
 auto m68kdis_and(uint32_t pc, uint16_t instr) -> string
 {
@@ -227,9 +338,6 @@ auto m68kdis_and(uint32_t pc, uint16_t instr) -> string
 	case Long: ss << ".l"; break;
 	default: ss << ".u"; break;
     }
-
-    ss << " " << addrmodedatadasm<Size>(getsrcmode(instr), getsrcreg(instr), pc);
-    ss << ", d" << getdstreg(instr);
 
     return ss.str();
 }
@@ -247,9 +355,6 @@ auto m68kdis_or(uint32_t pc, uint16_t instr) -> string
 	case Long: ss << ".l"; break;
 	default: ss << ".u"; break;
     }
-
-    ss << " " << addrmodedatadasm<Size>(getsrcmode(instr), getsrcreg(instr), pc);
-    ss << ", d" << getdstreg(instr);
 
     return ss.str();
 }
@@ -270,10 +375,57 @@ auto m68kdis_not(uint32_t pc, uint16_t instr) -> string
 	default: ss << ".u"; break;
     }
 
-    ss << " " << addrmodedatadasm<Size>(dstmode, dstreg, pc);
+    ss << " " << dstmodedasm<Size, DataAltAddr>(dstmode, dstreg, pc);
 
     return ss.str();
 };
+
+template<int Size>
+auto m68kdis_addi(uint32_t pc, uint16_t instr) -> string
+{
+    int dstmode = getsrcmode(instr);
+    int dstreg = getsrcreg(instr);
+    auto imm_val = extension<Size>(pc);
+
+    stringstream ss;
+    ss << "addi";
+
+    switch (Size)
+    {
+	case Byte: ss << ".b"; break;
+	case Word: ss << ".w"; break;
+	case Long: ss << ".l"; break;
+	default: ss << ".u"; break;
+    }
+
+    ss << " #$" << hex << int(imm_val) << ", " << dstmodedasm<Size, DataAltAddr>(dstmode, dstreg, pc);
+
+    return ss.str();
+}
+
+
+template<int Size>
+auto m68kdis_andi(uint32_t pc, uint16_t instr) -> string
+{
+    int dstmode = getsrcmode(instr);
+    int dstreg = getsrcreg(instr);
+    auto imm_val = extension<Size>(pc);
+
+    stringstream ss;
+    ss << "andi";
+
+    switch (Size)
+    {
+	case Byte: ss << ".b"; break;
+	case Word: ss << ".w"; break;
+	case Long: ss << ".l"; break;
+	default: ss << ".u"; break;
+    }
+
+    ss << " #$" << hex << int(imm_val) << ", " << dstmodedasm<Size, DataAltAddr>(dstmode, dstreg, pc);
+
+    return ss.str();
+}
 
 template<int Size>
 auto m68kdis_ori(uint32_t pc, uint16_t instr) -> string
@@ -293,7 +445,7 @@ auto m68kdis_ori(uint32_t pc, uint16_t instr) -> string
 	default: ss << ".u"; break;
     }
 
-    ss << " #" << hex << int(imm_val) << ", " << addrmodedatadasm<Size>(dstmode, dstreg, pc);
+    ss << " #$" << hex << int(imm_val) << ", " << dstmodedasm<Size, DataAltAddr>(dstmode, dstreg, pc);
 
     return ss.str();
 }
@@ -316,7 +468,7 @@ auto m68kdis_eori(uint32_t pc, uint16_t instr) -> string
 	default: ss << ".u"; break;
     }
 
-    ss << " #" << hex << int(imm_val) << ", " << addrmodedatadasm<Size>(dstmode, dstreg, pc);
+    ss << " #$" << hex << int(imm_val) << ", " << dstmodedasm<Size, DataAltAddr>(dstmode, dstreg, pc);
 
     return ss.str();
 }
@@ -342,7 +494,7 @@ auto m68kdis_clear(uint32_t pc, uint16_t instr) -> string
 	default: ss << ".u"; break;
     }
 
-    ss << " " << dstmodedasm<Size>(getsrcmode(instr), getsrcreg(instr), pc);
+    ss << " " << dstmodedasm<Size, DataAltAddr>(getsrcmode(instr), getsrcreg(instr), pc);
     return ss.str();
 }
 
@@ -372,7 +524,7 @@ auto m68kdis_bchgimm(uint32_t pc, uint16_t instr) -> string
 
     ss << ((dstmode == 0) ? ".l" : ".b");
     ss << " #" << bit_num;
-    ss << ", " << addrmodedatadasm<Byte, true>(dstmode, dstreg, pc);
+    ss << ", " << dstmodedasm<Byte, DataAddr>(dstmode, dstreg, pc);
 
     return ss.str();
 }
@@ -388,7 +540,7 @@ auto m68kdis_bsetimm(uint32_t pc, uint16_t instr) -> string
 
     ss << ((dstmode == 0) ? ".l" : ".b");
     ss << " #" << bit_num;
-    ss << ", " << addrmodedatadasm<Byte, true>(dstmode, dstreg, pc);
+    ss << ", " << dstmodedasm<Byte, DataAddr>(dstmode, dstreg, pc);
 
     return ss.str();
 }
@@ -404,7 +556,7 @@ auto m68kdis_bclrimm(uint32_t pc, uint16_t instr) -> string
 
     ss << ((dstmode == 0) ? ".l" : ".b");
     ss << " #" << bit_num;
-    ss << ", " << addrmodedatadasm<Byte, true>(dstmode, dstreg, pc);
+    ss << ", " << dstmodedasm<Byte, DataAddr>(dstmode, dstreg, pc);
 
     return ss.str();
 }
@@ -419,7 +571,7 @@ auto m68kdis_mulu(uint32_t pc, uint16_t instr) -> string
 auto m68kdis_trap(uint32_t pc, uint16_t instr) -> string
 {
     stringstream ss;
-    ss << "trap #" << dec << (int)(instr & 0xF);
+    ss << "trap #" << dec << int(instr & 0xF);
     return ss.str();
 }
 
@@ -428,6 +580,6 @@ auto m68kdis_stop(uint32_t pc, uint16_t instr) -> string
     uint16_t temp = extension<Word>(pc);
     stringstream ss;
     
-    ss << "stop #$" << hex << (int)(temp);
+    ss << "stop #$" << hex << int(temp);
     return ss.str();
 }

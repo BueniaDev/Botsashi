@@ -22,10 +22,6 @@ namespace botsashi
 {
     enum : int { Byte, Word, Long };
 
-    #include "utils.cpp"
-    #include "traits.cpp"
-    #include "memreg.cpp"
-
     BotsashiInterface::BotsashiInterface()
     {
 
@@ -45,6 +41,9 @@ namespace botsashi
     {
 
     }
+
+    #include "utils.cpp"
+    #include "memreg.cpp"
 
     void Botsashi::init(uint32_t init_pc)
     {
@@ -116,7 +115,16 @@ namespace botsashi
     {
 	uint16_t currentinstr = read<Word>(m68kreg.pc);
 	m68kreg.pc += 2;
-	return executeinstr(currentinstr);
+
+	int cycles = executeinstr(currentinstr);
+
+	if (cycles < 0)
+	{
+	    cout << "Exception occuring..." << endl;
+	    exit(1);
+	}
+
+	return cycles;
     }
 
     int Botsashi::executeinstr(uint16_t instr)

@@ -16,10 +16,16 @@
     along with Botsashi.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-auto Botsashi::interRead(bool upper, bool lower, uint32_t addr) -> uint16_t
+auto Botsashi::clipAddr(uint32_t addr) -> uint32_t
 {
     // Clip address to 24-bits, as on the real 68000
-    addr &= 0xFFFFFF;
+    // NOTE: This applies to the 68000 and 68010
+    return (addr & 0xFFFFFF);
+}
+
+auto Botsashi::interRead(bool upper, bool lower, uint32_t addr) -> uint16_t
+{
+    addr = clipAddr(addr);
     if (inter)
     {
 	return inter->readWord(upper, lower, addr);
@@ -30,8 +36,7 @@ auto Botsashi::interRead(bool upper, bool lower, uint32_t addr) -> uint16_t
 
 auto Botsashi::interWrite(bool upper, bool lower, uint32_t addr, uint16_t val) -> void
 {
-    // Clip address to 24-bits, as on the real 68000
-    addr &= 0xFFFFFF;
+    addr = clipAddr(addr);
     if (inter)
     {
 	return inter->writeWord(upper, lower, addr, val);
