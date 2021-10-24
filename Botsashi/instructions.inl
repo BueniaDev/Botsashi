@@ -67,6 +67,32 @@ auto calc_mode(int mode, int reg) -> int
     return mode_calc;
 }
 
+auto getcond(int cond_val) -> bool
+{
+    cond_val &= 0xF;
+
+    switch (cond_val)
+    {
+	case 0: return true; break; // True (T)
+	case 1: return false; break; // False (F)
+	case 2: return (!iscarry() && !iszero()); break; // High (HI)
+	case 3: return (iscarry() || iszero()); break; // Low or Same (LS)
+	case 4: return !iscarry(); break; // Carry Clear (CC)
+	case 5: return iscarry(); break; // Carry Set (CS)
+	case 6: return !iszero(); break; // Not Equal (NE)
+	case 7: return iszero(); break; // Equal (EQ)
+	case 8: return !isoverflow(); break; // Overflow Clear (VC)
+	case 9: return isoverflow(); break; // Overflow Set (VS)
+	case 10: return !issign(); break; // Plus (PL)
+	case 11: return issign(); break; // Minus (MI)
+	case 12: return (issign() == isoverflow()); break; // Greater or Equal (GE)
+	case 13: return (issign() != isoverflow()); break; // Less Than (LT)
+	case 14: return (!iszero() && (issign() == isoverflow())); break; // Greater Than (GT)
+	case 15: return (!iszero() || (issign() != isoverflow())); break; // Less or Equal (LE)
+	default: return false; break;
+    }
+}
+
 template<int Size, bool is_extend_mode = false>
 auto add_internal(uint32_t source, uint32_t operand) -> uint32_t
 {
@@ -666,6 +692,44 @@ auto m68k_jsr(uint16_t instr) -> int
 	case 9: cycles = 18; break;
 	case 10: cycles = 22; break;
 	default: break;
+    }
+
+    return cycles;
+}
+
+auto m68k_bcc(uint16_t instr) -> int
+{
+    int cond = getopcond(instr);
+
+    uint8_t byte_dis = (instr & 0xFF);
+
+    int cycles = 0;
+
+    if (getcond(cond) == true)
+    {
+	uint32_t pc_val= m68kreg.pc;
+
+	if (byte_dis == 0)
+	{
+	    uint16_t word_dis = extension<Word>(m68kreg.pc);
+	    pc_val += int16_t(word_dis);
+	}
+	else
+	{
+	    pc_val += int8_t(byte_dis);
+	}
+
+	m68kreg.pc = pc_val;
+	cycles = 10;
+    }
+    else
+    {
+	if (byte_dis == 0)
+	{
+	    m68kreg.pc += 2;
+	}
+
+	cycles = (byte_dis == 0) ? 12 : 8;
     }
 
     return cycles;

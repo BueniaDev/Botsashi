@@ -192,6 +192,32 @@ auto dstmodedasm(int mode, int reg, uint32_t &pc) -> string
     }
 }
 
+auto getconddasm(int cond_val) -> string
+{
+    cond_val &= 0xF;
+
+    switch (cond_val)
+    {
+	case 0: return "t";
+	case 1: return "f"; break;
+	case 2: return "hi"; break;
+	case 3: return "ls"; break;
+	case 4: return "cc"; break;
+	case 5: return "cs"; break;
+	case 6: return "ne"; break;
+	case 7: return "eq"; break;
+	case 8: return "vc"; break;
+	case 9: return "vs"; break;
+	case 10: return "pl"; break;
+	case 11: return "mi"; break;
+	case 12: return "ge"; break;
+	case 13: return "lt"; break;
+	case 14: return "gt"; break;
+	case 15: return "le"; break;
+	default: return ""; break;
+    }
+}
+
 auto m68kdis_unknown(uint32_t pc, uint16_t instr) -> string
 {
     return "undefined";
@@ -317,6 +343,31 @@ auto m68kdis_jmp(uint32_t pc, uint16_t instr) -> string
     int srcmode = getsrcmode(instr);
     int srcreg = getsrcreg(instr);
     ss << "jmp " << dstmodedasm<Long, ControlAddr>(srcmode, srcreg, pc);
+    return ss.str();
+}
+
+auto m68kdis_bcc(uint32_t pc, uint16_t instr) -> string
+{
+    stringstream ss;
+    int cond_val = getopcond(instr);
+
+    string cond_str = getconddasm(cond_val);
+
+    uint8_t byte_dis = (instr & 0xFF);
+
+    uint32_t pc_val = pc;
+
+    if (byte_dis == 0)
+    {
+	uint16_t word_dis = extension<Word>(pc);
+	pc_val += int16_t(word_dis);
+    }
+    else
+    {
+	pc_val += int8_t(byte_dis);
+    }
+    
+    ss << "b" << cond_str << " $" << hex << pc_val;
     return ss.str();
 }
 

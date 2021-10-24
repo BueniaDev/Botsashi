@@ -165,6 +165,7 @@ namespace botsashi
 	    auto getsrcreg(uint16_t instr) -> int;
 	    auto getdstmode(uint16_t instr) -> int;
 	    auto getdstreg(uint16_t instr) -> int;
+	    auto getopcond(uint16_t instr) -> int;
 
 	    template<int Size> auto getZero(uint32_t temp, bool is_extend = false) -> bool;
 	    template<int Size> auto getSign(uint32_t temp) -> bool;

@@ -36,6 +36,11 @@ auto Botsashi::getdstreg(uint16_t instr) -> int
     return ((instr >> 9) & 0x7);
 }
 
+auto Botsashi::getopcond(uint16_t instr) -> int
+{
+    return ((instr >> 8) & 0xF);
+}
+
 bool Botsashi::iscarry()
 {
     return testbit(m68kreg.statusreg, 0);
