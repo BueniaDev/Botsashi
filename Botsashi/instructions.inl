@@ -697,6 +697,49 @@ auto m68k_jsr(uint16_t instr) -> int
     return cycles;
 }
 
+auto m68k_bra(uint16_t instr) -> int
+{
+    uint8_t byte_dis = (instr & 0xFF);
+    uint32_t pc_val = m68kreg.pc;
+
+    if (byte_dis == 0)
+    {
+	uint16_t word_dis = extension<Word>(m68kreg.pc);
+	pc_val += int16_t(word_dis);
+    }
+    else
+    {
+	pc_val += int8_t(byte_dis);
+    }
+
+    m68kreg.pc = pc_val;
+    return 18;
+};
+
+auto m68k_bsr(uint16_t instr) -> int
+{
+    uint32_t stack_pointer = getAddrReg<Long>(7);
+
+    uint8_t byte_dis = (instr & 0xFF);
+    uint32_t pc_val = m68kreg.pc;
+
+    if (byte_dis == 0)
+    {
+	uint16_t word_dis = extension<Word>(m68kreg.pc);
+	pc_val += int16_t(word_dis);
+    }
+    else
+    {
+	pc_val += int8_t(byte_dis);
+    }
+
+    stack_pointer -= 4;
+    write<Long>(stack_pointer, m68kreg.pc);
+    setAddrReg<Long>(7, stack_pointer);
+    m68kreg.pc = pc_val;
+    return 18;
+};
+
 auto m68k_bcc(uint16_t instr) -> int
 {
     int cond = getopcond(instr);
@@ -707,7 +750,7 @@ auto m68k_bcc(uint16_t instr) -> int
 
     if (getcond(cond) == true)
     {
-	uint32_t pc_val= m68kreg.pc;
+	uint32_t pc_val = m68kreg.pc;
 
 	if (byte_dis == 0)
 	{
@@ -730,6 +773,38 @@ auto m68k_bcc(uint16_t instr) -> int
 	}
 
 	cycles = (byte_dis == 0) ? 12 : 8;
+    }
+
+    return cycles;
+}
+
+auto m68k_dbcc(uint16_t instr) -> int
+{
+    int cycles = 0;
+    int cond = getopcond(instr);
+    int srcreg = getsrcreg(instr);
+    uint32_t pc_val = m68kreg.pc;
+    int16_t word_dis = extension<Word>(m68kreg.pc);
+
+    if (getcond(cond) == true)
+    {
+	cycles = 12;
+    }
+    else
+    {
+	uint32_t dreg_val = getDataReg<Word>(srcreg);
+	setDataReg<Word>(srcreg, (dreg_val - 1));
+
+	if (dreg_val > 0)
+	{
+	    pc_val += word_dis;
+	    m68kreg.pc = pc_val;
+	    cycles = 10;
+	}
+	else
+	{
+	    cycles = 14;
+	}
     }
 
     return cycles;

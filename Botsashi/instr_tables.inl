@@ -82,8 +82,8 @@ vector<m68kmapping> funcmappings =
     instruction(0xF1F8, 0xB188, unknown, unknown), // 4-81 (p185)
 
     instruction(0xF000, 0x6000, bcc, bcc), // 4-25 (p129) (Bcc)
-    instruction(0xFF00, 0x6100, unknown, unknown), // 4-59 (p163) (BSR)
-    instruction(0xFF00, 0x6000, unknown, unknown), // 4-55 (p159) (BRA)
+    instruction(0xFF00, 0x6100, bsr, bsr), // 4-59 (p163) (BSR)
+    instruction(0xFF00, 0x6000, bra, bra), // 4-55 (p159) (BRA)
 
     instruction(0xF1C0, 0x41C0, lea, lea), // 4-110 (p214)
     instruction(0xFFC0, 0x4840, unknown, unknown), // 4-159 (p263)
@@ -140,7 +140,7 @@ vector<m68kmapping> funcmappings =
     instruction(0xFFC0, 0x0880, bclrimm, bclrimm), // 4-32 (p136)
 
     instruction(0xF0C0, 0x50C0, unknown, unknown), // 4-173 (p276) (Scc)
-    instruction(0xF0F8, 0x50C8, unknown, unknown), // 4-91 (p195) (DBcc)
+    instruction(0xF0F8, 0x50C8, dbcc, dbcc), // 4-91 (p195) (DBcc)
 
     instruction(0xFFC0, 0x4200, clear<Byte>, clear<Byte>), // 4-73 (p177)
     instruction(0xFFC0, 0x4240, clear<Word>, clear<Word>), // 4-73 (p177)

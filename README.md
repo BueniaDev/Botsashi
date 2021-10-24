@@ -35,7 +35,7 @@ Core dependencies:
 
 * Compiler: GCC or Clang. You only need one of those two:
 
-    * GCC 7.5.0+ (earlier versions not tested):
+    * GCC 9.3.0+ (earlier versions not tested):
 
         * Debian: `sudo apt-get install build-essential`
 
@@ -45,7 +45,7 @@ Core dependencies:
 
         * OpenSUSE (not tested): `sudo zypper in gcc-c++`
 
-    * Clang:
+    * Clang 10.0.0+ (earlier version not tested):
 
         * Debian: `sudo apt-get install clang clang-format libc++-dev` (in some distros, clang-5.0)
 
@@ -55,7 +55,7 @@ Core dependencies:
 
         * OpenSUSE (not tested): `zypper in clang`
 
-* Git (if not installed already) and CMake 3.15+:
+* Git (if not installed already) and CMake 3.10+:
 
     * Debian: `sudo apt-get install git cmake`
 

@@ -346,6 +346,48 @@ auto m68kdis_jmp(uint32_t pc, uint16_t instr) -> string
     return ss.str();
 }
 
+auto m68kdis_bra(uint32_t pc, uint16_t instr) -> string
+{
+    stringstream ss;
+    uint8_t byte_dis = (instr & 0xFF);
+
+    uint32_t pc_val = pc;
+
+    if (byte_dis == 0)
+    {
+	uint16_t word_dis = extension<Word>(pc);
+	pc_val += int16_t(word_dis);
+    }
+    else
+    {
+	pc_val += int8_t(byte_dis);
+    }
+
+    ss << "bra " << hex << pc_val;
+    return ss.str();
+}
+
+auto m68kdis_bsr(uint32_t pc, uint16_t instr) -> string
+{
+    stringstream ss;
+    uint8_t byte_dis = (instr & 0xFF);
+
+    uint32_t pc_val = pc;
+
+    if (byte_dis == 0)
+    {
+	uint16_t word_dis = extension<Word>(pc);
+	pc_val += int16_t(word_dis);
+    }
+    else
+    {
+	pc_val += int8_t(byte_dis);
+    }
+
+    ss << "bsr " << hex << pc_val;
+    return ss.str();
+}
+
 auto m68kdis_bcc(uint32_t pc, uint16_t instr) -> string
 {
     stringstream ss;
@@ -368,6 +410,22 @@ auto m68kdis_bcc(uint32_t pc, uint16_t instr) -> string
     }
     
     ss << "b" << cond_str << " $" << hex << pc_val;
+    return ss.str();
+}
+
+auto m68kdis_dbcc(uint32_t pc, uint16_t instr) -> string
+{
+    stringstream ss;
+    int cond_val = getopcond(instr);
+
+    string cond_str = getconddasm(cond_val);
+    int srcreg = getsrcreg(instr);
+
+    uint32_t pc_val = pc;
+    int16_t word_dis = extension<Word>(pc);
+    pc_val += word_dis;
+
+    ss << "db" << cond_str << " d" << dec << srcreg << ", $" << hex << int(pc_val);
     return ss.str();
 }
 
