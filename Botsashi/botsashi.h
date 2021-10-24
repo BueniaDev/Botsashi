@@ -64,6 +64,12 @@ namespace botsashi
 
 	    enum : int
 	    {
+		BitInstr = (1 << 0),
+		Hold = (1 << 1),
+	    };
+
+	    enum : int
+	    {
 		BusError = 2,
 		AddrError = 3,
 		IllegalInst = 4,

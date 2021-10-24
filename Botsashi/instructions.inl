@@ -110,7 +110,7 @@ auto add_internal(uint32_t source, uint32_t operand) -> uint32_t
     return clip<Size>(result);
 }
 
-template<int Size, uint16_t mask = AllAddr, bool is_bit_instr = false>
+template<int Size, uint16_t mask = AllAddr, int Flags = 0>
 auto srcaddrmode(int mode, int reg) -> uint32_t
 {
     mode &= 7;
@@ -126,7 +126,7 @@ auto srcaddrmode(int mode, int reg) -> uint32_t
 	{
 	    if (testbit(mask, 0))
 	    {
-		if (is_bit_instr)
+		if (testbit(Flags, 0))
 		{
 		    temp = getDataReg<Long>(reg);
 		}
@@ -209,7 +209,7 @@ auto srcaddrmode(int mode, int reg) -> uint32_t
     return temp;
 }
 
-template<int Size, uint16_t mask = AllAddr, bool is_bit_instr = false>
+template<int Size, uint16_t mask = AllAddr, int Flags = 0>
 auto rawaddrmode(int mode, int reg) -> uint32_t
 {
     mode &= 7;
@@ -261,7 +261,7 @@ auto rawaddrmode(int mode, int reg) -> uint32_t
     return temp;
 }
 
-template<int Size, uint16_t mask = AllAddr, bool is_bit_instr = false>
+template<int Size, uint16_t mask = AllAddr, int Flags = 0>
 auto dstaddrmode(int mode, int reg, uint32_t val) -> void
 {
     mode &= 7;
@@ -275,7 +275,7 @@ auto dstaddrmode(int mode, int reg, uint32_t val) -> void
 	{
 	    if (testbit(mask, 0))
 	    {
-		if (is_bit_instr)
+		if (testbit(Flags, 0))
 		{
 		    setDataReg<Long>(reg, val);
 		}
@@ -303,6 +303,18 @@ auto dstaddrmode(int mode, int reg, uint32_t val) -> void
 	    {
 		write<Size>(getAddrReg<Long>(reg), val);
 		is_inst_legal = true;
+	    }
+	}
+	break;
+	case 3:
+	{
+	    if (testbit(mask, 3))
+	    {
+		uint32_t inc_bytes = ((reg == 7) && (Size == Byte)) ? bytes<Word>() : bytes<Size>();
+		cout << "Incrementing address by " << dec << inc_bytes << " bytes" << endl;
+		uint32_t addr_reg = getAddrReg<Long>(reg);
+		write<Size>(addr_reg, val);
+		setAddrReg<Long>(reg, (addr_reg + inc_bytes));
 	    }
 	}
 	break;
@@ -1258,7 +1270,7 @@ auto m68k_bchg(uint16_t instr) -> int
     int bit_num = getDataReg<Long>(dstreg);
     bit_num &= (srcmode == 0) ? 31 : 7; // Mask to 32-bits for EA mode 0, and 8-bits for the others
 
-    uint32_t data_addr = srcaddrmode<Byte, DataAddr, true>(srcmode, srcreg);
+    uint32_t data_addr = srcaddrmode<Byte, DataAddr, BitInstr>(srcmode, srcreg);
 
     if (is_m68k_exception())
     {
@@ -1270,7 +1282,7 @@ auto m68k_bchg(uint16_t instr) -> int
     // Invert the selected bit of the destination operand
     data_addr = togglebit(data_addr, bit_num);
 
-    dstaddrmode<Byte, DataAddr, true>(srcmode, srcreg, data_addr);
+    dstaddrmode<Byte, DataAddr, BitInstr>(srcmode, srcreg, data_addr);
 
     if (is_m68k_exception())
     {
@@ -1301,7 +1313,7 @@ auto m68k_bclr(uint16_t instr) -> int
     int bit_num = getDataReg<Long>(dstreg);
     bit_num &= (srcmode == 0) ? 31 : 7; // Mask to 32-bits for EA mode 0, and 8-bits for the others
 
-    uint32_t data_addr = srcaddrmode<Byte, DataAddr, true>(srcmode, srcreg);
+    uint32_t data_addr = srcaddrmode<Byte, DataAddr, BitInstr>(srcmode, srcreg);
 
     if (is_m68k_exception())
     {
@@ -1311,7 +1323,7 @@ auto m68k_bclr(uint16_t instr) -> int
     setzero(!testbit(data_addr, bit_num));
     data_addr = resetbit(data_addr, bit_num);
 
-    dstaddrmode<Byte, DataAddr, true>(srcmode, srcreg, data_addr);
+    dstaddrmode<Byte, DataAddr, BitInstr>(srcmode, srcreg, data_addr);
 
     if (is_m68k_exception())
     {
@@ -1342,7 +1354,7 @@ auto m68k_bset(uint16_t instr) -> int
     int bit_num = getDataReg<Long>(dstreg);
     bit_num &= (srcmode == 0) ? 31 : 7; // Mask to 32-bits for EA mode 0, and 8-bits for the others
 
-    uint32_t data_addr = srcaddrmode<Byte, DataAddr, true>(srcmode, srcreg);
+    uint32_t data_addr = srcaddrmode<Byte, DataAddr, BitInstr>(srcmode, srcreg);
 
     if (is_m68k_exception())
     {
@@ -1352,7 +1364,7 @@ auto m68k_bset(uint16_t instr) -> int
     setzero(!testbit(data_addr, bit_num));
     data_addr = setbit(data_addr, bit_num);
 
-    dstaddrmode<Byte, DataAddr, true>(srcmode, srcreg, data_addr);
+    dstaddrmode<Byte, DataAddr, BitInstr>(srcmode, srcreg, data_addr);
 
     if (is_m68k_exception())
     {
@@ -1382,7 +1394,7 @@ auto m68k_bclrimm(uint16_t instr) -> int
     int bit_num = extension<Byte>(m68kreg.pc);
     bit_num &= (srcmode == 0) ? 31 : 7; // Mask to 32-bits for EA mode 0, and 8-bits for the others
 
-    uint32_t data_addr = srcaddrmode<Byte, DataAddr, true>(srcmode, srcreg);
+    uint32_t data_addr = srcaddrmode<Byte, DataAddr, BitInstr>(srcmode, srcreg);
 
     if (is_m68k_exception())
     {
@@ -1392,7 +1404,7 @@ auto m68k_bclrimm(uint16_t instr) -> int
     setzero(!testbit(data_addr, bit_num));
     data_addr = resetbit(data_addr, bit_num);
 
-    dstaddrmode<Byte, DataAddr, true>(srcmode, srcreg, data_addr);
+    dstaddrmode<Byte, DataAddr, BitInstr>(srcmode, srcreg, data_addr);
 
     if (is_m68k_exception())
     {
@@ -1422,7 +1434,7 @@ auto m68k_bsetimm(uint16_t instr) -> int
     int bit_num = extension<Byte>(m68kreg.pc);
     bit_num &= (srcmode == 0) ? 31 : 7; // Mask to 32-bits for EA mode 0, and 8-bits for the others
 
-    uint32_t data_addr = srcaddrmode<Byte, DataAddr, true>(srcmode, srcreg);
+    uint32_t data_addr = srcaddrmode<Byte, DataAddr, BitInstr>(srcmode, srcreg);
 
     if (is_m68k_exception())
     {
@@ -1432,7 +1444,7 @@ auto m68k_bsetimm(uint16_t instr) -> int
     setzero(!testbit(data_addr, bit_num));
     data_addr = setbit(data_addr, bit_num);
 
-    dstaddrmode<Byte, DataAddr, true>(srcmode, srcreg, data_addr);
+    dstaddrmode<Byte, DataAddr, BitInstr>(srcmode, srcreg, data_addr);
 
     if (is_m68k_exception())
     {
@@ -1462,7 +1474,7 @@ auto m68k_bchgimm(uint16_t instr) -> int
     int bit_num = extension<Byte>(m68kreg.pc);
     bit_num &= (srcmode == 0) ? 31 : 7; // Mask to 32-bits for EA mode 0, and 8-bits for the others
 
-    uint32_t data_addr = srcaddrmode<Byte, DataAddr, true>(srcmode, srcreg);
+    uint32_t data_addr = srcaddrmode<Byte, DataAddr, BitInstr>(srcmode, srcreg);
 
     if (is_m68k_exception())
     {
@@ -1474,7 +1486,7 @@ auto m68k_bchgimm(uint16_t instr) -> int
     // Invert the selected bit of the destination operand
     data_addr = togglebit(data_addr, bit_num);
 
-    dstaddrmode<Byte, DataAddr, true>(srcmode, srcreg, data_addr);
+    dstaddrmode<Byte, DataAddr, BitInstr>(srcmode, srcreg, data_addr);
 
     if (is_m68k_exception())
     {
@@ -1546,6 +1558,12 @@ auto m68k_trap(uint16_t instr) -> int
     cout << "Unimplemented: Low-level trap exception handling" << endl;
     exit(0);
     return 38;
+}
+
+auto m68k_nop(uint16_t instr) -> int
+{
+    // NOP instruction
+    return 4;
 }
 
 auto m68k_stop(uint16_t instr) -> int

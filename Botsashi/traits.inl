@@ -16,6 +16,17 @@
     along with Botsashi.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+template<int Size>
+auto bytes() -> uint32_t
+{
+    switch (Size)
+    {
+	case Byte: return 1; break;
+	case Word: return 2; break;
+	case Long: return 4; break;
+    }
+}
+
 template<int Size> 
 auto msb() -> uint32_t
 {

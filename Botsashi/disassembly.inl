@@ -684,6 +684,13 @@ auto m68kdis_trap(uint32_t pc, uint16_t instr) -> string
     return ss.str();
 }
 
+auto m68kdis_nop(uint32_t pc, uint16_t instr) -> string
+{
+    stringstream ss;
+    ss << "nop";
+    return ss.str();
+}
+
 auto m68kdis_stop(uint32_t pc, uint16_t instr) -> string
 {
     uint16_t temp = extension<Word>(pc);
