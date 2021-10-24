@@ -126,7 +126,7 @@ auto srcaddrmode(int mode, int reg) -> uint32_t
 	{
 	    if (testbit(mask, 0))
 	    {
-		if (testbit(Flags, 0))
+		if ((Flags & BitInstr) != 0)
 		{
 		    temp = getDataReg<Long>(reg);
 		}
@@ -144,6 +144,23 @@ auto srcaddrmode(int mode, int reg) -> uint32_t
 	    if (testbit(mask, 2))
 	    {
 		temp = read<Size>(getAddrReg<Long>(reg));
+		is_inst_legal = true;
+	    }
+	}
+	break;
+	case 3:
+	{
+	    if (testbit(mask, 3))
+	    {
+		uint32_t inc_bytes = ((reg == 7) && (Size == Byte)) ? bytes<Word>() : bytes<Size>();
+		uint32_t addr_reg = getAddrReg<Long>(reg);
+		temp = read<Size>(addr_reg);
+
+		if (Flags == None)
+		{
+		    setAddrReg<Long>(reg, (addr_reg + inc_bytes));
+		}
+
 		is_inst_legal = true;
 	    }
 	}
@@ -275,7 +292,7 @@ auto dstaddrmode(int mode, int reg, uint32_t val) -> void
 	{
 	    if (testbit(mask, 0))
 	    {
-		if (testbit(Flags, 0))
+		if ((Flags & BitInstr) != 0)
 		{
 		    setDataReg<Long>(reg, val);
 		}
@@ -311,7 +328,6 @@ auto dstaddrmode(int mode, int reg, uint32_t val) -> void
 	    if (testbit(mask, 3))
 	    {
 		uint32_t inc_bytes = ((reg == 7) && (Size == Byte)) ? bytes<Word>() : bytes<Size>();
-		cout << "Incrementing address by " << dec << inc_bytes << " bytes" << endl;
 		uint32_t addr_reg = getAddrReg<Long>(reg);
 		write<Size>(addr_reg, val);
 		setAddrReg<Long>(reg, (addr_reg + inc_bytes));
@@ -504,7 +520,7 @@ auto m68k_addq(uint16_t instr) -> int
     int srcmode = getsrcmode(instr);
     int srcreg = getsrcreg(instr);
 
-    uint32_t source_val = srcaddrmode<Size, AlterableAddr>(srcmode, srcreg);
+    uint32_t source_val = srcaddrmode<Size, AlterableAddr, Hold>(srcmode, srcreg);
 
     if (is_m68k_exception())
     {
@@ -837,11 +853,12 @@ template<int Size, bool is_rev = false>
 auto m68k_and(uint16_t instr) -> int
 {
     constexpr uint16_t addr_mode_mask = is_rev ? MemAltAddr : DataAddr;
+    constexpr uint16_t addr_mode_flags = is_rev ? Hold : None;
     int dstreg = getdstreg(instr);
     int srcmode = getsrcmode(instr);
     int srcreg = getsrcreg(instr);
 
-    uint32_t res_val = srcaddrmode<Size, addr_mode_mask>(srcmode, srcreg);
+    uint32_t res_val = srcaddrmode<Size, addr_mode_mask, addr_mode_flags>(srcmode, srcreg);
 
     if (is_m68k_exception())
     {
@@ -907,11 +924,12 @@ template<int Size, bool is_rev = false>
 auto m68k_or(uint16_t instr) -> int
 {
     constexpr uint16_t addr_mode_mask = is_rev ? MemAltAddr : DataAddr;
+    constexpr uint16_t addr_mode_flags = is_rev ? Hold : None;
     int dstreg = getdstreg(instr);
     int srcmode = getsrcmode(instr);
     int srcreg = getsrcreg(instr);
 
-    uint32_t res_val = srcaddrmode<Size, addr_mode_mask>(srcmode, srcreg);
+    uint32_t res_val = srcaddrmode<Size, addr_mode_mask, addr_mode_flags>(srcmode, srcreg);
 
     if (is_m68k_exception())
     {
@@ -979,7 +997,7 @@ auto m68k_not(uint16_t instr) -> int
     int dstmode = getsrcmode(instr);
     int dstreg = getsrcreg(instr);
 
-    uint32_t reg_val = srcaddrmode<Size, DataAltAddr>(dstmode, dstreg);
+    uint32_t reg_val = srcaddrmode<Size, DataAltAddr, Hold>(dstmode, dstreg);
 
     if (is_m68k_exception())
     {
@@ -1024,7 +1042,7 @@ auto m68k_addi(uint16_t instr) -> int
     int dstreg = getsrcreg(instr);
     auto imm_val = extension<Size>(m68kreg.pc);
 
-    uint32_t reg_val = srcaddrmode<Size, DataAltAddr>(dstmode, dstreg);
+    uint32_t reg_val = srcaddrmode<Size, DataAltAddr, Hold>(dstmode, dstreg);
 
     if (is_m68k_exception())
     {
@@ -1064,7 +1082,7 @@ auto m68k_andi(uint16_t instr) -> int
     int dstreg = getsrcreg(instr);
     auto imm_val = extension<Size>(m68kreg.pc);
 
-    uint32_t reg_val = srcaddrmode<Size, DataAltAddr>(dstmode, dstreg);
+    uint32_t reg_val = srcaddrmode<Size, DataAltAddr, Hold>(dstmode, dstreg);
 
     if (is_m68k_exception())
     {
@@ -1109,7 +1127,7 @@ auto m68k_ori(uint16_t instr) -> int
     int dstreg = getsrcreg(instr);
     auto imm_val = extension<Size>(m68kreg.pc);
 
-    uint32_t reg_val = srcaddrmode<Size, DataAltAddr>(dstmode, dstreg);
+    uint32_t reg_val = srcaddrmode<Size, DataAltAddr, Hold>(dstmode, dstreg);
 
     if (is_m68k_exception())
     {
@@ -1154,7 +1172,7 @@ auto m68k_eori(uint16_t instr) -> int
     int dstreg = getsrcreg(instr);
     auto imm_val = extension<Size>(m68kreg.pc);
 
-    uint32_t reg_val = srcaddrmode<Size, DataAltAddr>(dstmode, dstreg);
+    uint32_t reg_val = srcaddrmode<Size, DataAltAddr, Hold>(dstmode, dstreg);
 
     if (is_m68k_exception())
     {
