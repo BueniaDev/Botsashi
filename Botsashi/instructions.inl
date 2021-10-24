@@ -315,6 +315,7 @@ auto dstaddrmode(int mode, int reg, uint32_t val) -> void
 		uint32_t addr_reg = getAddrReg<Long>(reg);
 		write<Size>(addr_reg, val);
 		setAddrReg<Long>(reg, (addr_reg + inc_bytes));
+		is_inst_legal = true;
 	    }
 	}
 	break;
