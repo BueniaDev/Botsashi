@@ -1,9 +1,11 @@
 #include <iostream>
+#include <sstream>
 #include <fstream>
 #include <array>
 #include <vector>
 #include <functional>
 #include <chrono>
+#include <cassert>
 #include <SDL2/SDL.h>
 #include <Botsashi/botsashi.h>
 using namespace botsashi;
@@ -17,6 +19,32 @@ void sdl_error(string message)
 {
     cout << message << " SDL_Error: " << SDL_GetError() << endl;
 }
+
+template<typename T>
+bool inRange(T val, int low, int high)
+{
+    return ((val >= low) && (val < high));
+}
+
+struct SimsashiRGB
+{
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+};
+
+struct SimsashiPoint
+{
+    uint32_t xpos;
+    uint32_t ypos;
+
+    string to_str()
+    {
+	stringstream ss;
+	ss << "(" << dec << int(xpos) << "," << dec << int(ypos) << ")";
+	return ss.str();
+    }
+};
 
 class SimsashiInterface : public BotsashiInterface
 {
@@ -49,20 +77,38 @@ class SimsashiInterface : public BotsashiInterface
 		return false;
 	    }
 
+	    texture = SDL_CreateTexture(render, SDL_PIXELFORMAT_RGB24,
+SDL_TEXTUREACCESS_STREAMING, window_width, window_height);
+
+	    if (texture == NULL)
+	    {
+		sdl_error("Texture could not be created!");
+		return false;
+	    }
+
 	    SDL_SetRenderDrawColor(render, 0, 0, 0, 255);
 	    SDL_RenderClear(render);
+
+	    framebuffer.resize((window_width * window_height), {0, 0, 0});
 
 	    return true;
 	}
 
 	void stop_sdl2()
 	{
+	    framebuffer.clear();
+	    SDL_DestroyTexture(texture);
 	    SDL_DestroyRenderer(render);
 	    SDL_DestroyWindow(window);
 	}
 
 	void render_sdl2()
 	{
+	    assert(render && texture);
+	    SDL_UpdateTexture(texture, NULL, framebuffer.data(), (window_width * sizeof(SimsashiRGB)));
+
+	    SDL_RenderClear(render);
+	    SDL_RenderCopy(render, texture, NULL, NULL);
 	    SDL_RenderPresent(render);
 	}
 
@@ -107,7 +153,7 @@ class SimsashiInterface : public BotsashiInterface
 		return;
 	    }
 
-	    uint32_t function_number = m68k.getDataReg<Botsashi::Long>(0);
+	    uint32_t function_number = m68k.getDataReg<Botsashi::Byte>(0);
 	    
 	    switch (function_number)
 	    {
@@ -123,14 +169,9 @@ class SimsashiInterface : public BotsashiInterface
 		    {
 			case 0:
 			{
-			    int width = 0;
-			    int height = 0;
-
-			    SDL_GetRendererOutputSize(render, &width, &height);
-
-			    cout << "Screen resolution is " << dec << width << " pixels wide by " << height << " pixels high" << endl;
-			    uint16_t screen_width = static_cast<uint16_t>(width);
-			    uint16_t screen_height = static_cast<uint16_t>(height);
+			    cout << "Screen resolution is " << dec << window_width << " pixels wide by " << window_height << " pixels high" << endl;
+			    uint16_t screen_width = uint16_t(window_width);
+			    uint16_t screen_height = uint16_t(window_height);
 
 			    uint32_t screen_res = ((screen_width << 16) | screen_height);
 			    m68k.setDataReg<Botsashi::Long>(1, screen_res);
@@ -277,19 +318,36 @@ class SimsashiInterface : public BotsashiInterface
 		break;
 		case 80:
 		{
-		    uint32_t pen_color = m68k.getDataReg<Botsashi::Long>(1);
+		    uint32_t pen_color_val = m68k.getDataReg<Botsashi::Long>(1);
 
-		    if ((pen_color >> 24) != 0)
+		    if ((pen_color_val >> 24) != 0)
 		    {
 			cout << "Invalid color" << endl;
 			return;
 		    }
 
-		    uint8_t red = (pen_color & 0xFF);
-		    uint8_t green = ((pen_color >> 8) & 0xFF);
-		    uint8_t blue = ((pen_color >> 16) & 0xFF);
+		    uint8_t red = pen_color_val;
+		    uint8_t green = (pen_color_val >> 8);
+		    uint8_t blue = (pen_color_val >> 16);
 		    cout << "Setting pen color to (" << dec << (int)red << ", " << dec << (int)green << ", " << dec << (int)blue << ")" << endl;
-		    SDL_SetRenderDrawColor(render, red, green, blue, 0xFF);
+		    pen_color = {red, green, blue};
+		}
+		break;
+		case 81:
+		{
+		    uint32_t fill_color_val = m68k.getDataReg<Botsashi::Long>(1);
+
+		    if ((fill_color_val >> 24) != 0)
+		    {
+			cout << "Invalid color" << endl;
+			return;
+		    }
+
+		    uint8_t red = fill_color_val;
+		    uint8_t green = (fill_color_val >> 8);
+		    uint8_t blue = (fill_color_val >> 16);
+		    cout << "Setting fill color to (" << dec << (int)red << ", " << dec << (int)green << ", " << dec << (int)blue << ")" << endl;
+		    fill_color = {red, green, blue};
 		}
 		break;
 		case 82:
@@ -297,8 +355,112 @@ class SimsashiInterface : public BotsashiInterface
 		    uint16_t xpos = m68k.getDataReg<Botsashi::Word>(1);
 		    uint16_t ypos = m68k.getDataReg<Botsashi::Word>(2);
 		    cout << "Drawing pixel at (" << dec << (int)xpos << ", " << dec << (int)ypos << ")" << endl;
-		    SDL_RenderDrawPoint(render, xpos, ypos);
-		    SDL_RenderPresent(render);
+		    set_pixel(xpos, ypos, pen_color);
+		}
+		break;
+		case 83:
+		{
+		    uint16_t xpos = m68k.getDataReg<Botsashi::Word>(1);
+		    uint16_t ypos = m68k.getDataReg<Botsashi::Word>(2);
+		    cout << "Fetching pixel at (" << dec << (int)xpos << ", " << dec << (int)ypos << ")" << endl;
+
+		    SimsashiRGB pixel_val = get_pixel(xpos, ypos);
+
+		    uint32_t color_val = ((pixel_val.blue << 16) | (pixel_val.green << 8) | pixel_val.red);
+		    m68k.setDataReg<Botsashi::Long>(0, color_val);
+		}
+		break;
+		case 84:
+		{
+		    uint16_t xpos1 = m68k.getDataReg<Botsashi::Word>(1);
+		    uint16_t ypos1 = m68k.getDataReg<Botsashi::Word>(2);
+		    uint16_t xpos2 = m68k.getDataReg<Botsashi::Word>(3);
+		    uint16_t ypos2 = m68k.getDataReg<Botsashi::Word>(4);
+		    SimsashiPoint point1 = {xpos1, ypos1};
+		    SimsashiPoint point2 = {xpos2, ypos2};
+		    cout << "Drawing line from " << point1.to_str() << " to " << point2.to_str() << endl;
+		    draw_line(point1, point2, pen_color);
+		    drawing_point = point2;
+		}
+		break;
+		case 85:
+		{
+		    uint16_t xpos = m68k.getDataReg<Botsashi::Word>(1);
+		    uint16_t ypos = m68k.getDataReg<Botsashi::Word>(2);
+		    SimsashiPoint new_point = {xpos, ypos};
+		    cout << "Drawing line to " << new_point.to_str() << endl;
+		    draw_line(drawing_point, new_point, pen_color);
+		    drawing_point = {xpos, ypos};
+		}
+		break;
+		case 86:
+		{
+		    uint16_t xpos = m68k.getDataReg<Botsashi::Word>(1);
+		    uint16_t ypos = m68k.getDataReg<Botsashi::Word>(2);
+		    drawing_point = {xpos, ypos};
+		    cout << "Moving to point at " << drawing_point.to_str() << endl;
+		}
+		break;
+		case 87:
+		{
+		    uint16_t leftx = m68k.getDataReg<Botsashi::Word>(1);
+		    uint16_t uppery = m68k.getDataReg<Botsashi::Word>(2);
+		    uint16_t rightx = m68k.getDataReg<Botsashi::Word>(3);
+		    uint16_t lowery = m68k.getDataReg<Botsashi::Word>(4);
+
+		    cout << "Drawing rectangle defined by (" << dec << int(leftx) << "," << dec << int(uppery) << "," << dec << int(rightx) << "," << dec << int(lowery) << ")" << endl;
+		}
+		break;
+		case 88:
+		{
+		    uint16_t leftx = m68k.getDataReg<Botsashi::Word>(1);
+		    uint16_t uppery = m68k.getDataReg<Botsashi::Word>(2);
+		    uint16_t rightx = m68k.getDataReg<Botsashi::Word>(3);
+		    uint16_t lowery = m68k.getDataReg<Botsashi::Word>(4);
+
+		    cout << "Drawing ellipse bounded by the rectangle of (" << dec << int(leftx) << "," << dec << int(uppery) << "," << dec << int(rightx) << "," << dec << int(lowery) << ")" << endl;
+		}
+		break;
+		case 89:
+		{
+		    uint16_t xpos = m68k.getDataReg<Botsashi::Word>(1);
+		    uint16_t ypos = m68k.getDataReg<Botsashi::Word>(2);
+
+		    SimsashiPoint point = {xpos, ypos};
+		    cout << "Flood filling the area at " << point.to_str() << endl;
+		}
+		break;
+		case 90:
+		{
+		    uint16_t leftx = m68k.getDataReg<Botsashi::Word>(1);
+		    uint16_t uppery = m68k.getDataReg<Botsashi::Word>(2);
+		    uint16_t rightx = m68k.getDataReg<Botsashi::Word>(3);
+		    uint16_t lowery = m68k.getDataReg<Botsashi::Word>(4);
+
+		    cout << "Drawing unfilled rectangle defined by (" << dec << int(leftx) << "," << dec << int(uppery) << "," << dec << int(rightx) << "," << dec << int(lowery) << ")" << endl;
+		}
+		break;
+		case 91:
+		{
+		    uint16_t leftx = m68k.getDataReg<Botsashi::Word>(1);
+		    uint16_t uppery = m68k.getDataReg<Botsashi::Word>(2);
+		    uint16_t rightx = m68k.getDataReg<Botsashi::Word>(3);
+		    uint16_t lowery = m68k.getDataReg<Botsashi::Word>(4);
+
+		    cout << "Drawing unfilled ellipse bounded by the rectangle of (" << dec << int(leftx) << "," << dec << int(uppery) << "," << dec << int(rightx) << "," << dec << int(lowery) << ")" << endl;
+		}
+		break;
+		case 92:
+		{
+		    uint8_t draw_mode = m68k.getDataReg<Botsashi::Byte>(1);
+		    cout << "Setting drawing mode to " << dec << int(draw_mode) << endl;
+		}
+		break;
+		case 93:
+		{
+		    uint8_t pixel_width = m68k.getDataReg<Botsashi::Byte>(1);
+		    cout << "Setting pixel width to " << dec << int(pixel_width) << " pixels" << endl;
+		    pen_width = pixel_width;
 		}
 		break;
 		default: unrecognized_trapfunc(function_number); break;
@@ -338,7 +500,7 @@ class SimsashiInterface : public BotsashiInterface
 
 	    typedef duration<int64_t, centi> centiseconds;
 	    auto midnight_diff = chrono::duration_cast<centiseconds>(current_time - midnight_time);
-	    return static_cast<uint32_t>(midnight_diff.count());
+	    return uint32_t(midnight_diff.count());
 	}
 
 	void display_cr_lf()
@@ -505,14 +667,63 @@ class SimsashiInterface : public BotsashiInterface
 		int file_id = -1;
 	    };
 
+	    void draw_line(SimsashiPoint p1, SimsashiPoint p2, SimsashiRGB color)
+	    {
+		// TODO: Implement line drawing functionality
+		cout << "Drawing line from " << p1.to_str() << " to " << p2.to_str() << endl;
+		draw_line(p1.xpos, p1.ypos, p2.xpos, p2.ypos, pen_width, color);
+	    }
+
+	    void draw_line(int x0, int y0, int x1, int y1, int width, SimsashiRGB color)
+	    {
+		double length = sqrtf(powf(x0 - x1, 2) + powf(y0 - y1, 2));
+		int x = (((x1 - x0) / length) * width / 2);
+		int y = (((y1 - y0) / length) * width / 2);
+
+		cout << "Length: " << length << endl;
+		cout << "X: " << dec << x << endl;
+		cout << "Y: " << dec << y << endl;
+	    }
+
+	    SimsashiRGB get_pixel(uint32_t xpos, uint32_t ypos)
+	    {
+		if (!inRange(xpos, 0, window_width) || !inRange(ypos, 0, window_height))
+		{
+		    return {0, 0, 0};
+		}
+
+		int index = (xpos + (ypos * window_width));
+		return framebuffer.at(index);
+	    }
+
+	    void set_pixel(uint32_t xpos, uint32_t ypos, SimsashiRGB color)
+	    {
+		if (!inRange(xpos, 0, window_width) || !inRange(ypos, 0, window_height))
+		{
+		    return;
+		}
+
+		int index = (xpos + (ypos * window_width));
+		framebuffer.at(index) = color;
+	    }
+
 	    array<SimsashiFile, 8> files;
 
 	    uint32_t num_files_open = 0;
 	    SDL_Window *window = NULL;
 	    SDL_Renderer *render = NULL;
+	    SDL_Texture *texture = NULL;
 
 	    uint32_t window_width = 640;
 	    uint32_t window_height = 480;
+
+	    int pen_width = 1;
+
+	    SimsashiPoint drawing_point;
+	    SimsashiRGB pen_color;
+	    SimsashiRGB fill_color;
+
+	    vector<SimsashiRGB> framebuffer;
 };
 
 void copyprogram(vector<uint8_t> program)

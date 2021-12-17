@@ -171,7 +171,7 @@ auto srcaddrmode(int mode, int reg) -> uint32_t
 	    {
 		case 0:
 		{
-		    if (testbit(mask, 8))
+		    if (testbit(mask, 7))
 		    {
 			uint16_t ext_word = extension<Word>(m68kreg.pc);
 			uint32_t addr =  clip<Long>(sign<Word>(ext_word));
@@ -182,7 +182,7 @@ auto srcaddrmode(int mode, int reg) -> uint32_t
 		break;
 		case 1:
 		{
-		    if (testbit(mask, 9))
+		    if (testbit(mask, 8))
 		    {
 			uint32_t addr = extension<Long>(m68kreg.pc);
 			temp = read<Size>(addr);
@@ -341,7 +341,7 @@ auto dstaddrmode(int mode, int reg, uint32_t val) -> void
 	    {
 		case 0:
 		{
-		    if (testbit(mask, 8))
+		    if (testbit(mask, 7))
 		    {
 			uint16_t ext_word = extension<Word>(m68kreg.pc);
 			uint32_t addr = clip<Long>(sign<Word>(ext_word));
@@ -352,7 +352,7 @@ auto dstaddrmode(int mode, int reg, uint32_t val) -> void
 		break;
 		case 1:
 		{
-		    if (testbit(mask, 9))
+		    if (testbit(mask, 8))
 		    {
 			uint32_t addr = extension<Long>(m68kreg.pc);
 			write<Size>(addr, val);
