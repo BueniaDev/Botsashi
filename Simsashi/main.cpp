@@ -1,115 +1,41 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
-#include <array>
 #include <vector>
-#include <functional>
-#include <chrono>
-#include <cassert>
 #include <SDL2/SDL.h>
 #include <Botsashi/botsashi.h>
+#include "simsashi.h"
 using namespace botsashi;
 using namespace std;
-using namespace std::chrono;
-using namespace std::placeholders;
 
 vector<uint8_t> memory(0x1000000, 0);
-
-void sdl_error(string message)
-{
-    cout << message << " SDL_Error: " << SDL_GetError() << endl;
-}
-
-template<typename T>
-bool inRange(T val, int low, int high)
-{
-    return ((val >= low) && (val < high));
-}
-
-struct SimsashiRGB
-{
-    uint8_t red;
-    uint8_t green;
-    uint8_t blue;
-};
-
-struct SimsashiPoint
-{
-    uint32_t xpos;
-    uint32_t ypos;
-
-    string to_str()
-    {
-	stringstream ss;
-	ss << "(" << dec << int(xpos) << "," << dec << int(ypos) << ")";
-	return ss.str();
-    }
-};
 
 class SimsashiInterface : public BotsashiInterface
 {
     public:
-	SimsashiInterface(bool &cb) : stopped(cb)
+	SimsashiInterface(bool &is_stopped) : stopped(is_stopped)
 	{
-
+	    simIO = new SimsashiIO(stopped);
 	}
 
 	~SimsashiInterface()
 	{
-
+	    simIO = NULL;
 	}
 
-	bool init_sdl2()
+	bool init()
 	{
-	    window = SDL_CreateWindow("Simsashi", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, window_width, window_height, SDL_WINDOW_SHOWN);
-
-	    if (window == NULL)
-	    {
-		sdl_error("Window could not be created!");
-		return false;
-	    }
-
-	    render = SDL_CreateRenderer(window, -1, 0);
-
-	    if (render == NULL)
-	    {
-		sdl_error("Renderer could not be created!");
-		return false;
-	    }
-
-	    texture = SDL_CreateTexture(render, SDL_PIXELFORMAT_RGB24,
-SDL_TEXTUREACCESS_STREAMING, window_width, window_height);
-
-	    if (texture == NULL)
-	    {
-		sdl_error("Texture could not be created!");
-		return false;
-	    }
-
-	    SDL_SetRenderDrawColor(render, 0, 0, 0, 255);
-	    SDL_RenderClear(render);
-
-	    framebuffer.resize((window_width * window_height), {0, 0, 0});
-
-	    return true;
+	    return simIO->init();
 	}
 
-	void stop_sdl2()
+	void shutdown()
 	{
-	    framebuffer.clear();
-	    SDL_DestroyTexture(texture);
-	    SDL_DestroyRenderer(render);
-	    SDL_DestroyWindow(window);
+	    simIO->shutdown();
 	}
 
-	void render_sdl2()
+	void mainLoop(bool &quit)
 	{
-	    assert(render && texture);
-	    SDL_UpdateTexture(texture, NULL, framebuffer.data(), (window_width * sizeof(SimsashiRGB)));
-
-	    SDL_RenderClear(render);
-	    SDL_RenderCopy(render, texture, NULL, NULL);
-	    SDL_RenderPresent(render);
+	    simIO->mainLoop(quit);
 	}
 
 	uint16_t readWord(bool upper, bool lower, uint32_t addr)
@@ -153,316 +79,246 @@ SDL_TEXTUREACCESS_STREAMING, window_width, window_height);
 		return;
 	    }
 
-	    uint32_t function_number = m68k.getDataReg<Botsashi::Byte>(0);
+	    uint32_t function_number = getDataReg<uint8_t>(m68k, 0);
 	    
 	    switch (function_number)
 	    {
-		case 8: m68k.setDataReg<Botsashi::Long>(1, fetchTimeSinceMidnight()); break;
-		case 9: stopSimsashi(); break;
-		case 13: display_string(m68k, true); break;
-		case 14: display_string(m68k); break;
+		case 9: simIO->halt(); break;
+		case 13: simIO->textOutCR(form_string(m68k)); break;
+		case 14: simIO->textOut(form_string(m68k)); break;
 		case 33:
 		{
-		    uint32_t screen_reg = m68k.getDataReg<Botsashi::Long>(1);
+		    uint32_t out_val = getDataReg(m68k, 1);
 
-		    switch (screen_reg)
+		    switch (out_val)
 		    {
 			case 0:
 			{
-			    cout << "Screen resolution is " << dec << window_width << " pixels wide by " << window_height << " pixels high" << endl;
-			    uint16_t screen_width = uint16_t(window_width);
-			    uint16_t screen_height = uint16_t(window_height);
-
-			    uint32_t screen_res = ((screen_width << 16) | screen_height);
-			    m68k.setDataReg<Botsashi::Long>(1, screen_res);
+			    uint16_t width = 0;
+			    uint16_t height = 0;
+			    simIO->getWindowSize(width, height);
+			    uint32_t ret_val = ((width << 16) | height);
+			    setDataReg(m68k, 1, ret_val);
 			}
 			break;
-			case 1: cout << "Unimplemented: Setting windowed mode" << endl; break;
-			case 2: cout << "Unimplemented: Setting full-screen mode" << endl; break;
-			default: cout << "Unimplemented: Setting screen resolution" << endl; break;
+			case 1: simIO->setFullScreen(false); break;
+			case 2: simIO->setFullScreen(true); break;
+			default:
+			{
+			    uint16_t width = min<uint16_t>(640, (out_val >> 16));
+			    uint16_t height = min<uint16_t>(480, (out_val & 0xFFFF));
+			    simIO->setWindowSize(width, height);
+			}
+			break;
 		    }
 		}
 		break;
-		case 50:
-		{
-		    cout << "Closing all files..." << endl;
-		    close_all_files();
-		}
-		break;
+		case 50: simIO->closeAllFiles(); break;
 		case 51:
 		{
-		    string filename = fetch_filename(m68k);
+		    uint32_t file_id = 0;
+		    uint16_t ret = 0;
+		    string filename = form_string(m68k);
 
-		    int file_id = open_file(filename, false);
+		    simIO->openFile(filename, ret, file_id);
+		    setDataReg(m68k, 0, ret);
 
-		    if (file_id < 0)
+		    if (ret == 0)
 		    {
-			m68k.setDataReg<Botsashi::Word>(0, 2);
-			m68k.setDataReg<Botsashi::Long>(1, -1);
-			return;
+			cout << "File ID of file is " << dec << file_id << endl;
+			setDataReg(m68k, 1, file_id);
 		    }
-
-		    m68k.setDataReg<Botsashi::Word>(0, 0);
-		    m68k.setDataReg<Botsashi::Word>(1, file_id);
 		}
 		break;
 		case 52:
 		{
-		    string filename = fetch_filename(m68k);
+		    uint32_t file_id = 0;
+		    uint16_t ret = 0;
+		    string filename = form_string(m68k);
 
-		    int file_id = open_file(filename);
+		    simIO->newFile(filename, ret, file_id);
+		    setDataReg(m68k, 0, ret);
 
-		    if (file_id < 0)
+		    if (ret == 0)
 		    {
-			m68k.setDataReg<Botsashi::Word>(0, 2);
-			m68k.setDataReg<Botsashi::Long>(1, -1);
-			return;
+			cout << "File ID of file is " << dec << file_id << endl;
+			setDataReg(m68k, 1, file_id);
 		    }
-
-		    m68k.setDataReg<Botsashi::Word>(0, 0);
-		    m68k.setDataReg<Botsashi::Word>(1, file_id);
 		}
 		break;
 		case 53:
 		{
-		    uint32_t file_id = m68k.getDataReg<Botsashi::Long>(1);
-		    uint32_t num_bytes = m68k.getDataReg<Botsashi::Long>(2);
-		    uint32_t buffer_addr = m68k.getAddrReg<Botsashi::Long>(1);
+		    uint32_t file_id = getDataReg(m68k, 1);
+		    uint32_t buffer_address = getAddrReg(m68k, 1);
+		    uint32_t num_bytes = getDataReg(m68k, 2);
 
-		    if ((file_id < 0) || (file_id >= 8))
+		    uint16_t ret = 0;
+
+		    auto file_data = simIO->readFile(file_id, num_bytes, ret);
+
+		    setDataReg(m68k, 0, ret);
+		    setDataReg(m68k, 2, file_data.size());
+
+		    if (ret < 2)
 		    {
-			cout << "Invalid file ID" << endl;
-			m68k.setDataReg<Botsashi::Word>(0, 2);
-			return;
+			for (uint32_t addr = 0; addr < file_data.size(); addr++)
+			{
+			    memory[(buffer_address + addr)] = file_data.at(addr);
+			}
 		    }
-
-		    cout << "Reading " << dec << num_bytes << " bytes from file " << dec << file_id << " to buffer starting at 0x" << hex << buffer_addr << endl;
-		    vector<uint8_t> read_buffer;
-		    uint32_t num_bytes_read = read_file(file_id, read_buffer, num_bytes);
-
-		    for (uint32_t index = 0; index < num_bytes_read; index++)
-		    {
-			m68k.write<Botsashi::Byte>((buffer_addr + index), read_buffer.at(index));
-		    }
-
-		    if (num_bytes_read < num_bytes)
-		    {
-			cout << "EOF reached" << endl;
-			m68k.setDataReg<Botsashi::Word>(0, 1);
-			return;
-		    }
-
-		    m68k.setDataReg<Botsashi::Word>(0, 0);
 		}
 		break;
 		case 54:
 		{
-		    uint32_t file_id = m68k.getDataReg<Botsashi::Long>(1);
-		    uint32_t num_bytes = m68k.getDataReg<Botsashi::Long>(2);
-		    uint32_t buffer_addr = m68k.getAddrReg<Botsashi::Long>(1);
+		    uint32_t file_id = getDataReg(m68k, 1);
+		    uint32_t buffer_address = getAddrReg(m68k, 1);
+		    uint32_t num_bytes = getDataReg(m68k, 2);
 
-		    if ((file_id < 0) || (file_id >= 8))
-		    {
-			cout << "Invalid file ID" << endl;
-			m68k.setDataReg<Botsashi::Word>(0, 2);
-			return;
-		    }
+		    auto begin = (memory.begin() + buffer_address);
+		    auto end = (begin + num_bytes);
+		    vector<uint8_t> file_data = vector<uint8_t>(begin, end);
 
-		    cout << "Writing " << dec << num_bytes << " bytes to file " << dec << file_id << " from buffer starting at 0x" << hex << buffer_addr << endl;
+		    uint16_t ret = 0;
 
-		    vector<uint8_t> write_buffer = create_write_buffer(m68k, buffer_addr, num_bytes);
-		    if (!write_file(file_id, write_buffer))
-		    {
-			m68k.setDataReg<Botsashi::Word>(0, 2);
-			return;
-		    }
-
-		    m68k.setDataReg<Botsashi::Word>(0, 0);
+		    simIO->writeFile(file_id, file_data, num_bytes, ret);
+		    setDataReg(m68k, 0, ret);
 		}
 		break;
 		case 55:
 		{
-		    uint32_t file_id = m68k.getDataReg<Botsashi::Long>(1);
-		    uint32_t file_pos = m68k.getDataReg<Botsashi::Long>(2);
-		    
-		    if ((file_id < 0) || (file_id >= 8))
-		    {
-			cout << "Invalid file ID" << endl;
-			m68k.setDataReg<Botsashi::Word>(0, 2);
-			return;
-		    }
+		    uint32_t file_id = getDataReg(m68k, 1);
+		    uint32_t file_pos = getDataReg(m68k, 2);
 
-		    seek_file(file_id, file_pos);
-		}
-		break;
-		case 56:
-		{
-		    uint32_t file_id = m68k.getDataReg<Botsashi::Long>(1);
-
-		    if ((file_id < 0) || (file_id >= 8))
-		    {
-			cout << "Invalid file ID" << endl;
-			m68k.setDataReg<Botsashi::Word>(0, 2);
-			return;
-		    }
-
-		    cout << "Closing file " << dec << file_id << endl;
-		    close_file(file_id);
+		    uint16_t ret = 0;
+		    simIO->seekFile(file_id, file_pos, ret);
+		    setDataReg(m68k, 0, ret);
 		}
 		break;
 		case 57:
 		{
-		    cout << "Unimplemented: File deletion" << endl;
-		    close_all_files();
+		    string filename = form_string(m68k);
+		    uint16_t ret = 0;
+		    simIO->deleteFile(filename, ret);
+		    setDataReg(m68k, 0, ret);
 		}
 		break;
-		case 80:
+		case 70:
 		{
-		    uint32_t pen_color_val = m68k.getDataReg<Botsashi::Long>(1);
-
-		    if ((pen_color_val >> 24) != 0)
-		    {
-			cout << "Invalid color" << endl;
-			return;
-		    }
-
-		    uint8_t red = pen_color_val;
-		    uint8_t green = (pen_color_val >> 8);
-		    uint8_t blue = (pen_color_val >> 16);
-		    cout << "Setting pen color to (" << dec << (int)red << ", " << dec << (int)green << ", " << dec << (int)blue << ")" << endl;
-		    pen_color = {red, green, blue};
+		    string filename = form_string(m68k);
+		    uint16_t ret = 0;
+		    simIO->playWAV(filename, ret);
+		    setDataReg(m68k, 0, ret);
 		}
 		break;
-		case 81:
+		case 71:
 		{
-		    uint32_t fill_color_val = m68k.getDataReg<Botsashi::Long>(1);
-
-		    if ((fill_color_val >> 24) != 0)
-		    {
-			cout << "Invalid color" << endl;
-			return;
-		    }
-
-		    uint8_t red = fill_color_val;
-		    uint8_t green = (fill_color_val >> 8);
-		    uint8_t blue = (fill_color_val >> 16);
-		    cout << "Setting fill color to (" << dec << (int)red << ", " << dec << (int)green << ", " << dec << (int)blue << ")" << endl;
-		    fill_color = {red, green, blue};
+		    string filename = form_string(m68k);
+		    uint8_t ref_num = getDataReg<uint8_t>(m68k, 1);
+		    simIO->loadWAV(filename, ref_num);
 		}
 		break;
+		case 72:
+		{
+		    uint8_t ref_num = getDataReg<uint8_t>(m68k, 1);
+		    uint16_t ret = 0;
+		    simIO->playSound(ref_num, ret);
+		    setDataReg(m68k, 0, ret);
+		}
+		break;
+		case 80: simIO->setPenColor(getDataReg(m68k, 1)); break;
+		case 81: simIO->setFillColor(getDataReg(m68k, 1)); break;
 		case 82:
 		{
-		    uint16_t xpos = m68k.getDataReg<Botsashi::Word>(1);
-		    uint16_t ypos = m68k.getDataReg<Botsashi::Word>(2);
-		    cout << "Drawing pixel at (" << dec << (int)xpos << ", " << dec << (int)ypos << ")" << endl;
-		    set_pixel(xpos, ypos, pen_color);
+		    uint32_t xpos = getDataReg<uint16_t>(m68k, 1);
+		    uint32_t ypos = getDataReg<uint16_t>(m68k, 2);
+		    simIO->setPixel(xpos, ypos);
 		}
 		break;
 		case 83:
 		{
-		    uint16_t xpos = m68k.getDataReg<Botsashi::Word>(1);
-		    uint16_t ypos = m68k.getDataReg<Botsashi::Word>(2);
-		    cout << "Fetching pixel at (" << dec << (int)xpos << ", " << dec << (int)ypos << ")" << endl;
+		    uint32_t xpos = getDataReg<uint16_t>(m68k, 1);
+		    uint32_t ypos = getDataReg<uint16_t>(m68k, 2);
 
-		    SimsashiRGB pixel_val = get_pixel(xpos, ypos);
-
-		    uint32_t color_val = ((pixel_val.blue << 16) | (pixel_val.green << 8) | pixel_val.red);
-		    m68k.setDataReg<Botsashi::Long>(0, color_val);
+		    uint32_t color = simIO->getPixel(xpos, ypos);
+		    setDataReg(m68k, 0, color);
 		}
 		break;
 		case 84:
 		{
-		    uint16_t xpos1 = m68k.getDataReg<Botsashi::Word>(1);
-		    uint16_t ypos1 = m68k.getDataReg<Botsashi::Word>(2);
-		    uint16_t xpos2 = m68k.getDataReg<Botsashi::Word>(3);
-		    uint16_t ypos2 = m68k.getDataReg<Botsashi::Word>(4);
-		    SimsashiPoint point1 = {xpos1, ypos1};
-		    SimsashiPoint point2 = {xpos2, ypos2};
-		    cout << "Drawing line from " << point1.to_str() << " to " << point2.to_str() << endl;
-		    draw_line(point1, point2, pen_color);
-		    drawing_point = point2;
+		    uint32_t x1 = getDataReg<uint16_t>(m68k, 1);
+		    uint32_t y1 = getDataReg<uint16_t>(m68k, 2);
+		    uint32_t x2 = getDataReg<uint16_t>(m68k, 3);
+		    uint32_t y2 = getDataReg<uint16_t>(m68k, 4);
+
+		    simIO->line(x1, y1, x2, y2);
 		}
 		break;
 		case 85:
 		{
-		    uint16_t xpos = m68k.getDataReg<Botsashi::Word>(1);
-		    uint16_t ypos = m68k.getDataReg<Botsashi::Word>(2);
-		    SimsashiPoint new_point = {xpos, ypos};
-		    cout << "Drawing line to " << new_point.to_str() << endl;
-		    draw_line(drawing_point, new_point, pen_color);
-		    drawing_point = {xpos, ypos};
+		    uint32_t xpos = getDataReg<uint16_t>(m68k, 1);
+		    uint32_t ypos = getDataReg<uint16_t>(m68k, 2);
+
+		    simIO->lineTo(xpos, ypos);
 		}
 		break;
 		case 86:
 		{
-		    uint16_t xpos = m68k.getDataReg<Botsashi::Word>(1);
-		    uint16_t ypos = m68k.getDataReg<Botsashi::Word>(2);
-		    drawing_point = {xpos, ypos};
-		    cout << "Moving to point at " << drawing_point.to_str() << endl;
+		    uint32_t xpos = getDataReg<uint16_t>(m68k, 1);
+		    uint32_t ypos = getDataReg<uint16_t>(m68k, 2);
+
+		    simIO->moveTo(xpos, ypos);
 		}
 		break;
 		case 87:
 		{
-		    uint16_t leftx = m68k.getDataReg<Botsashi::Word>(1);
-		    uint16_t uppery = m68k.getDataReg<Botsashi::Word>(2);
-		    uint16_t rightx = m68k.getDataReg<Botsashi::Word>(3);
-		    uint16_t lowery = m68k.getDataReg<Botsashi::Word>(4);
+		    uint32_t leftx = getDataReg<uint16_t>(m68k, 1);
+		    uint32_t uppery = getDataReg<uint16_t>(m68k, 2);
+		    uint32_t rightx = getDataReg<uint16_t>(m68k, 3);
+		    uint32_t lowery = getDataReg<uint16_t>(m68k, 4);
 
-		    cout << "Drawing rectangle defined by (" << dec << int(leftx) << "," << dec << int(uppery) << "," << dec << int(rightx) << "," << dec << int(lowery) << ")" << endl;
+		    simIO->rectangle(leftx, uppery, rightx, lowery);
 		}
 		break;
 		case 88:
 		{
-		    uint16_t leftx = m68k.getDataReg<Botsashi::Word>(1);
-		    uint16_t uppery = m68k.getDataReg<Botsashi::Word>(2);
-		    uint16_t rightx = m68k.getDataReg<Botsashi::Word>(3);
-		    uint16_t lowery = m68k.getDataReg<Botsashi::Word>(4);
+		    uint32_t leftx = getDataReg<uint16_t>(m68k, 1);
+		    uint32_t uppery = getDataReg<uint16_t>(m68k, 2);
+		    uint32_t rightx = getDataReg<uint16_t>(m68k, 3);
+		    uint32_t lowery = getDataReg<uint16_t>(m68k, 4);
 
-		    cout << "Drawing ellipse bounded by the rectangle of (" << dec << int(leftx) << "," << dec << int(uppery) << "," << dec << int(rightx) << "," << dec << int(lowery) << ")" << endl;
+		    simIO->ellipse(leftx, uppery, rightx, lowery);
 		}
 		break;
 		case 89:
 		{
-		    uint16_t xpos = m68k.getDataReg<Botsashi::Word>(1);
-		    uint16_t ypos = m68k.getDataReg<Botsashi::Word>(2);
+		    uint32_t xpos = getDataReg<uint16_t>(m68k, 1);
+		    uint32_t ypos = getDataReg<uint16_t>(m68k, 2);
 
-		    SimsashiPoint point = {xpos, ypos};
-		    cout << "Flood filling the area at " << point.to_str() << endl;
+		    simIO->floodFill(xpos, ypos);
 		}
 		break;
 		case 90:
 		{
-		    uint16_t leftx = m68k.getDataReg<Botsashi::Word>(1);
-		    uint16_t uppery = m68k.getDataReg<Botsashi::Word>(2);
-		    uint16_t rightx = m68k.getDataReg<Botsashi::Word>(3);
-		    uint16_t lowery = m68k.getDataReg<Botsashi::Word>(4);
+		    uint32_t leftx = getDataReg<uint16_t>(m68k, 1);
+		    uint32_t uppery = getDataReg<uint16_t>(m68k, 2);
+		    uint32_t rightx = getDataReg<uint16_t>(m68k, 3);
+		    uint32_t lowery = getDataReg<uint16_t>(m68k, 4);
 
-		    cout << "Drawing unfilled rectangle defined by (" << dec << int(leftx) << "," << dec << int(uppery) << "," << dec << int(rightx) << "," << dec << int(lowery) << ")" << endl;
+		    simIO->unfilledRectangle(leftx, uppery, rightx, lowery);
 		}
 		break;
 		case 91:
 		{
-		    uint16_t leftx = m68k.getDataReg<Botsashi::Word>(1);
-		    uint16_t uppery = m68k.getDataReg<Botsashi::Word>(2);
-		    uint16_t rightx = m68k.getDataReg<Botsashi::Word>(3);
-		    uint16_t lowery = m68k.getDataReg<Botsashi::Word>(4);
+		    uint32_t leftx = getDataReg<uint16_t>(m68k, 1);
+		    uint32_t uppery = getDataReg<uint16_t>(m68k, 2);
+		    uint32_t rightx = getDataReg<uint16_t>(m68k, 3);
+		    uint32_t lowery = getDataReg<uint16_t>(m68k, 4);
 
-		    cout << "Drawing unfilled ellipse bounded by the rectangle of (" << dec << int(leftx) << "," << dec << int(uppery) << "," << dec << int(rightx) << "," << dec << int(lowery) << ")" << endl;
+		    simIO->unfilledEllipse(leftx, uppery, rightx, lowery);
 		}
 		break;
-		case 92:
-		{
-		    uint8_t draw_mode = m68k.getDataReg<Botsashi::Byte>(1);
-		    cout << "Setting drawing mode to " << dec << int(draw_mode) << endl;
-		}
-		break;
-		case 93:
-		{
-		    uint8_t pixel_width = m68k.getDataReg<Botsashi::Byte>(1);
-		    cout << "Setting pixel width to " << dec << int(pixel_width) << " pixels" << endl;
-		    pen_width = pixel_width;
-		}
-		break;
+		case 92: simIO->setDrawingMode(getDataReg<uint8_t>(m68k, 1)); break;
+		case 93: simIO->setPenWidth(getDataReg<uint8_t>(m68k, 1)); break;
 		default: unrecognized_trapfunc(function_number); break;
 	    }
 	}
@@ -485,245 +341,61 @@ SDL_TEXTUREACCESS_STREAMING, window_width, window_height);
 	    exit(0);
 	}
 
-	// Fetches the current time since midnight, in centiseconds (hundredths of a second)
-	uint32_t fetchTimeSinceMidnight()
+	void take_screenshot()
 	{
-	    auto current_time = chrono::system_clock::now();
-	    auto current_timet = chrono::system_clock::to_time_t(current_time);
-
-	    auto midnight_tm = localtime(&current_timet);
-	    midnight_tm->tm_hour = 0;
-	    midnight_tm->tm_min = 0;
-	    midnight_tm->tm_sec = 0;
-
-	    auto midnight_time = chrono::system_clock::from_time_t(mktime(midnight_tm));
-
-	    typedef duration<int64_t, centi> centiseconds;
-	    auto midnight_diff = chrono::duration_cast<centiseconds>(current_time - midnight_time);
-	    return uint32_t(midnight_diff.count());
+	    simIO->take_screenshot();
 	}
 
-	void display_cr_lf()
-	{
-	    cout << endl;
-	}
+    private:
+	bool &stopped;
 
-	// Prints character to stdout
-	void display_char(uint8_t char_val)
-	{
-	    cout.put(char_val);
-	}
+	SimsashiIO *simIO = NULL;
 
-	void append_char(string &str, uint8_t char_val)
+	string form_string(Botsashi &m68k, int addr_reg = 1)
 	{
-	    if (char_val < 0x20)
+	    uint32_t str_base = getAddrReg(m68k, addr_reg);
+	    stringstream text_str;
+
+	    for (uint32_t addr = str_base; (memory[addr] != 0); addr++)
 	    {
-		return;
+		text_str.put(memory[addr]);
 	    }
 
-	    str += static_cast<char>(char_val);
+	    return text_str.str();
 	}
 
-	string fetch_filename(Botsashi &m68k)
+	template<typename T = uint32_t>
+	uint32_t getDataReg(Botsashi &m68k, int reg)
 	{
-	    string filename_str;
-	    uint32_t string_addr = m68k.getAddrReg<Botsashi::Long>(1);
-
-	    for (uint32_t addr = string_addr; m68k.read<Botsashi::Byte>(addr) != 0; addr++)
+	    switch (sizeof(T))
 	    {
-		append_char(filename_str, m68k.read<Botsashi::Byte>(addr));
-	    }
-
-	    return filename_str;
-	}
-
-	void display_string(Botsashi &m68k, bool is_cr_lf = false)
-	{
-	    uint32_t string_addr = m68k.getAddrReg<Botsashi::Long>(1);
-
-	    for (uint32_t addr = string_addr; m68k.read<Botsashi::Byte>(addr) != 0; addr++)
-	    {
-		display_char(m68k.read<Botsashi::Byte>(addr));
-	    }
-
-	    if (is_cr_lf)
-	    {
-		display_cr_lf();
+		case 1: return m68k.getDataReg<Botsashi::Byte>(reg); break;
+		case 2: return m68k.getDataReg<Botsashi::Word>(reg); break;
+		default: return m68k.getDataReg<Botsashi::Long>(reg); break;
 	    }
 	}
 
-	vector<uint8_t> create_write_buffer(Botsashi &m68k, uint32_t buffer_addr, uint32_t num_bytes)
+	template<typename T>
+	void setDataReg(Botsashi &m68k, int reg, T val)
 	{
-	    vector<uint8_t> result;
-	    for (uint32_t index = 0; index < num_bytes; index++)
+	    switch (sizeof(T))
 	    {
-		result.push_back(m68k.read<Botsashi::Byte>((buffer_addr + index)));
-	    }
-
-	    return result;
-	}
-
-	int open_file(string filename, bool is_new_file = true)
-	{
-	    if (num_files_open >= 8)
-	    {
-		cout << "Maximum number of files reached" << endl;
-		return -1;
-	    }
-
-	    auto file_flags = ios::in | ios::out | ios::binary;
-
-	    if (is_new_file)
-	    {
-		file_flags |= ios::trunc;
-	    }
-
-	    cout << "Opening file of " << filename << endl;
-	    files[num_files_open].stream.open(filename, file_flags);
-
-	    if (!is_new_file && !files[num_files_open].stream.is_open())
-	    {
-		cout << "Could not open file of " << filename << endl;
-		return -1;
-	    }
-
-	    files[num_files_open].file_id = num_files_open;
-	    files[num_files_open].is_open = true;
-
-	    int file_id = num_files_open++;
-	    return file_id;
-	}
-
-	uint32_t read_file(int file_id, vector<uint8_t> &buffer, int num_bytes)
-	{
-	    if (!files[file_id].is_open)
-	    {
-		cout << "File is not currently open" << endl;
-		return 0;
-	    }
-
-	    buffer.resize(num_bytes, 0);
-	    files[file_id].stream.read((char*)buffer.data(), num_bytes);
-	    return files[file_id].stream.gcount();
-	}
-
-	bool write_file(int file_id, vector<uint8_t> buffer)
-	{
-	    if (!files[file_id].is_open)
-	    {
-		cout << "File is not currently open" << endl;
-		return false;
-	    }
-
-	    files[file_id].stream.write((char*)buffer.data(), buffer.size());
-	    return true;
-	}
-
-	void seek_file(int file_id, int file_pos)
-	{
-	    if (!files[file_id].is_open)
-	    {
-		cout << "File is not currently open" << endl;
-		return;
-	    }
-
-	    files[file_id].stream.seekg(file_pos, ios::beg);
-	    files[file_id].stream.seekp(file_pos, ios::beg);
-	}
-
-	void close_all_files()
-	{
-	    for (int index = 0; index < 8; index++)
-	    {
-		if (files[index].is_open)
-		{
-		    files[index].stream.close();
-		    files[index].is_open = false;
-		    files[index].file_id = -1;
-		}
-	    }
-
-	    num_files_open = 0;
-	}
-
-	void close_file(int file_id)
-	{
-	    if (files[file_id].is_open)
-	    {
-	        files[file_id].stream.close();
-		files[file_id].is_open = false;
-		files[file_id].file_id = -1;
-		num_files_open -= 1;
+		case 1: m68k.setDataReg<Botsashi::Byte>(reg, val); break;
+		case 2: m68k.setDataReg<Botsashi::Word>(reg, val); break;
+		default: m68k.setDataReg<Botsashi::Long>(reg, val); break;
 	    }
 	}
 
-	private:
-	    bool &stopped;
-
-	    struct SimsashiFile
+	template<typename T = uint32_t>
+	uint32_t getAddrReg(Botsashi &m68k, int reg)
+	{
+	    switch (sizeof(T))
 	    {
-		fstream stream;
-		bool is_open = false;
-		int file_id = -1;
-	    };
-
-	    void draw_line(SimsashiPoint p1, SimsashiPoint p2, SimsashiRGB color)
-	    {
-		// TODO: Implement line drawing functionality
-		cout << "Drawing line from " << p1.to_str() << " to " << p2.to_str() << endl;
-		draw_line(p1.xpos, p1.ypos, p2.xpos, p2.ypos, pen_width, color);
+		case 1: return m68k.getAddrReg<Botsashi::Byte>(reg); break;
+		case 2: return m68k.getAddrReg<Botsashi::Word>(reg); break;
+		default: return m68k.getAddrReg<Botsashi::Long>(reg); break;
 	    }
-
-	    void draw_line(int x0, int y0, int x1, int y1, int width, SimsashiRGB color)
-	    {
-		double length = sqrtf(powf(x0 - x1, 2) + powf(y0 - y1, 2));
-		int x = (((x1 - x0) / length) * width / 2);
-		int y = (((y1 - y0) / length) * width / 2);
-
-		cout << "Length: " << length << endl;
-		cout << "X: " << dec << x << endl;
-		cout << "Y: " << dec << y << endl;
-	    }
-
-	    SimsashiRGB get_pixel(uint32_t xpos, uint32_t ypos)
-	    {
-		if (!inRange(xpos, 0, window_width) || !inRange(ypos, 0, window_height))
-		{
-		    return {0, 0, 0};
-		}
-
-		int index = (xpos + (ypos * window_width));
-		return framebuffer.at(index);
-	    }
-
-	    void set_pixel(uint32_t xpos, uint32_t ypos, SimsashiRGB color)
-	    {
-		if (!inRange(xpos, 0, window_width) || !inRange(ypos, 0, window_height))
-		{
-		    return;
-		}
-
-		int index = (xpos + (ypos * window_width));
-		framebuffer.at(index) = color;
-	    }
-
-	    array<SimsashiFile, 8> files;
-
-	    uint32_t num_files_open = 0;
-	    SDL_Window *window = NULL;
-	    SDL_Renderer *render = NULL;
-	    SDL_Texture *texture = NULL;
-
-	    uint32_t window_width = 640;
-	    uint32_t window_height = 480;
-
-	    int pen_width = 1;
-
-	    SimsashiPoint drawing_point;
-	    SimsashiRGB pen_color;
-	    SimsashiRGB fill_color;
-
-	    vector<SimsashiRGB> framebuffer;
+	}
 };
 
 void copyprogram(vector<uint8_t> program)
@@ -764,6 +436,32 @@ vector<uint8_t> read_file(string filename)
     return result;
 }
 
+bool is_ctrl_pressed(SDL_Event event)
+{
+    return (event.key.keysym.mod & KMOD_CTRL) ? true : false;
+}
+
+void display_debug(Botsashi &m68k, uint64_t &total_cycles)
+{
+    uint64_t prev_cycles = total_cycles;
+    // Uncomment the below line to enable debug output
+    // m68k.debugoutput();
+    stringstream instr;
+    size_t offs = m68k.disassembleinstr(instr, m68k.getPC());
+    cout << "Instruction: " << instr.str() << endl;
+    cout << "Offset: " << dec << int(offs) << endl;
+    total_cycles += m68k.executenextinstr();
+    uint64_t cycles = (total_cycles - prev_cycles);
+    cout << "Cycles taken: " << dec << cycles << endl;
+    cout << endl;
+}
+
+void display_total_cycles(uint64_t total_cycles)
+{
+    cout << "Program execution finished." << endl;
+    cout << "Total cycles: " << dec << total_cycles << endl;
+}
+
 int main(int argc, char *argv[]) 
 {
     if (argc < 2)
@@ -779,18 +477,11 @@ int main(int argc, char *argv[])
 	return 1;
     }
 
-    if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
-    {
-	sdl_error("SDL2 could not be initialized!");
-	return 1;
-    }
-
     bool stopped = false;
     SimsashiInterface inter(stopped);
 
-    if (!inter.init_sdl2())
+    if (!inter.init())
     {
-	SDL_Quit();
 	return 1;
     }
 
@@ -801,40 +492,21 @@ int main(int argc, char *argv[])
     m68k.init();
 
     bool quit = false;
-    SDL_Event event;
 
     uint64_t total_cycles = 0;
-    uint64_t cycles = 0;
 
     while (!quit)
     {
-	while (SDL_PollEvent(&event))
-	{
-	    if (event.type == SDL_QUIT)
-	    {
-		quit = true;
-	    }
-	}
+	inter.mainLoop(quit);
 
 	if (!stopped)
 	{
-	    uint64_t prev_cycles = total_cycles;
-	    // Uncomment the below line to enable debug output
-	    // m68k.debugoutput();
-	    cout << m68k.disassembleinstr(m68k.getPC()) << endl;
-	    total_cycles += m68k.executenextinstr();
-	    cycles = (total_cycles - prev_cycles);
-	    cout << "Cycles taken: " << dec << cycles << endl;
-	    cout << endl;
+	    display_debug(m68k, total_cycles);
 	}
-
-	inter.render_sdl2();
     }
 
-    cout << "Program execution finished." << endl;
-    cout << "Total cycles: " << dec << total_cycles << endl;
+    display_total_cycles(total_cycles);
     m68k.shutdown();
-    inter.stop_sdl2();
-    SDL_Quit();
+    inter.shutdown();
     return 0;
 }

@@ -4,12 +4,15 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+set(SIMSASHI_HEADERS
+	simsashi.h)
+
 set(SIMSASHI_SOURCES
 	main.cpp)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSDL_MAIN_HANDLED")
 
-add_executable(simsashi ${SIMSASHI_SOURCES})
+add_executable(simsashi ${SIMSASHI_SOURCES} ${SIMSASHI_HEADERS})
 include_directories(simsashi ${BOTSASHI_INCLUDE_DIR})
 target_link_libraries(simsashi botsashi)
 

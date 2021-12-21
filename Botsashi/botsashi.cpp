@@ -162,13 +162,15 @@ namespace botsashi
 
 	if (printdisassembly)
 	{
-	    cout << "Current instruction (disassembly): " << disassembleinstr(m68kreg.pc) << endl;
+	    stringstream instr_str;
+	    disassembleinstr(instr_str, m68kreg.pc);
+	    cout << "Current instruction (disassembly): " << instr_str.str() << endl;
 	}
 
 	cout << endl;
     }
 
-    string Botsashi::disassembleinstr(uint32_t pc)
+    size_t Botsashi::disassembleinstr(ostream &stream, uint32_t pc)
     {
 	uint32_t pcval = pc;
 
@@ -180,10 +182,10 @@ namespace botsashi
 	    auto mapping = *mappingiter;
 	    if ((instr & mapping.mask) == mapping.value)
 	    {
-		return mapping.disfunc(pcval, instr);
+		return mapping.disfunc(stream, pcval, instr);
 	    }
 	}
 
-	return m68kdis_unknown(pcval, instr);
+	return m68kdis_unknown(stream, pcval, instr);
     }
 };

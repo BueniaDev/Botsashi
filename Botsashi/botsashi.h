@@ -162,7 +162,7 @@ namespace botsashi
 	    int executenextinstr();
 	    int executeinstr(uint16_t instr);
 	    void debugoutput(bool printdisassembly = true);
-	    string disassembleinstr(uint32_t pc);
+	    size_t disassembleinstr(ostream &stream, uint32_t pc);
 
 	    void setstatusreg(uint16_t val);
 
@@ -306,7 +306,7 @@ namespace botsashi
 	    #include "instructions.inl"
 
 	    using m68kfunc = function<int(uint16_t)>;
-	    using m68kdasmfunc = function<string(uint32_t, uint16_t)>;
+	    using m68kdasmfunc = function<size_t(ostream&, uint32_t, uint16_t)>;
 
 	    struct m68kmapping
 	    {
