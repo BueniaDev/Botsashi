@@ -33,7 +33,7 @@ struct SimsashiPoint
     string to_str()
     {
 	stringstream ss;
-	ss << "(" << dec << int(x) << "," << dec << int(y) << ")";
+	ss << "(" << dec << int(xpos) << "," << dec << int(ypos) << ")";
 	return ss.str();
     }
 };
