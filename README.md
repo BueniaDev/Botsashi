@@ -67,15 +67,15 @@ Core dependencies:
 
 Optional dependencies:
 
-    * SDL2 (for the Simsashi simulator):
+* SDL2 (for the Simsashi simulator):
 
-        * Debian: `sudo apt-get install libsdl2-dev`
+    * Debian: `sudo apt-get install libsdl2-dev`
 
-        * Arch (not tested): `sudo pacman -S sdl2`
+    * Arch (not tested): `sudo pacman -S sdl2`
 
-        * Fedora (not tested): `sudo dnf install SDL2-devel`
+    * Fedora (not tested): `sudo dnf install SDL2-devel`
 
-        * OpenSUSE: (not tested): `sudo zypper in libSDL2-devel`
+    * OpenSUSE: (not tested): `sudo zypper in libSDL2-devel`
 
 Step 2: Clone the repository:
 
@@ -104,17 +104,18 @@ Step 1: Install dependencies:
 
 Step 2: Clone the repository:
 
-`git clone --recursive https://github.com/BueniaDev/Botsashi.git`
-
-`cd Botsashi`
+```
+git clone --recursive https://github.com/BueniaDev/Botsashi.git
+cd Botsashi
+```
 
 Step 3: Compile:
 
-`mkdir build && cd build`
-
-`cmake .. -G "Unix Makefiles" -DBUILD_SIMSASHI="<ON/OFF>" -DCMAKE_BUILD_TYPE="<Debug/Release>"`
-
-`make -j$(sysctl -n hw.ncpu)`
+```
+mkdir build && cd build
+cmake .. -G "Unix Makefiles" -DBUILD_SIMSASHI="<ON/OFF>" -DCMAKE_BUILD_TYPE="<Debug/Release>"
+make -j$(sysctl -n hw.ncpu)
+```
 
 ## Windows:
 
@@ -127,19 +128,19 @@ Step 1: Install dependencies:
 
 Step 2: Clone the repository:
 
-`git clone --recursive https://github.com/BueniaDev/Botsashi.git`
-
-`cd Botsashi`
+```
+git clone --recursive https://github.com/BueniaDev/Botsashi.git
+cd Botsashi
+```
 
 Step 3: Compile:
 
-`mkdir build && cd build`
-
-`cmake .. -G "MSYS Makefiles" -DBUILD_SIMSASHI="<ON/OFF>" -DCMAKE_BUILD_TYPE="<Debug/Release>"`
-
-`(mingw32-)make -j$(nproc --all)`
-
-`../msys-dist.sh`
+```
+mkdir build && cd build
+cmake .. -G "MSYS Makefiles" -DBUILD_SIMSASHI="<ON/OFF>" -DCMAKE_BUILD_TYPE="<Debug/Release>"
+(mingw32-)make -j$(nproc --all)
+../msys-dist.sh
+```
 
 # Plans
 
@@ -165,7 +166,7 @@ Botsashi is free software: you can redistribute it and/or modify it under the te
 
 # Copyright
 
-(C) 2021 BueniaDev. This project is not affiliated in any way with NXP or Motorola. Motorola 68000 is a registered trademark of NXP Semiconductors N.V.
+(C) 2022 BueniaDev. This project is not affiliated in any way with NXP or Motorola. Motorola 68000 is a registered trademark of NXP Semiconductors N.V.
 
 All copyrighted material in this repository belongs to their respective owners, and is used under the terms of the "fair use" clause of U.S. and international copyright law. For more information, see the "res/fairuse.txt" file in this repository.
 
