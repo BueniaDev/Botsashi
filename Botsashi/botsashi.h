@@ -58,8 +58,6 @@ namespace botsashi
 	    Botsashi();
 	    ~Botsashi();
 
-	    unique_ptr<BotsashiInterface> inter;
-
 	    enum : int { Byte, Word, Long };
 
 	    enum : int
@@ -297,6 +295,8 @@ namespace botsashi
 		m68kexcept.is_exception = true;
 		m68kexcept.exception_type = type;
 	    }
+
+	    unique_ptr<BotsashiInterface> inter;
 
 	    m68kregisters m68kreg;
 

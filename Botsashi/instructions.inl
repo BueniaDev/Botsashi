@@ -179,6 +179,32 @@ auto cmp_internal(uint32_t source, uint32_t operand) -> uint32_t
     return clip<Size>(result);
 }
 
+template<int Size>
+auto lsr_internal(uint32_t reg, uint32_t shift) -> uint32_t
+{
+    uint32_t result = reg;
+
+    bool carry = false;
+
+    for (uint32_t i = 0; i < shift; i++)
+    {
+	carry = testbit(result, 0);
+	result >>= 1;
+    }
+
+    setcarry(carry);
+    setoverflow(false);
+    setzero(getZero<Size>(result));
+    setsign(getSign<Size>(result));
+
+    if (shift != 0)
+    {
+	setextend(iscarry());
+    }
+
+    return clip<Size>(result);
+}
+
 template<int Size, uint16_t mask = AllAddr, int Flags = None>
 auto srcaddrmode(int mode, int reg) -> uint32_t
 {
@@ -1465,6 +1491,47 @@ auto m68k_eori(uint16_t instr) -> int
     {
 	cycles = (Size == Long) ? 20 : 12;
 	cycles += effective_address_cycles<Size>(dest_mode);
+    }
+
+    return cycles;
+}
+
+template<int Size>
+auto m68k_lsr(uint16_t instr) -> int
+{
+    bool is_reg = testbit(instr, 5);
+    int reg_count = getdstreg(instr);
+    int srcreg = getsrcreg(instr);
+
+    int shift_count = 0;
+
+    if (is_reg)
+    {
+	shift_count = (getDataReg<Size>(reg_count) % 64);
+    }
+    else
+    {
+	shift_count = reg_count;
+
+	if (shift_count == 8)
+	{
+	    shift_count = 0;
+	}
+    }
+
+    uint32_t shift_reg = getDataReg<Size>(srcreg);
+    uint32_t result = lsr_internal<Size>(shift_reg, shift_count);
+    setDataReg<Size>(srcreg, result);
+
+    int cycles = (2 * shift_count);
+
+    if (Size == Long)
+    {
+	cycles += 8;
+    }
+    else
+    {
+	cycles += 6;
     }
 
     return cycles;

@@ -39,6 +39,12 @@ auto msb() -> uint32_t
 }
 
 template<int Size>
+auto lsb() -> uint32_t
+{
+    return 1;
+}
+
+template<int Size>
 auto clip(uint32_t data) -> uint32_t
 {
     switch (Size)

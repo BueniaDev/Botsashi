@@ -225,6 +225,8 @@ auto dstmodedasm(int mode, int reg, ostream &stream, uint32_t &pc) -> size_t
 
 auto m68kdis_unknown(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
+    (void)pc;
+    (void)instr;
     stream << "undefined";
     return 0;
 }
@@ -712,6 +714,22 @@ auto m68kdis_eori(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
     stream << " #$" << hex << int(imm_val) << ", " << mode_str.str();
 
     return offset;
+}
+
+template<int Size>
+auto m68kdis_lsr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    stream << "lsr";
+
+    switch (Size)
+    {
+	case Byte: stream << ".b"; break;
+	case Word: stream << ".w"; break;
+	case Long: stream << ".l"; break;
+	default: stream << ".u"; break;
+    }
+
+    return 0;
 }
 
 auto m68kdis_swap(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
