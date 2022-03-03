@@ -130,6 +130,13 @@ namespace botsashi
     int Botsashi::executeinstr(uint16_t instr)
     {
 	int first_four = (instr >> 12);
+
+	if ((first_four == 0xA) || (first_four == 0xF))
+	{
+	    unrecognizedinstr(instr);
+	    return 0;
+	}
+
 	int start = (table_offsets[first_four]);
 	int finish = (table_offsets[(first_four + 1)] - 1);
 
@@ -183,6 +190,12 @@ namespace botsashi
 	pcval += 2;
 
 	int first_four = (instr >> 12);
+
+	if ((first_four == 0xA) || (first_four == 0xF))
+	{
+	    return m68kdis_unknown(stream, pcval, instr);
+	}
+
 	int start = (table_offsets[first_four]);
 	int finish = (table_offsets[(first_four + 1)] - 1);
 
