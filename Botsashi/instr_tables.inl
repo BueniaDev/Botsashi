@@ -13,9 +13,9 @@
 */
 
 // Instruction table is 180 instructions
-array<int, 16> table_offsets = {
+array<int, 17> table_offsets = {
      0,  36,  37, 38,  39,  82,  90,  93, 
-    94, 103, 114, 114, 125, 137, 148, 148
+    94, 103, 114, 115, 126, 138, 149, 181, 182
 };
 
 vector<m68kmapping> funcmappings =
@@ -191,6 +191,9 @@ vector<m68kmapping> funcmappings =
     instruction(0xF1F0, 0x9140, unknown, unknown), // 4-184 (p288)
     instruction(0xF1F0, 0x9180, unknown, unknown), // 4-184 (p288)
 
+    // 0xA
+    instruction(0xF000, 0xA000, unknown, unknown), // LINE 1010 exception
+
     // 0xB
 
     instruction(0xF1C0, 0xB100, unknown, unknown), // 4-100 (p204)
@@ -285,4 +288,7 @@ vector<m68kmapping> funcmappings =
     instruction(0xF1D8, 0xE050, unknown, unknown), // 4-163 (p267)
     instruction(0xF1D8, 0xE090, unknown, unknown), // 4-163 (p267)
     instruction(0xFFC0, 0xE4C0, unknown, unknown), // 4-163 (p267)
+
+    // 0xF
+    instruction(0xF000, 0xF000, unknown, unknown), // LINE 1111 exception
 };
