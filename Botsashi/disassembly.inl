@@ -311,6 +311,8 @@ auto m68kdis_add_internal(ostream &stream, uint32_t pc, uint16_t instr) -> size_
 template<int Size>
 auto m68kdis_addq(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
+    (void)pc;
+    (void)instr;
     stream << "addq";
     return 0;
 }
@@ -394,6 +396,8 @@ auto m68kdis_jsr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 
 auto m68kdis_jmp(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
+    (void)pc;
+    (void)instr;
     stream << "jmp";
     return 0;
 }

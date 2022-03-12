@@ -1071,6 +1071,7 @@ auto m68k_dbcc(uint16_t instr) -> int
 
 auto m68k_rts(uint16_t instr) -> int
 {
+    (void)instr;
     uint32_t stack_pointer = getAddrReg<Long>(7);
     uint32_t pc_val = read<Long>(stack_pointer);
     stack_pointer += 4;
@@ -1957,12 +1958,14 @@ auto m68k_trap(uint16_t instr) -> int
 
 auto m68k_nop(uint16_t instr) -> int
 {
+    (void)instr;
     // NOP instruction
     return 4;
 }
 
 auto m68k_stop(uint16_t instr) -> int
 {
+    (void)instr;
     uint16_t stopimm = extension<Word>(m68kreg.pc);
     // Set status register to value of stopimm
     m68kreg.statusreg = stopimm;
