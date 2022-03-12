@@ -234,6 +234,15 @@ auto srcaddrmode(int mode, int reg) -> uint32_t
 	    }
 	}
 	break;
+	case 1:
+	{
+	    if (testbit(mask, 1) && (Size != Byte))
+	    {
+		temp = getAddrReg<Size>(reg);
+		is_inst_legal = true;
+	    }
+	}
+	break;
 	case 2:
 	{
 	    if (testbit(mask, 2))
@@ -1336,6 +1345,46 @@ auto m68k_addi(uint16_t instr) -> int
     }
 
     uint32_t result = add_internal<Size>(reg_val, imm_val);
+
+    dstaddrmode<Size, DataAltAddr>(dstmode, dstreg, result);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    int dest_mode = calc_mode(dstmode, dstreg);
+
+    int cycles = 0;
+
+    if (dstmode == 0)
+    {
+	cycles = (Size == Long) ? 16 : 8;
+    }
+    else
+    {
+	cycles = (Size == Long) ? 20 : 12;
+	cycles += effective_address_cycles<Size>(dest_mode);
+    }
+
+    return cycles;
+}
+
+template<int Size>
+auto m68k_subi(uint16_t instr) -> int
+{
+    int dstmode = getsrcmode(instr);
+    int dstreg = getsrcreg(instr);
+    auto imm_val = extension<Size>(m68kreg.pc);
+
+    uint32_t reg_val = srcaddrmode<Size, DataAltAddr, Hold>(dstmode, dstreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    uint32_t result = sub_internal<Size>(reg_val, imm_val);
 
     dstaddrmode<Size, DataAltAddr>(dstmode, dstreg, result);
 

@@ -37,9 +37,9 @@ vector<m68kmapping> funcmappings =
     instruction(0xFFC0, 0x0A40, eori<Word>, eori<Word>), // 4-102 (p206)
     instruction(0xFFC0, 0x0A80, eori<Long>, eori<Long>), // 4-102 (p206)
 
-    instruction(0xFFC0, 0x0400, unknown, unknown), // 4-179 (p283)
-    instruction(0xFFC0, 0x0440, unknown, unknown), // 4-179 (p283)
-    instruction(0xFFC0, 0x0480, unknown, unknown), // 4-179 (p283)
+    instruction(0xFFC0, 0x0400, subi<Byte>, subi<Byte>), // 4-179 (p283)
+    instruction(0xFFC0, 0x0440, subi<Word>, subi<Word>), // 4-179 (p283)
+    instruction(0xFFC0, 0x0480, subi<Long>, subi<Long>), // 4-179 (p283)
 
     instruction(0xFFC0, 0x0C00, unknown, unknown), // 4-79 (p183)
     instruction(0xFFC0, 0x0C40, unknown, unknown), // 4-79 (p183)

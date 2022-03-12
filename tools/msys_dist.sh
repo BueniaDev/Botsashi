@@ -12,5 +12,6 @@ if [ -d "Simsashi" ]; then
 		cp "${lib}" dist
 	done
 	cp Simsashi/simsashi.exe dist
+	windeployqt dist/simsashi.exe
 fi
 

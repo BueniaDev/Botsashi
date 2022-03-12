@@ -363,6 +363,8 @@ auto m68kdis_sub_internal(ostream &stream, uint32_t pc, uint16_t instr) -> size_
 template<int Size>
 auto m68kdis_subq(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
+    (void)pc;
+    (void)instr;
     stream << "subq";
     return 0;
 }
@@ -376,12 +378,16 @@ auto m68kdis_exgdreg(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 
 auto m68kdis_lea(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
+    (void)pc;
+    (void)instr;
     stream << "lea";
     return 0;
 }
 
 auto m68kdis_jsr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
+    (void)pc;
+    (void)instr;
     stream << "jsr";
     return 0;
 }
@@ -434,12 +440,16 @@ auto m68kdis_bsr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 
 auto m68kdis_bcc(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
+    (void)pc;
+    (void)instr;
     stream << "bcc";
     return 0;
 }
 
 auto m68kdis_dbcc(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
+    (void)pc;
+    (void)instr;
     stream << "dbcc";
     return 0;
 }
@@ -639,6 +649,32 @@ auto m68kdis_addi(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 }
 
 template<int Size>
+auto m68kdis_subi(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    int dstmode = getsrcmode(instr);
+    int dstreg = getsrcreg(instr);
+    auto imm_val = extension<Size>(pc);
+
+    stream << "subi";
+
+    switch (Size)
+    {
+	case Byte: stream << ".b"; break;
+	case Word: stream << ".w"; break;
+	case Long: stream << ".l"; break;
+	default: stream << ".u"; break;
+    }
+
+    stringstream mode_str;
+    size_t offset = (Size == Long) ? 6 : 4;
+    offset += dstmodedasm<Size, DataAltAddr>(dstmode, dstreg, mode_str, pc);
+
+    stream << " #$" << hex << int(imm_val) << ", " << mode_str.str();
+
+    return offset;
+}
+
+template<int Size>
 auto m68kdis_andi(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
     int dstmode = getsrcmode(instr);
@@ -766,18 +802,24 @@ auto m68kdis_clear(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 
 auto m68kdis_bchg(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
+    (void)pc;
+    (void)instr;
     stream << "bchg Dn, <ea>";
     return 0;
 }
 
 auto m68kdis_bset(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
+    (void)pc;
+    (void)instr;
     stream << "bset Dn, <ea>";
     return 0;
 }
 
 auto m68kdis_bclr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
+    (void)pc;
+    (void)instr;
     stream << "bclr Dn, <ea>";
     return 0;
 }

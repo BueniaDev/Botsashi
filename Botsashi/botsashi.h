@@ -1,6 +1,6 @@
 /*
     This file is part of Botsashi.
-    Copyright (C) 2021 BueniaDev.
+    Copyright (C) 2022 BueniaDev.
 
     Botsashi is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ namespace botsashi
 	    virtual uint16_t readWord(bool upper, bool lower, uint32_t addr) = 0;
 	    virtual void writeWord(bool upper, bool lower, uint32_t addr, uint16_t val) = 0;
 	    virtual bool istrapOverride(int val) = 0;
-	    virtual void trapException(int val, Botsashi &m68k) = 0;
+	    virtual void trapException(int val) = 0;
 	    virtual void stopFunction() = 0;
     };
 

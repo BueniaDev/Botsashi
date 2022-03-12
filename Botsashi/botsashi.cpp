@@ -1,6 +1,6 @@
 /*
     This file is part of Botsashi.
-    Copyright (C) 2021 BueniaDev.
+    Copyright (C) 2022 BueniaDev.
 
     Botsashi is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -53,6 +53,7 @@ namespace botsashi
 	    m68kreg.addrreg[i] = 0;
 	}
 
+	m68kreg.addrreg[7] = 0x01000000;
 	m68kreg.pc = init_pc;
 	setstatusreg(0x2700);
 
@@ -107,7 +108,7 @@ namespace botsashi
     {
 	if (inter)
 	{
-	    inter->trapException(val, *this);
+	    inter->trapException(val);
 	}
     }
 
