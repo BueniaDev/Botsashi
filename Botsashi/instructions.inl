@@ -1563,9 +1563,9 @@ auto m68k_lsr(uint16_t instr) -> int
     {
 	shift_count = reg_count;
 
-	if (shift_count == 8)
+	if (shift_count == 0)
 	{
-	    shift_count = 0;
+	    shift_count = 8;
 	}
     }
 

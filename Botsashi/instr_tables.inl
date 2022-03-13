@@ -264,9 +264,9 @@ vector<m68kmapping> funcmappings =
     instruction(0xF1D8, 0xE188, unknown, unknown), // 4-113 (p217)
     instruction(0xFFC0, 0xE3C0, unknown, unknown), // 4-113 (p217)
 
-    instruction(0xF1D8, 0xE008, unknown, unknown), // 4-113 (p217)
-    instruction(0xF1D8, 0xE048, unknown, unknown), // 4-113 (p217)
-    instruction(0xF1D8, 0xE088, unknown, unknown), // 4-113 (p217)
+    instruction(0xF1D8, 0xE008, lsr<Byte>, lsr<Byte>), // 4-113 (p217)
+    instruction(0xF1D8, 0xE048, lsr<Word>, lsr<Word>), // 4-113 (p217)
+    instruction(0xF1D8, 0xE088, lsr<Long>, lsr<Long>), // 4-113 (p217)
     instruction(0xFFC0, 0xE2C0, unknown, unknown), // 4-113 (p217)
 
     instruction(0xF1D8, 0xE118, unknown, unknown), // 4-160 (p264)

@@ -759,6 +759,8 @@ auto m68kdis_eori(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 template<int Size>
 auto m68kdis_lsr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
+    (void)pc;
+    (void)instr;
     stream << "lsr";
 
     switch (Size)

@@ -144,9 +144,11 @@ class QSimsashi : public QMainWindow, public BotsashiInterface
 	void textOut(QString str);
 	void textOutCRLF(QString str);
 	void charOut(QPainter &painter, QChar character);
+	void setTextSize();
 
 	void backspace(QPainter &painter);
 	void drawChar(QPainter &painter, int x, int y, QChar character);
+	void drawCharInternal(QPainter &painter, int x, int y, QChar character, bool is_print);
 
 	void setPenColor(uint32_t color);
 	void setFillColor(uint32_t color);
@@ -164,6 +166,7 @@ class QSimsashi : public QMainWindow, public BotsashiInterface
 	void setPenWidth(int width);
 
 	void doCRLF();
+	void setTextPos(int row, int col);
 
 	QPainter img_painter;
 
@@ -173,15 +176,23 @@ class QSimsashi : public QMainWindow, public BotsashiInterface
 	int window_width = 0;
 	int window_height = 0;
 
+	int font_width = 0;
+	int font_height = 0;
+
+	int text_xpos = 0;
+	int text_ypos = 0;
+
 	QPoint current_point;
 
 	QString line_text;
+
+	void setFont(QString family, int size);
 
 	QPen current_pen;
 	QBrush current_brush;
 
 	bool key_pending = false;
-	QChar pending_key;
+	QString pending_text;
 
 	array<QChar, (256 * 128)> characters;
 };

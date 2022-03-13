@@ -8,8 +8,7 @@ QSimsashi::QSimsashi(QWidget *parent) : window_width(640), window_height(480)
     memory.resize(0x1000000, 0x00);
     m68k.setinterface(*this);
 
-    font_family = "Fixedsys";
-    font_size = 9;
+    setFont("Fixedsys", 9);
 
     framebuffer.resize((window_width * window_height * 3), 0x00);
 
@@ -73,13 +72,41 @@ void QSimsashi::trapException(int val)
 
     switch (function_number)
     {
-	case 5:
+	case 2:
 	{
-	    uint8_t key_char = 0;
+	    QString text;
+
 	    if (key_pending)
 	    {
-		key_char = pending_key.toLatin1();
+		text = pending_text;
 		key_pending = false;
+		pending_text = "";
+	    }
+	    else
+	    {
+		while (true)
+		{
+		    text = QInputDialog::getText(this, "Get string", "Enter ASCII string here:");
+
+		    if ((text.size() > 0) && (text.size() <= 80))
+		    {
+			break;
+		    }
+		}
+	    }
+
+	    set_string(text, 1);
+	    setDataReg<uint16_t>(1, text.size());
+	    textOutCRLF(text);
+	}
+	break;
+	case 5:
+	{
+	    QChar key_char = 0;
+	    if (key_pending)
+	    {
+		cout << "Key pending" << endl;
+		exit(0);
 	    }
 	    else
 	    {
@@ -90,10 +117,23 @@ void QSimsashi::trapException(int val)
 		    text = QInputDialog::getText(this, "Get character", "Enter ONE ASCII character here:");
 		}
 
-		key_char = text.at(0).toLatin1();
+		key_char = text.at(0);
 	    }
 
-	    setDataReg<uint8_t>(1, key_char);
+	    setDataReg<uint8_t>(1, key_char.toLatin1());
+	    textOut(QString(key_char));
+	}
+	break;
+	case 7:
+	{
+	    if (key_pending)
+	    {
+		setDataReg<uint8_t>(1, 1);
+	    }
+	    else
+	    {
+		setDataReg<uint8_t>(1, 0);
+	    }
 	}
 	break;
 	case 9: stopFunction(); break;
@@ -112,7 +152,7 @@ void QSimsashi::trapException(int val)
 	case 23:
 	{
 	    uint32_t centiseconds = getDataReg<uint32_t>(1);
-	    cout << "Delaying " << dec << int(centiseconds) << " centiseconds" << endl;
+	    // cout << "Delaying " << dec << int(centiseconds) << " centiseconds" << endl;
 	}
 	break;
 	case 32:
@@ -167,6 +207,74 @@ void QSimsashi::trapException(int val)
 		}
 		break;
 	    }
+	}
+	break;
+	// TODO: File API
+	case 50:
+	{
+	    cout << "Closing all files..." << endl;
+	    setDataReg<uint16_t>(0, 0);
+	}
+	break;
+	case 51:
+	{
+	    QString filename = form_string();
+	    cout << "Opening new file of " << filename.toStdString() << endl;
+	    setDataReg<uint16_t>(0, 0);
+	    setDataReg<uint32_t>(1, 0);
+	}
+	break;
+	case 52:
+	{
+	    QString filename = form_string();
+	    cout << "Opening new file of " << filename.toStdString() << endl;
+	    setDataReg<uint16_t>(0, 0);
+	    setDataReg<uint32_t>(1, 0);
+	}
+	break;
+	case 53:
+	{
+	    cout << "Reading file..." << endl;
+	    setDataReg<uint16_t>(0, 0);
+	}
+	break;
+	case 54:
+	{
+	    cout << "Writing file..." << endl;
+	    setDataReg<uint16_t>(0, 0);
+	}
+	break;
+	case 55:
+	{
+	    cout << "Seeking file..." << endl;
+	    setDataReg<uint16_t>(0, 0);
+	}
+	break;
+	case 56:
+	{
+	    cout << "Closing file..." << endl;
+	    setDataReg<uint16_t>(0, 0);
+	}
+	break;
+	case 57:
+	{
+	    QString filename = form_string();
+	    cout << "Closing file of " << filename.toStdString() << endl;
+	    setDataReg<uint16_t>(0, 0);
+	}
+	break;
+	case 58:
+	{
+	    cout << "Displaying file dialog" << endl;
+	    setDataReg<uint32_t>(1, 0);
+	    setDataReg<uint16_t>(0, 0);
+	}
+	break;
+	case 59:
+	{
+	    QString filename = form_string();
+	    cout << "Performing file operations on filename of " << filename.toStdString() << endl;
+	    setDataReg<uint16_t>(0, 0);
 	}
 	break;
 	// TODO: Sound API
@@ -300,6 +408,38 @@ void QSimsashi::trapException(int val)
 	    setPenWidth(pen_width);
 	}
 	break;
+	case 100:
+	{
+	    cout << "Configuring as client..." << endl;
+	    uint32_t config_reg = getDataReg<uint32_t>(1);
+
+	    int mode = (config_reg & 0xFF);
+	    int port_number = (config_reg >> 16);
+
+	    QString ip_addr = form_string(2);
+
+	    switch (mode)
+	    {
+		case 0:
+		{
+		    cout << "Setting up UDP connection to address of " << ip_addr.toStdString() << " and port of " << dec << port_number << endl;
+		}
+		break;
+		case 1:
+		{
+		    cout << "Setting up TCP connection to address of " << ip_addr.toStdString() << " and port of " << dec << port_number << endl;
+		}
+		break;
+		default:
+		{
+		    cout << "Reserved value of " << dec << mode << " detected" << endl;
+		}
+		break;
+	    }
+
+	    setDataReg<uint32_t>(0, 0);
+	}
+	break;
 	case 101:
 	{
 	    cout << "Configuring as server..." << endl;
@@ -328,6 +468,24 @@ void QSimsashi::trapException(int val)
 	    }
 
 	    setDataReg<uint32_t>(0, 0);
+	}
+	break;
+	case 102:
+	{
+	    cout << "Sending data" << endl;
+	    setDataReg<uint32_t>(0, 0);
+	    setDataReg<uint32_t>(1, 0);
+	}
+	break;
+	case 103:
+	{
+	    cout << "Receiving data" << endl;
+	    QString temp_ip = "127.0.0.1";
+
+	    set_string(temp_ip);
+
+	    setDataReg<uint32_t>(0, 0);
+	    setDataReg<uint32_t>(1, 0);
 	}
 	break;
 	case 105:
@@ -526,7 +684,6 @@ void QSimsashi::textOut(QString str)
 void QSimsashi::charOut(QPainter &painter, QChar character)
 {
     char latin_str = character.toLatin1();
-    line_text.append(character);
 
     switch (latin_str)
     {
@@ -575,44 +732,76 @@ void QSimsashi::charOut(QPainter &painter, QChar character)
 	}
 	break;
     }
+
+    setTextPos(current_row, current_col);
 }
 
 void QSimsashi::backspace(QPainter &painter)
 {
-    int x = current_col;
-    int y = current_row;
-
-    int xoffs = (x * font_size);
-    int yoffs = ((y + 1) * (font_size + 5));
-
-    auto prev_char = characters.at(x + (256 * y));
-
-    painter.setPen(Qt::black);
-    painter.drawText(xoffs, yoffs, prev_char);
-
-    current_col -= 1;
+    setTextPos(current_row, (current_col - 1));
+    drawCharInternal(painter, current_col, current_row, 0, false);
 }
 
 void QSimsashi::drawChar(QPainter &painter, int x, int y, QChar character)
 {
-    int xoffs = (x * font_size);
-    int yoffs = ((y + 1) * (font_size + 5));
+    drawCharInternal(painter, x, y, character, true);
+}
 
-    auto &prev_char = characters.at(x + (256 * y));
-
+void QSimsashi::drawCharInternal(QPainter &painter, int x, int y, QChar character, bool is_print)
+{
+    auto &prev_char = characters.at(x + (font_width * y));
     painter.setPen(Qt::black);
-    painter.drawText(xoffs, yoffs, prev_char);
+    painter.drawText(text_xpos, text_ypos, font_width, font_height, 0, prev_char);
 
-    prev_char = character;
+    if (is_print)
+    {
+	prev_char = character;
+	painter.setPen(Qt::white);
+	painter.drawText(text_xpos, text_ypos, font_width, font_height, 0, character);
+    }
+}
 
-    painter.setPen(Qt::white);
-    painter.drawText(xoffs, yoffs, QString(character));
+void QSimsashi::setFont(QString family, int size)
+{
+    font_family = family;
+    font_size = size;
+    setTextSize();
+}
+
+void QSimsashi::setTextSize()
+{
+    QFont font(font_family, font_size);
+    QFontMetrics fm(font);
+
+    font_width = fm.horizontalAdvance("W");
+    font_height = fm.height();
+}
+
+void QSimsashi::setTextPos(int row, int col)
+{
+    if (row < 0)
+    {
+	row = 0;
+    }
+
+    if (col < 0)
+    {
+	col = 0;
+    }
+
+    current_row = row;
+    current_col = col;
+
+    text_ypos = (font_height * row);
+    text_xpos = (font_width * col);
 }
 
 void QSimsashi::doCRLF()
 {
     current_col = 0;
     current_row += 1;
+
+    setTextPos(current_row, current_col);
 }
 
 bool QSimsashi::loadSRecord(string filename)
@@ -658,9 +847,48 @@ bool QSimsashi::loadSRecord(string filename)
 		}
 	    }
 	    break;
+	    case '2':
+	    {
+		uint32_t code_addr = from_hex_str(line.substr(4, 6));
+		uint32_t num_bytes = (byte_count - 4);
+
+		for (size_t index = 0; index < num_bytes; index++)
+		{
+		    uint32_t byte_offs = (10 + (index << 1));
+		    uint8_t data_byte = from_hex_str(line.substr(byte_offs, 2));
+		    memory.at(code_addr + index) = data_byte;
+		}
+	    }
+	    break;
+	    case '3':
+	    {
+		uint32_t code_addr = from_hex_str(line.substr(4, 8));
+		uint32_t num_bytes = (byte_count - 5);
+
+		for (size_t index = 0; index < num_bytes; index++)
+		{
+		    uint32_t byte_offs = (12 + (index << 1));
+		    uint8_t data_byte = from_hex_str(line.substr(byte_offs, 2));
+		    memory.at(code_addr + index) = data_byte;
+		}
+	    }
+	    break;
+	    case '5': break;
+	    case '7':
+	    {
+		uint32_t exec_addr = from_hex_str(line.substr(4, 8));
+		m68k.init(exec_addr);
+	    }
+	    break;
 	    case '8':
 	    {
 		uint32_t exec_addr = from_hex_str(line.substr(4, 6));
+		m68k.init(exec_addr);
+	    }
+	    break;
+	    case '9':
+	    {
+		uint32_t exec_addr = from_hex_str(line.substr(4, 4));
 		m68k.init(exec_addr);
 	    }
 	    break;
@@ -694,12 +922,30 @@ void QSimsashi::render()
 
 void QSimsashi::keyPressEvent(QKeyEvent *event)
 {
-    int key = event->key();
-
-    if (key >= Qt::Key_Space && key <= Qt::Key_AsciiTilde)
+    if (event->key() == Qt::Key_Return)
     {
+	doCRLF();
 	key_pending = true;
-	pending_key = QChar(key);
+    }
+    else if (event->key() == Qt::Key_Backspace)
+    {
+	QChar backspace_key(0x08);
+	textOut(backspace_key);
+
+	if (!pending_text.isEmpty())
+	{
+	    pending_text.chop(1);
+	}
+    }
+    else
+    {
+	QChar pending_key = event->text().at(0);
+
+	if (pending_key.toLatin1() != 0)
+	{
+	    textOut(pending_key);
+	    pending_text.append(pending_key);
+	}
     }
 }
 

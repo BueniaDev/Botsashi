@@ -67,20 +67,20 @@ Core dependencies:
 
 Optional dependencies:
 
-* SDL2 (for the Simsashi simulator):
+* Qt5 (for the Simsashi simulator):
 
-    * Debian: `sudo apt-get install libsdl2-dev`
+    * Debian: `sudo apt-get install qtbase5-dev libqt5opengl5-dev qtmultimedia5-dev`
 
-    * Arch (not tested): `sudo pacman -S sdl2`
+    * Arch (not tested): `sudo pacman -S qt5`
 
-    * Fedora (not tested): `sudo dnf install SDL2-devel`
+    * Fedora (not tested): `sudo dnf install qt5-qtmultimedia-devel`
 
-    * OpenSUSE: (not tested): `sudo zypper in libSDL2-devel`
+    * OpenSUSE: (not tested): `sudo zypper in libQt5Multimedia5 libqt5-qtmultimedia-devel libQt5Concurrent-devel`
 
 Step 2: Clone the repository:
 
 ```
-git clone --recursive https://github.com/BueniaDev/libmbGB.git
+git clone --recursive https://github.com/BueniaDev/Botsashi.git
 cd Botsashi
 ```
 
@@ -113,7 +113,7 @@ Step 3: Compile:
 
 ```
 mkdir build && cd build
-cmake .. -G "Unix Makefiles" -DBUILD_SIMSASHI="<ON/OFF>" -DCMAKE_BUILD_TYPE="<Debug/Release>"
+cmake .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE="<Debug/Release>"
 make -j$(sysctl -n hw.ncpu)
 ```
 
@@ -124,7 +124,7 @@ Make sure to run `pacman -Syu` as needed.
 
 Step 1: Install dependencies:
 
-`pacman -S base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-SDL2 git`
+`pacman -S base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake <mingw-w64-x86_64-qt5> git`
 
 Step 2: Clone the repository:
 
@@ -147,6 +147,8 @@ cmake .. -G "MSYS Makefiles" -DBUILD_SIMSASHI="<ON/OFF>" -DCMAKE_BUILD_TYPE="<De
 ## Near-term
 
 Complete Motorola 68000 support (as of right now, this engine supports only a subset of the M68K instruction set with only extremely bare-bones exception support)
+
+Feature parity between the Simsashi and SIM68k simulators
 
 ## Medium-term
 
