@@ -231,6 +231,14 @@ auto m68kdis_unknown(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
     return 0;
 }
 
+auto m68kdis_move_to_sr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    (void)pc;
+    (void)instr;
+    stream << "move <ea>, SR";
+    return 0;
+}
+
 template<int Size>
 auto m68kdis_move(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {

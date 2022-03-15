@@ -504,7 +504,6 @@ auto dstaddrmode(int mode, int reg, uint32_t val) -> void
     if (!is_inst_legal)
     {
 	cout << "Illegal instruction" << endl;
-	exit(1);
 	set_m68k_exception(IllegalInst);
     }
 }
@@ -519,6 +518,32 @@ auto m68k_unknown(uint16_t instr) -> int
 {
     unrecognizedinstr(instr);
     return 0;
+}
+
+auto m68k_move_to_sr(uint16_t instr) -> int
+{
+    if (!ismodesupervisor())
+    {
+	// Privilege violation
+	set_m68k_exception(Unprivileged);
+	return -1;
+    }
+
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    uint32_t sr_value = srcaddrmode<Word, DataAddr>(srcmode, srcreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    setStatusReg(sr_value);
+    int source_mode = calc_mode(srcmode, srcreg);
+
+    int cycles = (12 + effective_address_cycles<Word>(source_mode));
+    return cycles;
 }
 
 template<int Size> 

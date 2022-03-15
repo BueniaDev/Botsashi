@@ -114,6 +114,11 @@ namespace botsashi
 		return m68kreg.pc;
 	    }
 
+	    uint16_t getStatusReg()
+	    {
+		return m68kreg.statusreg;
+	    }
+
 	    template<int Size>
 	    uint32_t getDataReg(int reg)
 	    {
@@ -141,18 +146,6 @@ namespace botsashi
 		reg &= 7;
 		m68kreg.addrreg[reg] = ((m68kreg.addrreg[reg] & ~mask<Size>()) | (val & mask<Size>()));
 	    }
-
-	    bool iscarry();
-	    bool isoverflow();
-	    bool iszero();
-	    bool issign();
-	    bool isextend();
-
-	    void setcarry(bool val);
-	    void setoverflow(bool val);
-	    void setzero(bool val);
-	    void setsign(bool val);
-	    void setextend(bool val);
 
 	    void init(uint32_t init_pc = 0);
 	    void shutdown();
@@ -299,6 +292,26 @@ namespace botsashi
 	    unique_ptr<BotsashiInterface> inter;
 
 	    m68kregisters m68kreg;
+
+	    void setStatusReg(uint16_t data)
+	    {
+		// TODO: Add support for other M68K architectures?
+		data &= 0xA71F; // T1 -- S -- -- I2 I1 I0 -- -- -- X N Z V C
+		m68kreg.statusreg = data;
+	    }
+
+	    bool ismodesupervisor();
+	    bool iscarry();
+	    bool isoverflow();
+	    bool iszero();
+	    bool issign();
+	    bool isextend();
+
+	    void setcarry(bool val);
+	    void setoverflow(bool val);
+	    void setzero(bool val);
+	    void setsign(bool val);
+	    void setextend(bool val);
 
 	    #include "traits.inl"
 

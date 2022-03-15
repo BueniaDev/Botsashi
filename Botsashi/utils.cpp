@@ -41,6 +41,11 @@ auto Botsashi::getopcond(uint16_t instr) -> int
     return ((instr >> 8) & 0xF);
 }
 
+bool Botsashi::ismodesupervisor()
+{
+    return testbit(m68kreg.statusreg, 13);
+}
+
 bool Botsashi::iscarry()
 {
     return testbit(m68kreg.statusreg, 0);
