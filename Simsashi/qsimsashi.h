@@ -28,6 +28,12 @@ class QSimsashi : public QMainWindow, public BotsashiInterface
 	bool loadSRecord(string filename);
 
     private:
+	template<typename T>
+	bool testbit(T reg, int bit)
+	{
+	    return ((reg >> bit) & 1) ? true : false;
+	}
+
 	Botsashi m68k;
 
 	bool stopped = false;
@@ -38,6 +44,7 @@ class QSimsashi : public QMainWindow, public BotsashiInterface
 	void render();
 
 	void keyPressEvent(QKeyEvent *event) override;
+	void mousePressEvent(QMouseEvent *event) override;
 	void paintEvent(QPaintEvent *event) override;
 
 	vector<uint8_t> memory;
@@ -195,6 +202,9 @@ class QSimsashi : public QMainWindow, public BotsashiInterface
 	QString pending_text;
 
 	array<QChar, (256 * 128)> characters;
+
+	int mouse_irq_level = 0;
+	int mouse_irq_mask = 0;
 };
 
 

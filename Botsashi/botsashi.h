@@ -147,34 +147,16 @@ namespace botsashi
 		m68kreg.addrreg[reg] = ((m68kreg.addrreg[reg] & ~mask<Size>()) | (val & mask<Size>()));
 	    }
 
-	    void init(uint32_t init_pc = 0);
+	    void init();
+	    void init(uint32_t init_pc);
 	    void shutdown();
-	    void reset_exception(uint32_t vector_offs = 0);
+	    void reset();
+	    void reset_exception();
 	    int executenextinstr();
 	    int executeinstr(uint16_t instr);
 	    void debugoutput(bool printdisassembly = true);
 	    size_t disassembleinstr(ostream &stream, uint32_t pc);
-
-	    void setstatusreg(uint16_t val);
-
-	    void stopFunction();
-
-	    auto getsrcmode(uint16_t instr) -> int;
-	    auto getsrcreg(uint16_t instr) -> int;
-	    auto getdstmode(uint16_t instr) -> int;
-	    auto getdstreg(uint16_t instr) -> int;
-	    auto getopcond(uint16_t instr) -> int;
-
-	    template<int Size> auto getZero(uint32_t temp, bool is_extend = false) -> bool;
-	    template<int Size> auto getSign(uint32_t temp) -> bool;
-
-	    template<typename T> bool testbit(T reg, int bit);
-	    template<typename T> T setbit(T reg, int bit);
-	    template<typename T> T resetbit(T reg, int bit);
-	    template<typename T> T changebit(T reg, int bit, bool val);
-	    template<typename T> T togglebit(T reg, int bit);
-
-	    bool stopped = false;
+	    void fire_irq(int level, bool line);
 
 	    void setinterface(BotsashiInterface &cb);
 
@@ -289,7 +271,29 @@ namespace botsashi
 		m68kexcept.exception_type = type;
 	    }
 
+	    void init_regs();
+	    bool is_reset_exception = false;
+
 	    unique_ptr<BotsashiInterface> inter;
+
+	    template<int Size>
+	    void pushStack(uint32_t val)
+	    {
+		uint32_t stack_pointer = getAddrReg<Long>(7);
+		stack_pointer -= bytes<Size>();
+		write<Size>(stack_pointer, val);
+		setAddrReg<Long>(7, stack_pointer);
+	    }
+
+	    template<int Size>
+	    uint32_t popStack()
+	    {
+		uint32_t stack_pointer = getAddrReg<Long>(7);
+		uint32_t value = read<Size>(stack_pointer);
+		stack_pointer += bytes<Size>();
+		setAddrReg<Long>(7, stack_pointer);
+		return value;
+	    }
 
 	    m68kregisters m68kreg;
 
@@ -300,18 +304,44 @@ namespace botsashi
 		m68kreg.statusreg = data;
 	    }
 
+	    void stopFunction();
+	    int handle_interrupts();
+
+	    auto getsrcmode(uint16_t instr) -> int;
+	    auto getsrcreg(uint16_t instr) -> int;
+	    auto getdstmode(uint16_t instr) -> int;
+	    auto getdstreg(uint16_t instr) -> int;
+	    auto getopcond(uint16_t instr) -> int;
+
+	    bool stopped = false;
+
 	    bool ismodesupervisor();
+	    void set_supervisor_flag(bool is_set);
+	    void set_trace_flag(bool is_set);
+	    int get_irq_mask();
+	    void set_irq_mask(int val);
 	    bool iscarry();
 	    bool isoverflow();
 	    bool iszero();
 	    bool issign();
 	    bool isextend();
 
+	    int irq_line = 0;
+
 	    void setcarry(bool val);
 	    void setoverflow(bool val);
 	    void setzero(bool val);
 	    void setsign(bool val);
 	    void setextend(bool val);
+
+	    template<int Size> auto getZero(uint32_t temp, bool is_extend = false) -> bool;
+	    template<int Size> auto getSign(uint32_t temp) -> bool;
+
+	    template<typename T> bool testbit(T reg, int bit);
+	    template<typename T> T setbit(T reg, int bit);
+	    template<typename T> T resetbit(T reg, int bit);
+	    template<typename T> T changebit(T reg, int bit, bool val);
+	    template<typename T> T togglebit(T reg, int bit);
 
 	    #include "traits.inl"
 

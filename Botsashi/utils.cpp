@@ -46,6 +46,27 @@ bool Botsashi::ismodesupervisor()
     return testbit(m68kreg.statusreg, 13);
 }
 
+void Botsashi::set_supervisor_flag(bool is_set)
+{
+    setStatusReg(changebit(m68kreg.statusreg, 13, is_set));
+}
+
+void Botsashi::set_trace_flag(bool is_set)
+{
+    setStatusReg(changebit(m68kreg.statusreg, 15, is_set));
+}
+
+int Botsashi::get_irq_mask()
+{
+    return ((m68kreg.statusreg >> 8) & 0x7);
+}
+
+void Botsashi::set_irq_mask(int value)
+{
+    uint16_t new_status_reg = ((m68kreg.statusreg & ~0x700) | ((value & 0x7) << 8));
+    setStatusReg(new_status_reg);
+}
+
 bool Botsashi::iscarry()
 {
     return testbit(m68kreg.statusreg, 0);

@@ -137,6 +137,37 @@ void QSimsashi::trapException(int val)
 	}
 	break;
 	case 9: stopFunction(); break;
+	case 11:
+	{
+	    uint16_t value = getDataReg<uint16_t>(1);
+
+	    switch (value)
+	    {
+		case 0xFF00:
+		{
+		    cout << "Clearing screen..." << endl;
+		}
+		break;
+		case 0x00FF:
+		{
+		    cout << "Unimplemented: Get cursor position" << endl;
+		    exit(0);
+		}
+		break;
+		default:
+		{
+		    uint8_t xpos = (value >> 8);
+		    uint8_t ypos = (value & 0xFF);
+
+		    if (((xpos >= 0) && (xpos <= 255)) && ((ypos >= 0) || (ypos <= 128)))
+		    {
+			cout << "Setting cursor position to (" << dec << int(xpos) << "," << dec << int(ypos) << ")" << endl;
+		    }
+		}
+		break;
+	    }
+	}
+	break;
 	case 13:
 	{
 	    QString text_str = form_string();
@@ -277,6 +308,14 @@ void QSimsashi::trapException(int val)
 	    setDataReg<uint16_t>(0, 0);
 	}
 	break;
+	case 60:
+	{
+	    uint16_t reg_value = getDataReg<uint16_t>(1);
+
+	    mouse_irq_level = (reg_value >> 8);
+	    mouse_irq_mask = (reg_value & 0xFF);
+	}
+	break;
 	// TODO: Sound API
 	case 70:
 	{
@@ -406,6 +445,19 @@ void QSimsashi::trapException(int val)
 	{
 	    int pen_width = getDataReg<uint8_t>(1);
 	    setPenWidth(pen_width);
+	}
+	break;
+	case 95:
+	{
+	    QString text_str = form_string();
+
+	    uint32_t xpos = getDataReg<uint16_t>(1);
+	    uint32_t ypos = getDataReg<uint16_t>(2);
+
+	    cout << "Unimplemented: Drawing text" << endl;
+	    cout << "Position: (" << dec << xpos << "," << dec << ypos << ")" << endl;
+	    cout << "Text string: " << text_str.toStdString() << endl;
+	    cout << endl;
 	}
 	break;
 	case 100:
@@ -946,6 +998,17 @@ void QSimsashi::keyPressEvent(QKeyEvent *event)
 	    textOut(pending_key);
 	    pending_text.append(pending_key);
 	}
+    }
+}
+
+void QSimsashi::mousePressEvent(QMouseEvent *event)
+{
+    cout << "Mouse pressed" << endl;
+
+    if (testbit(mouse_irq_mask, 0))
+    {
+	cout << "Firing mouse IRQ..." << endl;
+	m68k.fire_irq(mouse_irq_level, (mouse_irq_level != 0));
     }
 }
 

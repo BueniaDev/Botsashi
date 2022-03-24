@@ -269,6 +269,20 @@ auto srcaddrmode(int mode, int reg) -> uint32_t
 	    }
 	}
 	break;
+	case 5:
+	{
+	    if (testbit(mask, 5))
+	    {
+		uint32_t addr_reg = getAddrReg<Long>(reg);
+		uint16_t ext_word = extension<Word>(m68kreg.pc);
+
+		uint32_t displacement = clip<Long>(sign<Word>(ext_word));
+
+		temp = read<Size>(addr_reg + displacement);
+		is_inst_legal = true;
+	    }
+	}
+	break;
 	case 7:
 	{
 	    switch (reg)
@@ -366,6 +380,16 @@ auto rawaddrmode(int mode, int reg) -> uint32_t
 	{
 	    switch (reg)
 	    {
+		case 0:
+		{
+		    if (testbit(mask, 7))
+		    {
+			uint16_t ext_word = extension<Word>(m68kreg.pc);
+			temp = clip<Long>(sign<Word>(ext_word));
+			is_inst_legal = true;
+		    }
+		}
+		break;
 		case 1:
 		{
 		    if (testbit(mask, 8))
@@ -909,6 +933,38 @@ auto m68k_lea(uint16_t instr) -> int
     return cycles;
 }
 
+auto m68k_pea(uint16_t instr) -> int
+{
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    uint32_t address = rawaddrmode<Long, ControlAddr>(srcmode, srcreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    pushStack<Long>(address);
+
+    int source_mode = calc_mode(srcmode, srcreg);
+
+    int cycles = 0;
+
+    switch (source_mode)
+    {
+	case 2: cycles = 12; break;
+	case 5: cycles = 16; break;
+	case 6: cycles = 20; break;
+	case 7: cycles = 16; break;
+	case 8: cycles = 20; break;
+	case 9: cycles = 16; break;
+	case 10: cycles = 20; break;
+    }
+
+    return cycles;
+}
+
 auto m68k_jmp(uint16_t instr) -> int
 {
     int srcmode = getsrcmode(instr);
@@ -944,8 +1000,6 @@ auto m68k_jmp(uint16_t instr) -> int
 
 auto m68k_jsr(uint16_t instr) -> int
 {
-    uint32_t stack_pointer = getAddrReg<Long>(7);
-
     int srcmode = getsrcmode(instr);
     int srcreg = getsrcreg(instr);
 
@@ -956,9 +1010,7 @@ auto m68k_jsr(uint16_t instr) -> int
 	return -1;
     }
 
-    stack_pointer -= 4;
-    write<Long>(stack_pointer, m68kreg.pc);
-    setAddrReg<Long>(7, stack_pointer);
+    pushStack<Long>(m68kreg.pc);
 
     m68kreg.pc = clipAddr(subroutine_addr);
 
@@ -1002,8 +1054,6 @@ auto m68k_bra(uint16_t instr) -> int
 
 auto m68k_bsr(uint16_t instr) -> int
 {
-    uint32_t stack_pointer = getAddrReg<Long>(7);
-
     uint8_t byte_dis = (instr & 0xFF);
     uint32_t pc_val = m68kreg.pc;
 
@@ -1017,9 +1067,7 @@ auto m68k_bsr(uint16_t instr) -> int
 	pc_val += int8_t(byte_dis);
     }
 
-    stack_pointer -= 4;
-    write<Long>(stack_pointer, m68kreg.pc);
-    setAddrReg<Long>(7, stack_pointer);
+    pushStack<Long>(m68kreg.pc);
     m68kreg.pc = pc_val;
     return 18;
 };
@@ -1097,11 +1145,7 @@ auto m68k_dbcc(uint16_t instr) -> int
 auto m68k_rts(uint16_t instr) -> int
 {
     (void)instr;
-    uint32_t stack_pointer = getAddrReg<Long>(7);
-    uint32_t pc_val = read<Long>(stack_pointer);
-    stack_pointer += 4;
-    setAddrReg<Long>(7, stack_pointer);
-    m68kreg.pc = pc_val;
+    m68kreg.pc = popStack<Long>();
     return 16;
 }
 

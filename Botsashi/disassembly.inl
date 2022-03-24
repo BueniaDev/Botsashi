@@ -394,6 +394,14 @@ auto m68kdis_lea(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
     return 0;
 }
 
+auto m68kdis_pea(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    (void)pc;
+    (void)instr;
+    stream << "pea";
+    return 0;
+}
+
 auto m68kdis_jsr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
     (void)pc;

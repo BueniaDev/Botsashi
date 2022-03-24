@@ -45,45 +45,64 @@ namespace botsashi
     #include "utils.cpp"
     #include "memreg.cpp"
 
-    void Botsashi::init(uint32_t init_pc)
+    void Botsashi::init()
     {
-	for (int i = 0; i < 8; i++)
-	{
-	    m68kreg.datareg[i] = 0;
-	    m68kreg.addrreg[i] = 0;
-	}
-
-	m68kreg.addrreg[7] = 0x01000000;
-	m68kreg.pc = init_pc;
-	setstatusreg(0x2700);
-
+	init_regs();
+	reset_exception();
 	cout << "Botsashi::Initialized" << endl;
     }
 
-    void Botsashi::reset_exception(uint32_t vector_offs)
+    void Botsashi::init(uint32_t init_pc)
     {
-	m68kreg.addrreg[7] = read<Long>(vector_offs);
-	m68kreg.pc = read<Long>((vector_offs + 4));
+	init_regs();
+	setAddrReg<Long>(7, 0x01000000);
+	m68kreg.pc = init_pc;
+	setStatusReg(0x2000);
+	is_reset_exception = false;
+	cout << "Botsashi::Initialized" << endl;
+    }
+
+    void Botsashi::reset()
+    {
+	cout << "Botsashi::Resetting..." << endl;
+
+	// Only call reset exception if
+	// system was initialized with one
+	if (is_reset_exception)
+	{
+	    init();
+	}
+	else
+	{
+	    init(m68kreg.pc);
+	}
+    }
+
+    void Botsashi::init_regs()
+    {
+	for (int i = 0; i < 8; i++)
+	{
+	    setDataReg<Long>(i, 0);
+	    setAddrReg<Long>(i, 0);
+	}
+    }
+
+    void Botsashi::reset_exception()
+    {
+	setAddrReg<Long>(7, read<Long>(0));
+	m68kreg.pc = read<Long>(4);
+	setStatusReg(0x2700);
+	is_reset_exception = true;
     }
 
     void Botsashi::shutdown()
     {
-	if (inter)
-	{
-	    inter.reset();
-	}
-
 	cout << "Botsashi::Shutting down..." << endl;
     }
 
     void Botsashi::setinterface(BotsashiInterface &cb)
     {
 	inter = unique_ptr<BotsashiInterface>(&cb);
-    }
-
-    void Botsashi::setstatusreg(uint16_t val)
-    {
-	m68kreg.statusreg = val;
     }
 
     void Botsashi::stopFunction()
@@ -114,16 +133,20 @@ namespace botsashi
 
     int Botsashi::executenextinstr()
     {
+	int cycles = handle_interrupts();
+
 	uint16_t currentinstr = read<Word>(m68kreg.pc);
 	m68kreg.pc += 2;
 
-	int cycles = executeinstr(currentinstr);
+	int inst_cycles = executeinstr(currentinstr);
 
-	if (cycles < 0)
+	if (inst_cycles < 0)
 	{
 	    cout << "Exception occuring..." << endl;
 	    exit(1);
 	}
+
+	cycles += inst_cycles;
 
 	return cycles;
     }
@@ -146,6 +169,50 @@ namespace botsashi
 
 	unrecognizedinstr(instr);
 	return 0;
+    }
+
+    int Botsashi::handle_interrupts()
+    {
+	int irq_mask = get_irq_mask();
+
+	int irq_level = 0;
+
+	for (int level = 7; level > 0; level--)
+	{
+	    if (testbit(irq_line, level))
+	    {
+		irq_level = level;
+		break;
+	    }
+	}
+
+	if (irq_level <= irq_mask)
+	{
+	    return 0;
+	}
+
+	uint16_t status_copy = m68kreg.statusreg;
+	set_supervisor_flag(true);
+	set_trace_flag(false);
+	set_irq_mask(irq_level);
+	uint32_t vector_addr = (0x60 + (irq_level << 2));
+
+	pushStack<Long>(m68kreg.pc);
+	pushStack<Word>(status_copy);
+
+	m68kreg.pc = read<Long>(vector_addr);
+	return 44;
+    }
+
+    void Botsashi::fire_irq(int level, bool line)
+    {
+	// TODO: Implement NMIs and spurious/uninitalized interrupts
+	if ((level <= 0) && (level >= 7))
+	{
+	    throw out_of_range("Invalid IRQ level");
+	}
+
+	irq_line = changebit(irq_line, level, line);
     }
 
     void Botsashi::debugoutput(bool printdisassembly)
