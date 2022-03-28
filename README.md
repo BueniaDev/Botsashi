@@ -45,7 +45,7 @@ Core dependencies:
 
         * OpenSUSE (not tested): `sudo zypper in gcc-c++`
 
-    * Clang 10.0.0+ (earlier version not tested):
+    * Clang 10.0.0+ (earlier versions not tested):
 
         * Debian: `sudo apt-get install clang clang-format libc++-dev` (in some distros, clang-5.0)
 
@@ -69,7 +69,7 @@ Optional dependencies:
 
 * Qt5 (for the Simsashi simulator):
 
-    * Debian: `sudo apt-get install qtbase5-dev libqt5opengl5-dev qtmultimedia5-dev`
+    * Debian (not tested): `sudo apt-get install qtbase5-dev libqt5opengl5-dev qtmultimedia5-dev`
 
     * Arch (not tested): `sudo pacman -S qt5`
 
@@ -146,7 +146,7 @@ cmake .. -G "MSYS Makefiles" -DBUILD_SIMSASHI="<ON/OFF>" -DCMAKE_BUILD_TYPE="<De
 
 ## Near-term
 
-Complete Motorola 68000 support (as of right now, this engine supports only a subset of the M68K instruction set with only extremely bare-bones exception support)
+Complete Motorola 68000 support (as of right now, this engine supports only a subset of the M68K instruction set with only extremely bare-bones exception support and basic IRQ support)
 
 Feature parity between the Simsashi and SIM68k simulators
 

@@ -27,6 +27,17 @@ auto bytes() -> uint32_t
     }
 }
 
+template<int Size>
+auto topbit() -> int
+{
+    switch (Size)
+    {
+	case Byte: return 7; break;
+	case Word: return 15; break;
+	case Long: return 31; break;
+    }
+}
+
 template<int Size> 
 auto msb() -> uint32_t
 {
