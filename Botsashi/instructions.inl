@@ -231,6 +231,104 @@ auto lsr_internal(uint32_t reg, uint32_t shift) -> uint32_t
     return clip<Size>(result);
 }
 
+template<int Size>
+auto rol_internal(uint32_t reg, uint32_t shift) -> uint32_t
+{
+    uint32_t result = reg;
+
+    bool carry = false;
+
+    for (uint32_t i = 0; i < shift; i++)
+    {
+	carry = testbit(result, topbit<Size>());
+	result = ((result << 1) | carry);
+    }
+
+    setcarry(carry);
+    setoverflow(false);
+    setzero(getZero<Size>(result));
+    setsign(getSign<Size>(result));
+
+    return clip<Size>(result);
+}
+
+template<int Size>
+auto ror_internal(uint32_t reg, uint32_t shift) -> uint32_t
+{
+    uint32_t result = reg;
+
+    bool carry = false;
+
+    for (uint32_t i = 0; i < shift; i++)
+    {
+	carry = testbit(result, 0);
+	result >>= 1;
+
+	if (carry)
+	{
+	    result = setbit(result, topbit<Size>());
+	}
+    }
+
+    setcarry(carry);
+    setoverflow(false);
+    setzero(getZero<Size>(result));
+    setsign(getSign<Size>(result));
+
+    return clip<Size>(result);
+}
+
+template<int Size>
+auto roxl_internal(uint32_t reg, uint32_t shift) -> uint32_t
+{
+    uint32_t result = reg;
+
+    bool carry = isextend();
+
+    for (uint32_t i = 0; i < shift; i++)
+    {
+	bool extend = carry;
+	carry = testbit(result, topbit<Size>());
+	result = ((result << 1) | extend);
+    }
+
+    setcarry(carry);
+    setoverflow(false);
+    setzero(getZero<Size>(result));
+    setsign(getSign<Size>(result));
+    setextend(iscarry());
+
+    return clip<Size>(result);
+}
+
+template<int Size>
+auto roxr_internal(uint32_t reg, uint32_t shift) -> uint32_t
+{
+    uint32_t result = reg;
+
+    bool carry = isextend();
+
+    for (uint32_t i = 0; i < shift; i++)
+    {
+	bool extend = carry;
+	carry = testbit(result, 0);
+	result >>= 1;
+
+	if (extend)
+	{
+	    result = setbit(result, topbit<Size>());
+	}
+    }
+
+    setcarry(carry);
+    setoverflow(false);
+    setzero(getZero<Size>(result));
+    setsign(getSign<Size>(result));
+    setextend(iscarry());
+
+    return clip<Size>(result);
+}
+
 template<int Size, uint16_t mask = AllAddr, int Flags = None>
 auto srcaddrmode(int mode, int reg) -> uint32_t
 {
@@ -1706,6 +1804,170 @@ auto m68k_lsr(uint16_t instr) -> int
 
     uint32_t shift_reg = getDataReg<Size>(srcreg);
     uint32_t result = lsr_internal<Size>(shift_reg, shift_count);
+    setDataReg<Size>(srcreg, result);
+
+    int cycles = (2 * shift_count);
+
+    if (Size == Long)
+    {
+	cycles += 8;
+    }
+    else
+    {
+	cycles += 6;
+    }
+
+    return cycles;
+}
+
+template<int Size>
+auto m68k_rol(uint16_t instr) -> int
+{
+    bool is_reg = testbit(instr, 5);
+    int reg_count = getdstreg(instr);
+    int srcreg = getsrcreg(instr);
+
+    int shift_count = 0;
+
+    if (is_reg)
+    {
+	shift_count = (getDataReg<Size>(reg_count) % 64);
+    }
+    else
+    {
+	shift_count = reg_count;
+
+	if (shift_count == 0)
+	{
+	    shift_count = 8;
+	}
+    }
+
+    uint32_t shift_reg = getDataReg<Size>(srcreg);
+    uint32_t result = rol_internal<Size>(shift_reg, shift_count);
+    setDataReg<Size>(srcreg, result);
+
+    int cycles = (2 * shift_count);
+
+    if (Size == Long)
+    {
+	cycles += 8;
+    }
+    else
+    {
+	cycles += 6;
+    }
+
+    return cycles;
+}
+
+template<int Size>
+auto m68k_ror(uint16_t instr) -> int
+{
+    bool is_reg = testbit(instr, 5);
+    int reg_count = getdstreg(instr);
+    int srcreg = getsrcreg(instr);
+
+    int shift_count = 0;
+
+    if (is_reg)
+    {
+	shift_count = (getDataReg<Size>(reg_count) % 64);
+    }
+    else
+    {
+	shift_count = reg_count;
+
+	if (shift_count == 0)
+	{
+	    shift_count = 8;
+	}
+    }
+
+    uint32_t shift_reg = getDataReg<Size>(srcreg);
+    uint32_t result = ror_internal<Size>(shift_reg, shift_count);
+    setDataReg<Size>(srcreg, result);
+
+    int cycles = (2 * shift_count);
+
+    if (Size == Long)
+    {
+	cycles += 8;
+    }
+    else
+    {
+	cycles += 6;
+    }
+
+    return cycles;
+}
+
+template<int Size>
+auto m68k_roxl(uint16_t instr) -> int
+{
+    bool is_reg = testbit(instr, 5);
+    int reg_count = getdstreg(instr);
+    int srcreg = getsrcreg(instr);
+
+    int shift_count = 0;
+
+    if (is_reg)
+    {
+	shift_count = (getDataReg<Size>(reg_count) % 64);
+    }
+    else
+    {
+	shift_count = reg_count;
+
+	if (shift_count == 0)
+	{
+	    shift_count = 8;
+	}
+    }
+
+    uint32_t shift_reg = getDataReg<Size>(srcreg);
+    uint32_t result = rol_internal<Size>(shift_reg, shift_count);
+    setDataReg<Size>(srcreg, result);
+
+    int cycles = (2 * shift_count);
+
+    if (Size == Long)
+    {
+	cycles += 8;
+    }
+    else
+    {
+	cycles += 6;
+    }
+
+    return cycles;
+}
+
+template<int Size>
+auto m68k_roxr(uint16_t instr) -> int
+{
+    bool is_reg = testbit(instr, 5);
+    int reg_count = getdstreg(instr);
+    int srcreg = getsrcreg(instr);
+
+    int shift_count = 0;
+
+    if (is_reg)
+    {
+	shift_count = (getDataReg<Size>(reg_count) % 64);
+    }
+    else
+    {
+	shift_count = reg_count;
+
+	if (shift_count == 0)
+	{
+	    shift_count = 8;
+	}
+    }
+
+    uint32_t shift_reg = getDataReg<Size>(srcreg);
+    uint32_t result = ror_internal<Size>(shift_reg, shift_count);
     setDataReg<Size>(srcreg, result);
 
     int cycles = (2 * shift_count);

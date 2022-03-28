@@ -269,24 +269,24 @@ vector<m68kmapping> funcmappings =
     instruction(0xF1D8, 0xE088, lsr<Long>, lsr<Long>), // 4-113 (p217)
     instruction(0xFFC0, 0xE2C0, unknown, unknown), // 4-113 (p217)
 
-    instruction(0xF1D8, 0xE118, unknown, unknown), // 4-160 (p264)
-    instruction(0xF1D8, 0xE158, unknown, unknown), // 4-160 (p264)
-    instruction(0xF1D8, 0xE198, unknown, unknown), // 4-160 (p264)
+    instruction(0xF1D8, 0xE118, rol<Byte>, unknown), // 4-160 (p264)
+    instruction(0xF1D8, 0xE158, rol<Word>, unknown), // 4-160 (p264)
+    instruction(0xF1D8, 0xE198, rol<Long>, unknown), // 4-160 (p264)
     instruction(0xFFC0, 0xE7C0, unknown, unknown), // 4-160 (p264)
 
-    instruction(0xF1D8, 0xE018, unknown, unknown), // 4-160 (p264)
-    instruction(0xF1D8, 0xE058, unknown, unknown), // 4-160 (p264)
-    instruction(0xF1D8, 0xE098, unknown, unknown), // 4-160 (p264)
+    instruction(0xF1D8, 0xE018, ror<Byte>, unknown), // 4-160 (p264)
+    instruction(0xF1D8, 0xE058, ror<Word>, unknown), // 4-160 (p264)
+    instruction(0xF1D8, 0xE098, ror<Long>, unknown), // 4-160 (p264)
     instruction(0xFFC0, 0xE6C0, unknown, unknown), // 4-160 (p264)
 
-    instruction(0xF1D8, 0xE110, unknown, unknown), // 4-163 (p267)
-    instruction(0xF1D8, 0xE150, unknown, unknown), // 4-163 (p267)
-    instruction(0xF1D8, 0xE190, unknown, unknown), // 4-163 (p267)
+    instruction(0xF1D8, 0xE110, roxl<Byte>, unknown), // 4-163 (p267)
+    instruction(0xF1D8, 0xE150, roxl<Word>, unknown), // 4-163 (p267)
+    instruction(0xF1D8, 0xE190, roxl<Long>, unknown), // 4-163 (p267)
     instruction(0xFFC0, 0xE5C0, unknown, unknown), // 4-163 (p267)
 
-    instruction(0xF1D8, 0xE010, unknown, unknown), // 4-163 (p267)
-    instruction(0xF1D8, 0xE050, unknown, unknown), // 4-163 (p267)
-    instruction(0xF1D8, 0xE090, unknown, unknown), // 4-163 (p267)
+    instruction(0xF1D8, 0xE010, roxr<Byte>, unknown), // 4-163 (p267)
+    instruction(0xF1D8, 0xE050, roxr<Word>, unknown), // 4-163 (p267)
+    instruction(0xF1D8, 0xE090, roxr<Long>, unknown), // 4-163 (p267)
     instruction(0xFFC0, 0xE4C0, unknown, unknown), // 4-163 (p267)
 
     // 0xF
