@@ -936,6 +936,14 @@ auto m68kdis_bclr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
     return 0;
 }
 
+auto m68kdis_btst(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    (void)pc;
+    (void)instr;
+    stream << "bclr Dn, <ea>";
+    return 0;
+}
+
 auto m68kdis_bchgimm(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
     int dstmode = getsrcmode(instr);
@@ -981,6 +989,25 @@ auto m68kdis_bclrimm(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
     int bit_num = extension<Byte>(pc);
     bit_num &= (dstmode == 0) ? 31 : 7; // Mask to 32-bits for EA mode 0, and to 8-bits for the others
     stream << "bclr";
+
+    stringstream mode_str;
+
+    size_t offset = 4;
+    offset += dstmodedasm<Byte, DataAddr>(dstmode, dstreg, mode_str, pc);
+
+    stream << ((dstmode == 0) ? ".l" : ".b");
+    stream << " #" << dec << bit_num;
+    stream << ", " << mode_str.str();
+    return offset;
+}
+
+auto m68kdis_btstimm(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    int dstmode = getsrcmode(instr);
+    int dstreg = getsrcreg(instr);
+    int bit_num = extension<Byte>(pc);
+    bit_num &= (dstmode == 0) ? 31 : 7; // Mask to 32-bits for EA mode 0, and to 8-bits for the others
+    stream << "btst";
 
     stringstream mode_str;
 

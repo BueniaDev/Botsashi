@@ -605,6 +605,20 @@ auto dstaddrmode(int mode, int reg, uint32_t val) -> void
 	    }
 	}
 	break;
+	case 5:
+	{
+	    if (testbit(mask, 5))
+	    {
+		uint32_t addr_reg = getAddrReg<Long>(reg);
+		uint16_t ext_word = extension<Word>(m68kreg.pc);
+
+		uint32_t displacement = clip<Long>(sign<Word>(ext_word));
+
+		write<Size>(addr_reg + displacement, val);
+		is_inst_legal = true;
+	    }
+	}
+	break;
 	case 7:
 	{
 	    switch (reg)
@@ -2055,6 +2069,39 @@ auto m68k_clear(uint16_t instr) -> int
     return cycles;
 }
 
+auto m68k_btst(uint16_t instr) -> int
+{
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+    int dstreg = getdstreg(instr);
+    int bit_num = getDataReg<Long>(dstreg);
+    bit_num &= (srcmode == 0) ? 31 : 7; // Mask to 32-bits for EA mode 0, and 8-bits for the others
+
+    uint32_t data_addr = srcaddrmode<Byte, DataAddr, BitInstr>(srcmode, srcreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    setzero(!testbit(data_addr, bit_num));
+
+    int cycles = 0;
+
+    int source_mode = calc_mode(srcmode, srcreg);
+
+    if (source_mode == 0)
+    {
+	cycles = 6;
+    }
+    else
+    {
+	cycles = (4 + effective_address_bw_cycles[source_mode]);
+    }
+
+    return cycles;
+}
+
 auto m68k_bchg(uint16_t instr) -> int
 {
     int srcmode = getsrcmode(instr);
@@ -2297,6 +2344,38 @@ auto m68k_bchgimm(uint16_t instr) -> int
     else
     {
 	cycles = (12 + effective_address_bw_cycles[source_mode]);
+    }
+
+    return cycles;
+}
+
+auto m68k_btstimm(uint16_t instr) -> int
+{
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+    int bit_num = extension<Byte>(m68kreg.pc);
+    bit_num &= (srcmode == 0) ? 31 : 7; // Mask to 32-bits for EA mode 0, and 8-bits for the others
+
+    uint32_t data_addr = srcaddrmode<Byte, DataAddr, BitInstr>(srcmode, srcreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    setzero(!testbit(data_addr, bit_num));
+
+    int cycles = 0;
+
+    int source_mode = calc_mode(srcmode, srcreg);
+
+    if (source_mode == 0)
+    {
+	cycles = 10;
+    }
+    else
+    {
+	cycles = (8 + effective_address_bw_cycles[source_mode]);
     }
 
     return cycles;
