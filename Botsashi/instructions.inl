@@ -384,7 +384,7 @@ auto srcaddrmode(int mode, int reg) -> uint32_t
 		uint32_t addr_reg = getAddrReg<Long>(reg);
 		temp = read<Size>(addr_reg);
 
-		if (Flags == None)
+		if ((Flags & Hold) == 0)
 		{
 		    setAddrReg<Long>(reg, (addr_reg + inc_bytes));
 		}
@@ -417,7 +417,7 @@ auto srcaddrmode(int mode, int reg) -> uint32_t
 		    {
 			uint16_t ext_word = 0;
 
-			if (Flags == None)
+			if ((Flags & Hold) == 0)
 			{
 			    ext_word = extension<Word>(m68kreg.pc);
 			}
@@ -438,7 +438,7 @@ auto srcaddrmode(int mode, int reg) -> uint32_t
 		    {
 			uint32_t addr = 0;
 
-			if (Flags == None)
+			if ((Flags & Hold) == 0)
 			{
 			    addr = extension<Long>(m68kreg.pc);
 			}
