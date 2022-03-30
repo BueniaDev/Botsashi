@@ -48,6 +48,15 @@ auto srcmodedasm(int mode, int reg, ostream &stream, uint32_t &pc) -> size_t
 	    }
 	}
 	break;
+	case 5:
+	{
+	    if (testbit(mask, 5))
+	    {
+		ss << "d16(a" << dec << reg << ")";
+		is_inst_legal = true;
+	    }
+	}
+	break;
 	case 7:
 	{
 	    switch (reg)
@@ -166,6 +175,15 @@ auto dstmodedasm(int mode, int reg, ostream &stream, uint32_t &pc) -> size_t
 	    }
 	}
 	break;
+	case 5:
+	{
+	    if (testbit(mask, 5))
+	    {
+		ss << "d16(a" << dec << reg << ")";
+		is_inst_legal = true;
+	    }
+	}
+	break;
 	case 7:
 	{
 	    switch (reg)
@@ -233,15 +251,27 @@ auto m68kdis_unknown(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 
 auto m68kdis_move_to_sr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
-    (void)pc;
-    (void)instr;
-    stream << "move <ea>, SR";
-    return 0;
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    stringstream src_str;
+
+    size_t offset = 2;
+    offset += srcmodedasm<Word, DataAddr>(srcmode, srcreg, src_str, pc);
+
+    stream << "move " << src_str.str() << ", SR";
+    return offset;
 }
 
 template<int Size>
 auto m68kdis_move(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    int dstmode = getdstmode(instr);
+    int dstreg = getdstreg(instr);
+
     stream << "move";
 
     switch (Size)
@@ -256,8 +286,8 @@ auto m68kdis_move(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
     stringstream dst_str;
 
     size_t offset = 2;
-    offset += srcmodedasm<Size>(getsrcmode(instr), getsrcreg(instr), src_str, pc);
-    offset += dstmodedasm<Size>(getdstmode(instr), getdstreg(instr), dst_str, pc);
+    offset += srcmodedasm<Size>(srcmode, srcreg, src_str, pc);
+    offset += dstmodedasm<Size>(dstmode, dstreg, dst_str, pc);
 
     stream << " " << src_str.str() << ", " << dst_str.str();
 
@@ -317,12 +347,60 @@ auto m68kdis_add_internal(ostream &stream, uint32_t pc, uint16_t instr) -> size_
 }
 
 template<int Size>
+auto m68kdis_adda(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    int dstreg = getdstreg(instr);
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+    stream << "adda";
+
+    switch (Size)
+    {
+	case Word: stream << ".w"; break;
+	case Long: stream << ".l"; break;
+	default: stream << ".u"; break;
+    }
+
+    stringstream mode_str;
+    size_t offset = 2;
+    offset += srcmodedasm<Size>(srcmode, srcreg, mode_str, pc);
+
+    stream << " " << mode_str.str() << ", a" << dec << dstreg;
+
+    return offset;
+}
+
+template<int Size>
 auto m68kdis_addq(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
-    (void)pc;
-    (void)instr;
     stream << "addq";
-    return 0;
+
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    switch (Size)
+    {
+	case Byte: stream << ".b"; break;
+	case Word: stream << ".w"; break;
+	case Long: stream << ".l"; break;
+	default: stream << ".u"; break;
+    }
+
+    int imm_val = getdstreg(instr);
+
+    // The immediate value of 0 represents a value of 8
+    if (imm_val == 0)
+    {
+	imm_val = 8;
+    }
+
+    stringstream mode_str;
+    size_t offset = 2;
+    offset += srcmodedasm<Size, AlterableAddr>(srcmode, srcreg, mode_str, pc);
+
+    stream << " #" << dec << imm_val << ", " << mode_str.str();
+
+    return offset;
 }
 
 template<int Size>
@@ -373,10 +451,34 @@ auto m68kdis_sub_internal(ostream &stream, uint32_t pc, uint16_t instr) -> size_
 template<int Size>
 auto m68kdis_subq(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
-    (void)pc;
-    (void)instr;
     stream << "subq";
-    return 0;
+
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    switch (Size)
+    {
+	case Byte: stream << ".b"; break;
+	case Word: stream << ".w"; break;
+	case Long: stream << ".l"; break;
+	default: stream << ".u"; break;
+    }
+
+    int imm_val = getdstreg(instr);
+
+    // The immediate value of 0 represents a value of 8
+    if (imm_val == 0)
+    {
+	imm_val = 8;
+    }
+
+    stringstream mode_str;
+    size_t offset = 2;
+    offset += srcmodedasm<Size, AlterableAddr>(srcmode, srcreg, mode_str, pc);
+
+    stream << " #" << dec << imm_val << ", " << mode_str.str();
+
+    return offset;
 }
 
 auto m68kdis_exgdreg(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
@@ -460,9 +562,21 @@ auto m68kdis_bsr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 
 auto m68kdis_bcc(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
-    (void)pc;
-    (void)instr;
-    stream << "bcc";
+    uint8_t byte_dis = (instr & 0xFF);
+
+    uint32_t pc_val = pc;
+
+    if (byte_dis == 0)
+    {
+	uint16_t word_dis = extension<Word>(pc);
+	pc_val += int16_t(word_dis);
+    }
+    else
+    {
+	pc_val += int8_t(byte_dis);
+    }
+
+    stream << "bcc $" << hex << pc_val;
     return 0;
 }
 
@@ -940,7 +1054,7 @@ auto m68kdis_btst(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
     (void)pc;
     (void)instr;
-    stream << "bclr Dn, <ea>";
+    stream << "btst Dn, <ea>";
     return 0;
 }
 

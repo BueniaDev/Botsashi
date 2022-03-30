@@ -967,7 +967,7 @@ void QSimsashi::render()
 {
     if (!stopped)
     {
-	// m68k.debugoutput();
+	m68k.debugoutput();
 	m68k.executenextinstr();
     }
 }

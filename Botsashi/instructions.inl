@@ -499,6 +499,20 @@ auto rawaddrmode(int mode, int reg) -> uint32_t
 
     switch (mode)
     {
+	case 5:
+	{
+	    if (testbit(mask, 5))
+	    {
+		uint32_t addr_reg = getAddrReg<Long>(reg);
+		uint16_t ext_word = extension<Word>(m68kreg.pc);
+
+		uint32_t displacement = clip<Long>(sign<Word>(ext_word));
+
+		temp = (addr_reg + displacement);
+		is_inst_legal = true;
+	    }
+	}
+	break;
 	case 7:
 	{
 	    switch (reg)
@@ -836,6 +850,49 @@ auto m68k_add_internal(uint16_t instr) -> int
 
     cycles += effective_address_cycles<Size>(source_mode);
 
+    return cycles;
+}
+
+template<int Size>
+auto m68k_adda(uint16_t instr) -> int
+{
+    int addr_reg = getdstreg(instr);
+
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    uint32_t res_val = srcaddrmode<Size>(srcmode, srcreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    uint32_t reg_val = getAddrReg<Size>(addr_reg);
+
+    setAddrReg<Size>(addr_reg, (reg_val + res_val));
+
+    int source_mode = calc_mode(srcmode, srcreg);
+
+    int cycles = 0;
+
+    if (Size == Long)
+    {
+	if ((source_mode == 0) || (source_mode == 1) || (source_mode == 11))
+	{
+	    cycles = 8;
+	}
+	else
+	{
+	    cycles = 6;
+	}
+    }
+    else
+    {
+	cycles = 8;
+    }
+
+    cycles += effective_address_cycles<Size>(source_mode);
     return cycles;
 }
 

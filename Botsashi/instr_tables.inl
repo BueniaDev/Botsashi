@@ -240,8 +240,8 @@ vector<m68kmapping> funcmappings =
     instruction(0xF1C0, 0xD140, addr<Word>, addr<Byte>), // 4-4 (p108) (Dn + ea -> ea)
     instruction(0xF1C0, 0xD180, addr<Long>, addr<Byte>), // 4-4 (p108) (Dn + ea -> ea)
 
-    instruction(0xF1C0, 0xD0C0, unknown, unknown), // 4-7 (p111)
-    instruction(0xF1C0, 0xD1C0, unknown, unknown), // 4-7 (p111)
+    instruction(0xF1C0, 0xD0C0, adda<Word>, adda<Word>), // 4-7 (p111)
+    instruction(0xF1C0, 0xD1C0, adda<Long>, adda<Long>), // 4-7 (p111)
 
     instruction(0xF1F0, 0xD100, unknown, unknown), // 4-14 (p118)
     instruction(0xF1F0, 0xD140, unknown, unknown), // 4-14 (p118)

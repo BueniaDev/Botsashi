@@ -106,7 +106,9 @@ namespace botsashi
 		AllAddr = 0xFFF,
 		DataAltAddr = 0x1FD,
 		MemAltAddr = 0x1FC,
-		ControlAltAddr = 0x1E4
+		ControlAltAddr = 0x1E4,
+		ControlAltMemAddr = 0x1F4,
+		ControlAltRegAddr = 0x7EC,
 	    };
 
 	    uint32_t getPC()
