@@ -1557,7 +1557,7 @@ template<int Size>
 auto m68k_tst(uint16_t instr) -> int
 {
     int srcmode = getsrcmode(instr);
-    int srcreg = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
 
     uint32_t result = srcaddrmode<Size, DataAddr>(srcmode, srcreg);
 
