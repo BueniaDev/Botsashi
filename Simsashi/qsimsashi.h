@@ -43,6 +43,7 @@ class QSimsashi : public QMainWindow, public BotsashiInterface
 
 	void render();
 
+	void closeEvent(QCloseEvent *event) override;
 	void keyPressEvent(QKeyEvent *event) override;
 	void mousePressEvent(QMouseEvent *event) override;
 	void paintEvent(QPaintEvent *event) override;

@@ -452,6 +452,20 @@ auto srcaddrmode(int mode, int reg) -> uint32_t
 		    }
 		}
 		break;
+		case 2:
+		{
+		    if (testbit(mask, 9))
+		    {
+			uint32_t pc_val = m68kreg.pc;
+			uint16_t ext_word = extension<Word>(m68kreg.pc);
+
+			uint32_t displacement = clip<Long>(sign<Word>(ext_word));
+
+			temp = read<Size>(pc_val + displacement);
+			is_inst_legal = true;
+		    }
+		}
+		break;
 		case 4:
 		{
 		    if (testbit(mask, 11))
@@ -532,6 +546,20 @@ auto rawaddrmode(int mode, int reg) -> uint32_t
 		    if (testbit(mask, 8))
 		    {
 			temp = extension<Long>(m68kreg.pc);
+			is_inst_legal = true;
+		    }
+		}
+		break;
+		case 2:
+		{
+		    if (testbit(mask, 9))
+		    {
+			uint32_t pc_val = m68kreg.pc;
+			uint16_t ext_word = extension<Word>(m68kreg.pc);
+
+			uint32_t displacement = clip<Long>(sign<Word>(ext_word));
+
+			temp = (pc_val + displacement);
 			is_inst_legal = true;
 		    }
 		}

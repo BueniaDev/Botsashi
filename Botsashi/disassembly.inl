@@ -6,6 +6,8 @@ auto srcmodedasm(int mode, int reg, ostream &stream, uint32_t &pc) -> size_t
 
     size_t offset = 0;
 
+    size_t prev_pc = pc;
+
     bool is_inst_legal = false;
 
     stringstream ss;
@@ -52,7 +54,12 @@ auto srcmodedasm(int mode, int reg, ostream &stream, uint32_t &pc) -> size_t
 	{
 	    if (testbit(mask, 5))
 	    {
-		ss << "d16(a" << dec << reg << ")";
+		uint32_t addr_reg = getAddrReg<Long>(reg);
+		uint16_t ext_word = extension<Word>(pc);
+
+		uint32_t displacement = clip<Long>(sign<Word>(ext_word));
+
+		ss << "$" << hex << int(addr_reg + displacement);
 		is_inst_legal = true;
 	    }
 	}
@@ -66,7 +73,6 @@ auto srcmodedasm(int mode, int reg, ostream &stream, uint32_t &pc) -> size_t
 		    if (testbit(mask, 7))
 		    {
 			uint16_t ext_word = extension<Word>(pc);
-			offset = 2;
 			uint32_t addr = clip<Long>(sign<Word>(ext_word));
 			ss << "$" << hex << int(addr);
 			is_inst_legal = true;
@@ -78,8 +84,21 @@ auto srcmodedasm(int mode, int reg, ostream &stream, uint32_t &pc) -> size_t
 		    if (testbit(mask, 8))
 		    {
 			uint32_t addr = extension<Long>(pc);
-			offset = 4;
 			ss << "$" << hex << int(addr);
+			is_inst_legal = true;
+		    }
+		}
+		break;
+		case 2:
+		{
+		    if (testbit(mask, 9))
+		    {
+			uint32_t pc_val = pc;
+			uint16_t ext_word = extension<Word>(pc);
+
+			uint32_t displacement = clip<Long>(sign<Word>(ext_word));
+
+			ss << "$" << hex << int(pc_val + displacement);
 			is_inst_legal = true;
 		    }
 		}
@@ -89,7 +108,6 @@ auto srcmodedasm(int mode, int reg, ostream &stream, uint32_t &pc) -> size_t
 		    if (testbit(mask, 11))
 		    {
 			uint32_t imm_val = extension<Size>(pc);
-			offset = (Size == Long) ? 4 : 2;
 			ss << "#$" << hex << int(imm_val);
 			is_inst_legal = true;
 		    }
@@ -105,6 +123,7 @@ auto srcmodedasm(int mode, int reg, ostream &stream, uint32_t &pc) -> size_t
     if (is_inst_legal)
     {
 	stream << ss.str();
+	offset = (pc - prev_pc);
     }
     else
     {
@@ -126,12 +145,100 @@ auto srcmodedasm(int mode, int reg, ostream &stream, uint32_t &pc) -> size_t
 }
 
 template<int Size, uint16_t mask = AllAddr>
+auto rawmodedasm(int mode, int reg, ostream &stream, uint32_t &pc) -> size_t
+{
+    mode &= 7;
+    reg &= 7;
+
+    size_t offset = 0;
+
+    size_t prev_pc = pc;
+
+    uint32_t temp_addr = 0;
+
+    bool is_inst_legal = false;
+
+    switch (mode)
+    {
+	case 5:
+	{
+	    if (testbit(mask, 5))
+	    {
+		uint32_t addr_reg = getAddrReg<Long>(reg);
+		uint16_t ext_word = extension<Word>(pc);
+
+		uint32_t displacement = clip<Long>(sign<Word>(ext_word));
+
+		temp_addr = (addr_reg + displacement);
+		is_inst_legal = true;
+	    }
+	}
+	break;
+	case 7:
+	{
+	    switch (reg)
+	    {
+		case 0:
+		{
+		    if (testbit(mask, 7))
+		    {
+			uint16_t ext_word = extension<Word>(pc);
+			temp_addr = clip<Long>(sign<Word>(ext_word));
+			is_inst_legal = true;
+		    }
+		}
+		break;
+		case 1:
+		{
+		    if (testbit(mask, 8))
+		    {
+			temp_addr = extension<Long>(pc);
+			is_inst_legal = true;
+		    }
+		}
+		break;
+		case 2:
+		{
+		    if (testbit(mask, 9))
+		    {
+			uint32_t pc_val = pc;
+			uint16_t ext_word = extension<Word>(pc);
+
+			uint32_t displacement = clip<Long>(sign<Word>(ext_word));
+
+			temp_addr = (pc_val + displacement);
+			is_inst_legal = true;
+		    }
+		}
+		break;
+		default: break;
+	    }
+	}
+    }
+
+    if (is_inst_legal)
+    {
+	stream << "$" << hex << int(temp_addr);
+	offset = (pc - prev_pc);
+    }
+    else
+    {
+	stream << "und";
+	offset = 0;
+    }
+
+    return offset;
+}
+
+template<int Size, uint16_t mask = AllAddr>
 auto dstmodedasm(int mode, int reg, ostream &stream, uint32_t &pc) -> size_t
 {
     mode &= 7;
     reg &= 7;
 
     size_t offset = 0;
+
+    size_t prev_pc = pc;
 
     bool is_inst_legal = false;
 
@@ -179,7 +286,12 @@ auto dstmodedasm(int mode, int reg, ostream &stream, uint32_t &pc) -> size_t
 	{
 	    if (testbit(mask, 5))
 	    {
-		ss << "d16(a" << dec << reg << ")";
+		uint32_t addr_reg = getAddrReg<Long>(reg);
+		uint16_t ext_word = extension<Word>(pc);
+
+		uint32_t displacement = clip<Long>(sign<Word>(ext_word));
+
+		ss << "$" << hex << int(addr_reg + displacement);
 		is_inst_legal = true;
 	    }
 	}
@@ -193,7 +305,6 @@ auto dstmodedasm(int mode, int reg, ostream &stream, uint32_t &pc) -> size_t
 		    if (testbit(mask, 7))
 		    {
 			uint16_t ext_word = extension<Word>(pc);
-			offset = 2;
 			uint32_t addr = clip<Long>(sign<Word>(ext_word));
 			ss << "$" << hex << int(addr);
 			is_inst_legal = true;
@@ -205,7 +316,6 @@ auto dstmodedasm(int mode, int reg, ostream &stream, uint32_t &pc) -> size_t
 		    if (testbit(mask, 8))
 		    {
 			uint32_t addr = extension<Long>(pc);
-			offset = 4;
 			ss << "$" << hex << int(addr);
 			is_inst_legal = true;
 		    }
@@ -221,6 +331,7 @@ auto dstmodedasm(int mode, int reg, ostream &stream, uint32_t &pc) -> size_t
     if (is_inst_legal)
     {
 	stream << ss.str();
+	offset = (prev_pc - pc);
     }
     else
     {
@@ -490,34 +601,59 @@ auto m68kdis_exgdreg(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 
 auto m68kdis_lea(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
-    (void)pc;
-    (void)instr;
-    stream << "lea";
-    return 0;
+    int dstreg = getdstreg(instr);
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    stringstream addr_str;
+
+    size_t offset = 2;
+    offset += rawmodedasm<Long, ControlAddr>(srcmode, srcreg, addr_str, pc);
+
+    stream << "lea " << addr_str.str() << ", a" << dec << dstreg;
+    return offset;
 }
 
 auto m68kdis_pea(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
-    (void)pc;
-    (void)instr;
-    stream << "pea";
-    return 0;
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    stringstream addr_str;
+
+    size_t offset = 2;
+    offset += rawmodedasm<Long, ControlAddr>(srcmode, srcreg, addr_str, pc);
+
+    stream << "pea " << addr_str.str();
+    return offset;
 }
 
 auto m68kdis_jsr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
-    (void)pc;
-    (void)instr;
-    stream << "jsr";
-    return 0;
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    stringstream addr_str;
+
+    size_t offset = 2;
+    offset += rawmodedasm<Long, ControlAddr>(srcmode, srcreg, addr_str, pc);
+
+    stream << "jsr " << addr_str.str();
+    return offset;
 }
 
 auto m68kdis_jmp(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
-    (void)pc;
-    (void)instr;
-    stream << "jmp";
-    return 0;
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    stringstream addr_str;
+
+    size_t offset = 2;
+    offset += rawmodedasm<Long, ControlAddr>(srcmode, srcreg, addr_str, pc);
+
+    stream << "jmp " << addr_str.str();
+    return offset;
 }
 
 auto m68kdis_bra(ostream &stream, uint32_t pc, uint16_t instr) -> size_t

@@ -14,7 +14,12 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     QSimsashi window;
     window.show();
-    window.loadSRecord(argv[1]);
+
+    if (!window.loadSRecord(argv[1]))
+    {
+	return 1;
+    }
+
     window.runCore();
 
     return app.exec();

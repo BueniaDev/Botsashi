@@ -23,7 +23,7 @@ QSimsashi::QSimsashi(QWidget *parent) : window_width(640), window_height(480)
 
 QSimsashi::~QSimsashi()
 {
-    m68k.shutdown();
+
 }
 
 uint16_t QSimsashi::readWord(bool upper, bool lower, uint32_t addr)
@@ -862,6 +862,7 @@ bool QSimsashi::loadSRecord(string filename)
 
     if (!file.is_open())
     {
+	cout << "Could not load s-record file of " << filename << endl;
 	return false;
     }
 
@@ -970,6 +971,12 @@ void QSimsashi::render()
 	m68k.debugoutput();
 	m68k.executenextinstr();
     }
+}
+
+void QSimsashi::closeEvent(QCloseEvent *event)
+{
+    m68k.shutdown();
+    QMainWindow::closeEvent(event);
 }
 
 void QSimsashi::keyPressEvent(QKeyEvent *event)
