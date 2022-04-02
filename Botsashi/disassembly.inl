@@ -160,6 +160,33 @@ auto rawmodedasm(int mode, int reg, ostream &stream, uint32_t &pc) -> size_t
 
     switch (mode)
     {
+	case 2:
+	{
+	    if (testbit(mask, 2))
+	    {
+		temp_addr = getAddrReg<Long>(reg);
+		is_inst_legal = true;
+	    }
+	}
+	break;
+	case 3:
+	{
+	    if (testbit(mask, 3))
+	    {
+		temp_addr = getAddrReg<Long>(reg);
+		is_inst_legal = true;
+	    }
+	}
+	break;
+	case 4:
+	{
+	    if (testbit(mask, 4))
+	    {
+		temp_addr = getAddrReg<Long>(reg);
+		is_inst_legal = true;
+	    }
+	}
+	break;
 	case 5:
 	{
 	    if (testbit(mask, 5))
@@ -282,6 +309,15 @@ auto dstmodedasm(int mode, int reg, ostream &stream, uint32_t &pc) -> size_t
 	    }
 	}
 	break;
+	case 4:
+	{
+	    if (testbit(mask, 4))
+	    {
+		ss << "-(a" << dec << reg << ")";
+		is_inst_legal = true;
+	    }
+	}
+	break;
 	case 5:
 	{
 	    if (testbit(mask, 5))
@@ -360,6 +396,20 @@ auto m68kdis_unknown(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
     return 0;
 }
 
+auto m68kdis_move_from_sr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    stringstream src_str;
+
+    size_t offset = 2;
+    offset += dstmodedasm<Word, DataAltAddr>(srcmode, srcreg, src_str, pc);
+
+    stream << "move SR, " << src_str.str();
+    return offset;
+}
+
 auto m68kdis_move_to_sr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
     int srcmode = getsrcmode(instr);
@@ -403,6 +453,15 @@ auto m68kdis_move(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
     stream << " " << src_str.str() << ", " << dst_str.str();
 
     return offset;
+}
+
+auto m68kdis_movem(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    (void)instr;
+    uint16_t reglist = extension<Word>(pc);
+    (void)reglist;
+    stream << "movem";
+    return 0;
 }
 
 auto m68kdis_moveq(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
@@ -926,6 +985,32 @@ auto m68kdis_subi(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
     auto imm_val = extension<Size>(pc);
 
     stream << "subi";
+
+    switch (Size)
+    {
+	case Byte: stream << ".b"; break;
+	case Word: stream << ".w"; break;
+	case Long: stream << ".l"; break;
+	default: stream << ".u"; break;
+    }
+
+    stringstream mode_str;
+    size_t offset = (Size == Long) ? 6 : 4;
+    offset += dstmodedasm<Size, DataAltAddr>(dstmode, dstreg, mode_str, pc);
+
+    stream << " #$" << hex << int(imm_val) << ", " << mode_str.str();
+
+    return offset;
+}
+
+template<int Size>
+auto m68kdis_cmpi(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    int dstmode = getsrcmode(instr);
+    int dstreg = getsrcreg(instr);
+    auto imm_val = extension<Size>(pc);
+
+    stream << "cmpi";
 
     switch (Size)
     {

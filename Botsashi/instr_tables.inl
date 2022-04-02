@@ -41,9 +41,9 @@ vector<m68kmapping> funcmappings =
     instruction(0xFFC0, 0x0440, subi<Word>, subi<Word>), // 4-179 (p283)
     instruction(0xFFC0, 0x0480, subi<Long>, subi<Long>), // 4-179 (p283)
 
-    instruction(0xFFC0, 0x0C00, unknown, unknown), // 4-79 (p183)
-    instruction(0xFFC0, 0x0C40, unknown, unknown), // 4-79 (p183)
-    instruction(0xFFC0, 0x0C80, unknown, unknown), // 4-79 (p183)
+    instruction(0xFFC0, 0x0C00, cmpi<Byte>, cmpi<Byte>), // 4-79 (p183)
+    instruction(0xFFC0, 0x0C40, cmpi<Word>, cmpi<Word>), // 4-79 (p183)
+    instruction(0xFFC0, 0x0C80, cmpi<Long>, cmpi<Long>), // 4-79 (p183)
 
     instruction(0xF1C0, 0x0100, btst, btst), // 4-62 (p166)
     instruction(0xFFC0, 0x0800, btstimm, btstimm), // 4-63 (p167)
@@ -80,7 +80,7 @@ vector<m68kmapping> funcmappings =
 
     instruction(0xFFC0, 0x46C0, move_to_sr, move_to_sr), // 6-19 (p473)
     instruction(0xFFC0, 0x44C0, unknown, unknown), // 4-123 (p227)
-    instruction(0xFFC0, 0x40C0, unknown, unknown), // 6-17 (p471)
+    instruction(0xFFC0, 0x40C0, move_from_sr, move_from_sr), // 6-17 (p471)
 
     instruction(0xF1C0, 0x41C0, lea, lea), // 4-110 (p214)
     instruction(0xFFC0, 0x4840, pea, pea), // 4-159 (p263)
@@ -104,10 +104,10 @@ vector<m68kmapping> funcmappings =
     instruction(0xFFC0, 0x4640, not<Word>, not<Word>), // 4-148 (p252)
     instruction(0xFFC0, 0x4680, not<Long>, not<Long>), // 4-148 (p252)
 
-    instruction(0xFFC0, 0x48C0, unknown, unknown), // 4-128 (p232)
-    instruction(0xFFC0, 0x4880, unknown, unknown), // 4-128 (p232)
-    instruction(0xFFC0, 0x4CC0, unknown, unknown), // 4-128 (p232)
-    instruction(0xFFC0, 0x4C80, unknown, unknown), // 4-128 (p232)
+    instruction(0xFFC0, 0x48C0, movem, movem), // 4-128 (p232)
+    instruction(0xFFC0, 0x4880, movem, movem), // 4-128 (p232)
+    instruction(0xFFC0, 0x4CC0, movem, movem), // 4-128 (p232)
+    instruction(0xFFC0, 0x4C80, movem, movem), // 4-128 (p232)
 
     instruction(0xFFC0, 0x4A00, tst<Byte>, tst<Byte>), // 4-192 (p296)
     instruction(0xFFC0, 0x4A40, tst<Word>, tst<Word>), // 4-192 (p296)

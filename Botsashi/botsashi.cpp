@@ -207,7 +207,7 @@ namespace botsashi
     void Botsashi::fire_irq(int level, bool line)
     {
 	// TODO: Implement NMIs and spurious/uninitalized interrupts
-	if ((level <= 0) && (level >= 7))
+	if ((level <= 0) || (level >= 7))
 	{
 	    throw out_of_range("Invalid IRQ level");
 	}

@@ -513,6 +513,33 @@ auto rawaddrmode(int mode, int reg) -> uint32_t
 
     switch (mode)
     {
+	case 2:
+	{
+	    if (testbit(mask, 2))
+	    {
+		temp = getAddrReg<Long>(reg);
+		is_inst_legal = true;
+	    }
+	}
+	break;
+	case 3:
+	{
+	    if (testbit(mask, 3))
+	    {
+		temp = getAddrReg<Long>(reg);
+		is_inst_legal = true;
+	    }
+	}
+	break;
+	case 4:
+	{
+	    if (testbit(mask, 4))
+	    {
+		temp = getAddrReg<Long>(reg);
+		is_inst_legal = true;
+	    }
+	}
+	break;
 	case 5:
 	{
 	    if (testbit(mask, 5))
@@ -647,6 +674,19 @@ auto dstaddrmode(int mode, int reg, uint32_t val) -> void
 	    }
 	}
 	break;
+	case 4:
+	{
+	    if (testbit(mask, 4))
+	    {
+		uint32_t inc_bytes = ((reg == 7) && (Size == Byte)) ? bytes<Word>() : bytes<Size>();
+		uint32_t addr_reg = getAddrReg<Long>(reg);
+		setAddrReg<Long>(reg, (addr_reg - inc_bytes));
+		uint32_t address = getAddrReg<Long>(reg);
+		write<Size>(address, val);
+		is_inst_legal = true;
+	    }
+	}
+	break;
 	case 5:
 	{
 	    if (testbit(mask, 5))
@@ -721,6 +761,43 @@ auto m68k_unknown(uint16_t instr) -> int
 {
     unrecognizedinstr(instr);
     return 0;
+}
+
+auto m68k_move_from_sr(uint16_t instr) -> int
+{
+    if (!ismodesupervisor())
+    {
+	// Privilege violation
+	set_m68k_exception(Unprivileged);
+	return -1;
+    }
+
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    uint16_t status_reg = m68kreg.statusreg;
+
+    dstaddrmode<Word, DataAltAddr>(srcmode, srcreg, status_reg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    int source_mode = calc_mode(srcmode, srcreg);
+
+    int cycles = 0;
+
+    if (srcmode == 0)
+    {
+	cycles = 6;
+    }
+    else
+    {
+	cycles = (8 + effective_address_cycles<Word>(source_mode));
+    }
+
+    return cycles;
 }
 
 auto m68k_move_to_sr(uint16_t instr) -> int
@@ -801,6 +878,90 @@ auto m68k_moveq(uint16_t instr) -> int
 
     setDataReg<Long>(dstreg, result);
     return 4;
+}
+
+auto m68k_movem(uint16_t instr) -> int
+{
+    bool is_mem_to_reg = testbit(instr, 10);
+    bool is_long_or_word = testbit(instr, 6);
+
+    int mask = (is_mem_to_reg << 1) | is_long_or_word;
+
+    int cycles = 0;
+
+    switch (mask)
+    {
+	case 0: cycles = m68k_movem_to_mem<Word>(instr); break;
+	case 1: cycles = m68k_movem_to_mem<Long>(instr); break;
+	default:
+	{
+	    cout << "Unrecognized movem mask of " << dec << int(mask) << endl;
+	    exit(0);
+	}
+	break;
+    }
+
+    return cycles;
+}
+
+template<int Size>
+auto m68k_movem_to_mem(uint16_t instr) -> int
+{
+    uint16_t list_mask = extension<Word>(m68kreg.pc);
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    uint32_t addr = rawaddrmode<Long, ControlAltMemAddr>(srcmode, srcreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    cout << "Address: " << hex << int(addr) << endl;
+
+    int num_regs = 0;
+
+    for (int i = 0; i < 16; i++)
+    {
+	if (!testbit(list_mask, i))
+	{
+	    continue;
+	}
+
+	num_regs += 1;
+
+	int index = (srcmode == 4) ? (15 - i) : i;
+
+	if (srcmode == 4)
+	{
+	    addr -= bytes<Size>();
+	}
+
+	auto data = (index < 8) ? getDataReg<Size>(index) : getAddrReg<Size>(index - 8);
+	write<Size>(addr, data);
+
+	if (srcmode != 4)
+	{
+	    addr += bytes<Size>();
+	}
+    }
+
+    cout << "Address: " << hex << int(addr) << endl;
+
+    if ((srcmode == 4) || (srcmode == 3))
+    {
+	setAddrReg<Long>(srcreg, addr);
+    }
+
+    int cycle_mul = (Size == Long) ? 8 : 4;
+
+    int cycles = (cycle_mul * num_regs);
+
+    int source_mode = calc_mode(srcmode, srcreg);
+
+    cycles += effective_address_cycles<Size>(source_mode);
+    return cycles;
 }
 
 template<int Size>
@@ -1637,7 +1798,6 @@ auto m68k_addi(uint16_t instr) -> int
     }
 
     uint32_t result = add_internal<Size>(reg_val, imm_val);
-
     dstaddrmode<Size, DataAltAddr>(dstmode, dstreg, result);
 
     if (is_m68k_exception())
@@ -1677,7 +1837,6 @@ auto m68k_subi(uint16_t instr) -> int
     }
 
     uint32_t result = sub_internal<Size>(reg_val, imm_val);
-
     dstaddrmode<Size, DataAltAddr>(dstmode, dstreg, result);
 
     if (is_m68k_exception())
@@ -1716,13 +1875,7 @@ auto m68k_andi(uint16_t instr) -> int
 	return -1;
     }
 
-    uint32_t result = (reg_val & imm_val);
-
-    setzero(getZero<Size>(result));
-    setsign(getSign<Size>(result));
-    setcarry(false);
-    setoverflow(false);
-
+    uint32_t result = and_internal<Size>(reg_val, imm_val);
     dstaddrmode<Size, DataAltAddr>(dstmode, dstreg, result);
 
     if (is_m68k_exception())
@@ -1761,13 +1914,7 @@ auto m68k_ori(uint16_t instr) -> int
 	return -1;
     }
 
-    uint32_t result = (reg_val | imm_val);
-
-    setzero(getZero<Size>(result));
-    setsign(getSign<Size>(result));
-    setcarry(false);
-    setoverflow(false);
-
+    uint32_t result = or_internal<Size>(reg_val, imm_val);
     dstaddrmode<Size, DataAltAddr>(dstmode, dstreg, result);
 
     if (is_m68k_exception())
@@ -1793,6 +1940,39 @@ auto m68k_ori(uint16_t instr) -> int
 }
 
 template<int Size>
+auto m68k_cmpi(uint16_t instr) -> int
+{
+    int dstmode = getsrcmode(instr);
+    int dstreg = getsrcreg(instr);
+    auto imm_val = extension<Size>(m68kreg.pc);
+
+    uint32_t reg_val = srcaddrmode<Size, DataAltAddr>(dstmode, dstreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    cmp_internal<Size>(reg_val, imm_val);
+
+    int dest_mode = calc_mode(dstmode, dstreg);
+
+    int cycles = 0;
+
+    if (dstmode == 0)
+    {
+	cycles = (Size == Long) ? 14 : 8;
+    }
+    else
+    {
+	cycles = (Size == Long) ? 12 : 8;
+	cycles += effective_address_cycles<Size>(dest_mode);
+    }
+
+    return cycles;
+}
+
+template<int Size>
 auto m68k_eori(uint16_t instr) -> int
 {
     int dstmode = getsrcmode(instr);
@@ -1806,13 +1986,7 @@ auto m68k_eori(uint16_t instr) -> int
 	return -1;
     }
 
-    uint32_t result = (reg_val ^ imm_val);
-
-    setzero(getZero<Size>(result));
-    setsign(getSign<Size>(result));
-    setcarry(false);
-    setoverflow(false);
-
+    uint32_t result = eor_internal<Size>(reg_val, imm_val);
     dstaddrmode<Size, DataAltAddr>(dstmode, dstreg, result);
 
     if (is_m68k_exception())

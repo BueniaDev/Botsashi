@@ -102,13 +102,13 @@ namespace botsashi
 		DataAddr = 0xFFD,
 		MemAddr = 0xFFC,
 		ControlAddr = 0x7E4,
+		ControlRegAddr = 0x7EC,
 		AlterableAddr = 0x1FF,
 		AllAddr = 0xFFF,
 		DataAltAddr = 0x1FD,
 		MemAltAddr = 0x1FC,
 		ControlAltAddr = 0x1E4,
 		ControlAltMemAddr = 0x1F4,
-		ControlAltRegAddr = 0x7EC,
 	    };
 
 	    uint32_t getPC()
@@ -314,8 +314,6 @@ namespace botsashi
 	    auto getdstmode(uint16_t instr) -> int;
 	    auto getdstreg(uint16_t instr) -> int;
 	    auto getopcond(uint16_t instr) -> int;
-
-	    bool stopped = false;
 
 	    bool ismodesupervisor();
 	    void set_supervisor_flag(bool is_set);
