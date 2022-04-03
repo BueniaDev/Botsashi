@@ -651,6 +651,24 @@ auto m68kdis_subq(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
     return offset;
 }
 
+auto m68kdis_ext(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    (void)pc;
+    int opmode = getdstmode(instr);
+
+    stream << "ext";
+
+    switch (opmode)
+    {
+	case 0b010: stream << ".w"; break;
+	case 0b011: stream << ".l"; break;
+	default: stream << ".u"; break;
+    }
+
+    stream << " d" << getsrcreg(instr);
+    return 2;
+}
+
 auto m68kdis_exgdreg(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
     (void)pc;

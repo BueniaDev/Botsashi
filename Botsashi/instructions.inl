@@ -2275,6 +2275,45 @@ auto m68k_swap(uint16_t instr) -> int
     return 4;
 }
 
+auto m68k_ext(uint16_t instr) -> int
+{
+    int opmode = getdstmode(instr);
+
+    int cycles = 0;
+
+    switch (opmode)
+    {
+	case 0b010: cycles = m68k_ext_internal<Byte, Word>(instr); break;
+	case 0b011: cycles = m68k_ext_internal<Word, Long>(instr); break;
+	default:
+	{
+	    cout << "Unrecognized opcode mode of " << dec << int(opmode) << endl;
+	    exit(0);
+	}
+	break;
+    }
+
+    return cycles;
+}
+
+template<int OpSize, int Size>
+auto m68k_ext_internal(uint16_t instr) -> int
+{
+    int regnum = getsrcreg(instr);
+
+    uint32_t data_reg = getDataReg<OpSize>(regnum);
+
+    uint32_t result = clip<Size>(sign<OpSize>(data_reg));
+
+    setDataReg<Size>(regnum, result);
+
+    setcarry(false);
+    setoverflow(false);
+    setzero(getZero<Size>(result));
+    setsign(getSign<Size>(result));
+    return 4;
+}
+
 auto m68k_exgdreg(uint16_t instr) -> int
 {
     int regxnum = getdstreg(instr);
