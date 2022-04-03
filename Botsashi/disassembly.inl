@@ -1240,6 +1240,22 @@ auto m68kdis_swap(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
     return 2;
 }
 
+auto m68kdis_scc(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    int dstmode = getsrcmode(instr);
+    int dstreg = getsrcreg(instr);
+
+    stream << "scc";
+
+    stringstream mode_str;
+
+    size_t offset = 2;
+    offset += dstmodedasm<Byte, DataAltAddr>(dstmode, dstreg, mode_str, pc);
+
+    stream << " " << mode_str.str();
+    return offset;
+}
+
 template<int Size>
 auto m68kdis_clear(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {

@@ -2325,6 +2325,32 @@ auto m68k_exgdreg(uint16_t instr) -> int
     return 6;
 }
 
+auto m68k_scc(uint16_t instr) -> int
+{
+    int cycles = 0;
+    int dstmode = getsrcmode(instr);
+    int dstreg = getsrcreg(instr);
+
+    int cond = getopcond(instr);
+
+    int dest_mode = calc_mode(dstmode, dstreg);
+
+    if (getcond(cond) == true)
+    {
+	cycles = (dest_mode == 0) ? 6 : 8;
+	dstaddrmode<Byte, DataAltAddr>(dstmode, dstreg, 0xFFFFFFFF);
+    }
+    else
+    {
+	cycles = (dest_mode == 0) ? 4 : 8;
+	dstaddrmode<Byte, DataAltAddr>(dstmode, dstreg, 0);
+    }
+
+    cycles += effective_address_cycles<Byte>(dest_mode);
+
+    return cycles;
+}
+
 template<int Size>
 auto m68k_clear(uint16_t instr) -> int
 {

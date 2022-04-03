@@ -56,12 +56,12 @@ vector<m68kmapping> funcmappings =
     instruction(0xF1F8, 0x0188, unknown, unknown), // 4-133 (p237)
     instruction(0xF1F8, 0x01C8, unknown, unknown), // 4-133 (p237)
 
-    instruction(0xFFFF, 0x027C, unknown, unknown),
-    instruction(0xFFFF, 0x023C, unknown, unknown),
-    instruction(0xFFFF, 0x0A7C, unknown, unknown),
-    instruction(0xFFFF, 0x0A3C, unknown, unknown),
-    instruction(0xFFFF, 0x007C, unknown, unknown),
-    instruction(0xFFFF, 0x003C, unknown, unknown),
+    instruction(0xFFFF, 0x027C, unknown, unknown), // 6-2 (p456)
+    instruction(0xFFFF, 0x023C, unknown, unknown), // 4-20 (p124)
+    instruction(0xFFFF, 0x0A7C, unknown, unknown), // 6-10 (p464)
+    instruction(0xFFFF, 0x0A3C, unknown, unknown), // 4-104 (p208)
+    instruction(0xFFFF, 0x007C, unknown, unknown), // 6-27 (p481)
+    instruction(0xFFFF, 0x003C, unknown, unknown), // 4-155 (p259)
 
     instruction(0xF1C0, 0x0140, bchg, bchg), // 4-28 (p132)
     instruction(0xFFC0, 0x0840, bchgimm, bchgimm), // 4-29 (p133)
@@ -146,7 +146,7 @@ vector<m68kmapping> funcmappings =
     instruction(0xF1C0, 0x5140, subq<Word>, subq<Word>), // 4-181 (p285)
     instruction(0xF1C0, 0x5180, subq<Long>, subq<Long>), // 4-181 (p285)
 
-    instruction(0xF0C0, 0x50C0, unknown, unknown), // 4-173 (p276) (Scc)
+    instruction(0xF0C0, 0x50C0, scc, scc), // 4-173 (p276) (Scc)
     instruction(0xF0F8, 0x50C8, dbcc, dbcc), // 4-91 (p195) (DBcc)
 
     // 0x6
