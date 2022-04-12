@@ -478,6 +478,7 @@ auto srcaddrmode(int mode, int reg) -> uint32_t
 		default:
 		{
 		    cout << "Unrecognized mode 7 source addressing mode of " << dec << int(reg) << endl;
+		    debugoutput(false);
 		    exit(1);
 		}
 		break;
@@ -487,6 +488,7 @@ auto srcaddrmode(int mode, int reg) -> uint32_t
 	default:
 	{
 	    cout << "Unrecognized source addressing mode of " << dec << int(mode) << endl;
+	    debugoutput(false);
 	    exit(1);
 	}
 	break;
@@ -594,6 +596,7 @@ auto rawaddrmode(int mode, int reg) -> uint32_t
 		default:
 		{
 		    cout << "Unrecognized mode 7 raw addressing mode of " << dec << int(reg) << endl;
+		    debugoutput(false);
 		    exit(1);
 		}
 		break;
@@ -603,6 +606,7 @@ auto rawaddrmode(int mode, int reg) -> uint32_t
 	default:
 	{
 	    cout << "Unrecognized raw addressing mode of " << dec << int(mode) << endl;
+	    debugoutput(false);
 	    exit(1);
 	}
 	break;
@@ -729,6 +733,7 @@ auto dstaddrmode(int mode, int reg, uint32_t val) -> void
 		default:
 		{
 		    cout << "Unrecognized mode 7 destination addressing mode of " << dec << int(reg) << endl;
+		    debugoutput(false);
 		    exit(1);
 		}
 		break;
@@ -738,6 +743,7 @@ auto dstaddrmode(int mode, int reg, uint32_t val) -> void
 	default:
 	{
 	    cout << "Unrecognized destination addressing mode of " << dec << int(mode) << endl;
+	    debugoutput(false);
 	    exit(1);
 	}
 	break;
