@@ -398,7 +398,17 @@ auto srcaddrmode(int mode, int reg) -> uint32_t
 	    if (testbit(mask, 5))
 	    {
 		uint32_t addr_reg = getAddrReg<Long>(reg);
-		uint16_t ext_word = extension<Word>(m68kreg.pc);
+
+		uint16_t ext_word = 0;
+
+		if ((Flags & Hold) == 0)
+		{
+		    ext_word = extension<Word>(m68kreg.pc);
+		}
+		else
+		{
+		    ext_word = read<Word>(m68kreg.pc);
+		}
 
 		uint32_t displacement = clip<Long>(sign<Word>(ext_word));
 
