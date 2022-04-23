@@ -417,6 +417,45 @@ auto srcaddrmode(int mode, int reg) -> uint32_t
 	    }
 	}
 	break;
+	case 6:
+	{
+	    if (testbit(mask, 6))
+	    {
+		uint32_t addr_reg = getAddrReg<Long>(reg);
+
+		uint16_t ext_word = 0;
+
+		if ((Flags & Hold) == 0)
+		{
+		    ext_word = extension<Word>(m68kreg.pc);
+		}
+		else
+		{
+		    ext_word = read<Word>(m68kreg.pc);
+		}
+
+		int reg_val = ((ext_word >> 12) & 0x7);
+
+		bool is_addr_reg = testbit(ext_word, 15);
+		bool is_longword = testbit(ext_word, 11);
+
+		uint32_t register_index = (is_addr_reg) ? getAddrReg<Long>(reg_val) : getDataReg<Long>(reg_val);
+
+		uint32_t index_value = register_index;
+
+		if (!is_longword)
+		{
+		    index_value = sign<Word>(register_index);
+		}
+
+		uint8_t displacement = (ext_word & 0xFF);
+		uint32_t ext_displace = sign<Byte>(displacement);
+
+		temp = read<Size>(addr_reg + index_value + ext_displace);
+		is_inst_legal = true;
+	    }
+	}
+	break;
 	case 7:
 	{
 	    switch (reg)
@@ -566,6 +605,45 @@ auto rawaddrmode(int mode, int reg) -> uint32_t
 	    }
 	}
 	break;
+	case 6:
+	{
+	    if (testbit(mask, 6))
+	    {
+		uint32_t addr_reg = getAddrReg<Long>(reg);
+
+		uint16_t ext_word = 0;
+
+		if ((Flags & Hold) == 0)
+		{
+		    ext_word = extension<Word>(m68kreg.pc);
+		}
+		else
+		{
+		    ext_word = read<Word>(m68kreg.pc);
+		}
+
+		int reg_val = ((ext_word >> 12) & 0x7);
+
+		bool is_addr_reg = testbit(ext_word, 15);
+		bool is_longword = testbit(ext_word, 11);
+
+		uint32_t register_index = (is_addr_reg) ? getAddrReg<Long>(reg_val) : getDataReg<Long>(reg_val);
+
+		uint32_t index_value = register_index;
+
+		if (!is_longword)
+		{
+		    index_value = sign<Word>(register_index);
+		}
+
+		uint8_t displacement = (ext_word & 0xFF);
+		uint32_t ext_displace = sign<Byte>(displacement);
+
+		temp = (addr_reg + index_value + ext_displace);
+		is_inst_legal = true;
+	    }
+	}
+	break;
 	case 7:
 	{
 	    switch (reg)
@@ -711,6 +789,35 @@ auto dstaddrmode(int mode, int reg, uint32_t val) -> void
 		uint32_t displacement = clip<Long>(sign<Word>(ext_word));
 
 		write<Size>(addr_reg + displacement, val);
+		is_inst_legal = true;
+	    }
+	}
+	break;
+	case 6:
+	{
+	    if (testbit(mask, 6))
+	    {
+		uint32_t addr_reg = getAddrReg<Long>(reg);
+		uint16_t ext_word = extension<Word>(m68kreg.pc);
+
+		int reg_val = ((ext_word >> 12) & 0x7);
+
+		bool is_addr_reg = testbit(ext_word, 15);
+		bool is_longword = testbit(ext_word, 11);
+
+		uint32_t register_index = (is_addr_reg) ? getAddrReg<Long>(reg_val) : getDataReg<Long>(reg_val);
+
+		uint32_t index_value = register_index;
+
+		if (!is_longword)
+		{
+		    index_value = sign<Word>(register_index);
+		}
+
+		uint8_t displacement = (ext_word & 0xFF);
+		uint32_t ext_displace = sign<Byte>(displacement);
+
+		write<Size>((addr_reg + index_value + ext_displace), val);
 		is_inst_legal = true;
 	    }
 	}
