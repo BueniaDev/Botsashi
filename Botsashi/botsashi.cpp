@@ -95,9 +95,9 @@ namespace botsashi
 
     void Botsashi::reset_exception()
     {
-	setSP(read<Long>(0));
 	m68kreg.pc = read<Long>(4);
 	setStatusReg(0x2700);
+	setSP(read<Long>(0));
 	is_reset_exception = true;
     }
 
