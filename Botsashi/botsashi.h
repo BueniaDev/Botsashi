@@ -147,6 +147,11 @@ namespace botsashi
 	    {
 		reg &= 7;
 		m68kreg.addrreg[reg] = ((m68kreg.addrreg[reg] & ~mask<Size>()) | (val & mask<Size>()));
+
+		if (reg == 7)
+		{
+		    setSP(val);
+		}
 	    }
 
 	    void init();
