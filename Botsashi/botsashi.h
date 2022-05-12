@@ -309,8 +309,6 @@ namespace botsashi
 
 	    void setSP(uint32_t data)
 	    {
-		setAddrReg<Long>(7, data);
-
 		if (ismodesupervisor())
 		{
 		    m68kreg.ssp = data;
