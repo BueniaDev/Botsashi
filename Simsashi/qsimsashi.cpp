@@ -75,34 +75,49 @@ void QSimsashi::trapException(int val)
 	case 2:
 	{
 	    QString text;
-
 	    if (key_pending)
 	    {
-		text = pending_text;
 		key_pending = false;
+		text = pending_text;
 		pending_text = "";
 	    }
 	    else
 	    {
 		while (true)
 		{
-		    text = QInputDialog::getText(this, "Get string", "Enter ASCII string here:");
+		    text = QInputDialog::getText(this, "Simsashi", "Enter a line of text here:");
 
-		    if ((text.size() > 0) && (text.size() <= 80))
+		    if ((text.size() >= 0) && (text.size() < 80))
 		    {
 			break;
 		    }
 		}
 	    }
 
-	    set_string(text, 1);
-	    setDataReg<uint16_t>(1, text.size());
 	    textOutCRLF(text);
+	    set_string(text, 1);
+	    setDataReg<uint32_t>(1, text.size());
+	}
+	break;
+	case 4:
+	{
+	    if (key_pending)
+	    {
+		cout << "Key pending" << endl;
+		exit(0);
+	    }
+	    else
+	    {
+		QString text = QInputDialog::getText(this, "Simsashi", "Enter a number here:");
+		int number = text.toInt();
+		textOutCRLF(QString::number(number));
+		setDataReg<uint32_t>(1, number);
+	    }
 	}
 	break;
 	case 5:
 	{
-	    QChar key_char = 0;
+	    QChar text_char;
 	    if (key_pending)
 	    {
 		cout << "Key pending" << endl;
@@ -111,29 +126,27 @@ void QSimsashi::trapException(int val)
 	    else
 	    {
 		QString text;
-
-		while (text.size() != 1)
+		while (true)
 		{
-		    text = QInputDialog::getText(this, "Get character", "Enter ONE ASCII character here:");
+		    text = QInputDialog::getText(this, "Simsashi", "Enter ONE ASCII character here:");
+
+		    if (text.size() == 1)
+		    {
+			break;
+		    }
 		}
 
-		key_char = text.at(0);
+		text_char = text.at(0);
 	    }
 
-	    setDataReg<uint8_t>(1, key_char.toLatin1());
-	    textOut(QString(key_char));
+	    textOutCRLF(text_char);
+	    setDataReg<uint8_t>(1, text_char.toLatin1());
 	}
 	break;
 	case 7:
 	{
-	    if (key_pending)
-	    {
-		setDataReg<uint8_t>(1, 1);
-	    }
-	    else
-	    {
-		setDataReg<uint8_t>(1, 0);
-	    }
+	    int key_value = (key_pending) ? 1 : 0;
+	    setDataReg<uint8_t>(1, key_value);
 	}
 	break;
 	case 9: stopFunction(); break;
@@ -983,28 +996,18 @@ void QSimsashi::keyPressEvent(QKeyEvent *event)
 {
     if (event->key() == Qt::Key_Return)
     {
+	cout << "Input text is " << pending_text.toStdString() << endl;
 	doCRLF();
 	key_pending = true;
     }
     else if (event->key() == Qt::Key_Backspace)
     {
-	QChar backspace_key(0x08);
-	textOut(backspace_key);
-
-	if (!pending_text.isEmpty())
-	{
-	    pending_text.chop(1);
-	}
+	pending_text.chop(1);
     }
     else
     {
-	QChar pending_key = event->text().at(0);
-
-	if (pending_key.toLatin1() != 0)
-	{
-	    textOut(pending_key);
-	    pending_text.append(pending_key);
-	}
+	pending_text.append(event->text().at(0));
+	textOut(event->text().at(0));
     }
 }
 

@@ -48,7 +48,14 @@ bool Botsashi::ismodesupervisor()
 
 void Botsashi::set_supervisor_flag(bool is_set)
 {
+    bool prev_flag = ismodesupervisor();
+
     setStatusReg(changebit(m68kreg.statusreg, 13, is_set));
+
+    if (prev_flag != is_set)
+    {
+	setAddrReg<Long>(7, getSP());
+    }
 }
 
 void Botsashi::set_trace_flag(bool is_set)

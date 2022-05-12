@@ -281,29 +281,66 @@ namespace botsashi
 	    template<int Size>
 	    void pushStack(uint32_t val)
 	    {
-		uint32_t stack_pointer = getAddrReg<Long>(7);
+		uint32_t stack_pointer = getSP();
 		stack_pointer -= bytes<Size>();
 		write<Size>(stack_pointer, val);
-		setAddrReg<Long>(7, stack_pointer);
+		setSP(stack_pointer);
 	    }
 
 	    template<int Size>
 	    uint32_t popStack()
 	    {
-		uint32_t stack_pointer = getAddrReg<Long>(7);
+		uint32_t stack_pointer = getSP();
 		uint32_t value = read<Size>(stack_pointer);
 		stack_pointer += bytes<Size>();
-		setAddrReg<Long>(7, stack_pointer);
+		setSP(stack_pointer);
 		return value;
+	    }
+
+	    uint32_t getSP()
+	    {
+		return (ismodesupervisor() ? m68kreg.ssp : m68kreg.usp);
+	    }
+
+	    void setSP(uint32_t data)
+	    {
+		setAddrReg<Long>(7, data);
+
+		if (ismodesupervisor())
+		{
+		    m68kreg.ssp = data;
+		}
+		else
+		{
+		    m68kreg.usp = data;
+		}
 	    }
 
 	    m68kregisters m68kreg;
 
+	    uint8_t getConditonReg()
+	    {
+		return (m68kreg.statusreg & 0xFF);
+	    }
+
+	    void setConditionReg(uint8_t data)
+	    {
+		m68kreg.statusreg = ((m68kreg.statusreg & 0xFF00) | data);
+	    }
+
 	    void setStatusReg(uint16_t data)
 	    {
 		// TODO: Add support for other M68K architectures?
+		bool prev_supervisor = ismodesupervisor();
+
 		data &= 0xA71F; // T1 -- S -- -- I2 I1 I0 -- -- -- X N Z V C
 		m68kreg.statusreg = data;
+
+		// Update A7 when switching modes
+		if (prev_supervisor != ismodesupervisor())
+		{
+		    setAddrReg<Long>(7, getSP());
+		}
 	    }
 
 	    void stopFunction();

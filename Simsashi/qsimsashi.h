@@ -199,6 +199,8 @@ class QSimsashi : public QMainWindow, public BotsashiInterface
 	QPen current_pen;
 	QBrush current_brush;
 
+	bool is_prompt = false;
+	int prompt_type = -1;
 	bool key_pending = false;
 	QString pending_text;
 

@@ -886,6 +886,105 @@ auto m68k_unknown(uint16_t instr) -> int
     return 0;
 }
 
+auto m68k_move_usp(uint16_t instr) -> int
+{
+    if (!ismodesupervisor())
+    {
+	// Privilege violation
+	set_m68k_exception(Unprivileged);
+	return -1;
+    }
+
+    bool is_reg = testbit(instr, 3);
+    int reg = getsrcreg(instr);
+
+    if (is_reg)
+    {
+	setAddrReg<Long>(reg, m68kreg.usp);
+    }
+    else
+    {
+	m68kreg.usp = getAddrReg<Long>(reg);
+    }
+
+    return 4;
+}
+
+auto m68k_andi_to_sr(uint16_t instr) -> int
+{
+    if (!ismodesupervisor())
+    {
+	// Privilege violation
+	set_m68k_exception(Unprivileged);
+	return -1;
+    }
+
+    uint16_t status_reg = m68kreg.statusreg;
+    uint16_t bitmask_val = extension<Word>(m68kreg.pc);
+    status_reg &= bitmask_val;
+    setStatusReg(status_reg);
+    return 20;
+}
+
+auto m68k_andi_to_ccr(uint16_t instr) -> int
+{
+    uint8_t status_reg = getConditonReg();
+    uint8_t bitmask_val = extension<Byte>(m68kreg.pc);
+    status_reg &= bitmask_val;
+    setConditionReg(status_reg);
+    return 20;
+}
+
+auto m68k_eori_to_sr(uint16_t instr) -> int
+{
+    if (!ismodesupervisor())
+    {
+	// Privilege violation
+	set_m68k_exception(Unprivileged);
+	return -1;
+    }
+
+    uint16_t status_reg = m68kreg.statusreg;
+    uint16_t bitmask_val = extension<Word>(m68kreg.pc);
+    status_reg ^= bitmask_val;
+    setStatusReg(status_reg);
+    return 20;
+}
+
+auto m68k_eori_to_ccr(uint16_t instr) -> int
+{
+    uint8_t status_reg = getConditonReg();
+    uint8_t bitmask_val = extension<Byte>(m68kreg.pc);
+    status_reg ^= bitmask_val;
+    setConditionReg(status_reg);
+    return 20;
+}
+
+auto m68k_ori_to_sr(uint16_t instr) -> int
+{
+    if (!ismodesupervisor())
+    {
+	// Privilege violation
+	set_m68k_exception(Unprivileged);
+	return -1;
+    }
+
+    uint16_t status_reg = m68kreg.statusreg;
+    uint16_t bitmask_val = extension<Word>(m68kreg.pc);
+    status_reg |= bitmask_val;
+    setStatusReg(status_reg);
+    return 20;
+}
+
+auto m68k_ori_to_ccr(uint16_t instr) -> int
+{
+    uint8_t status_reg = getConditonReg();
+    uint8_t bitmask_val = extension<Byte>(m68kreg.pc);
+    status_reg |= bitmask_val;
+    setConditionReg(status_reg);
+    return 20;
+}
+
 auto m68k_move_from_sr(uint16_t instr) -> int
 {
     if (!ismodesupervisor())

@@ -57,9 +57,10 @@ namespace botsashi
     void Botsashi::init(uint32_t init_pc)
     {
 	init_regs();
-	setAddrReg<Long>(7, 0x01000000);
 	m68kreg.pc = init_pc;
 	setStatusReg(0x2000);
+	setSP(0x01000000);
+	m68kreg.usp = 0xFF0000;
 	is_reset_exception = false;
 	cout << "Botsashi::Initialized" << endl;
     }
@@ -87,11 +88,14 @@ namespace botsashi
 	    setDataReg<Long>(i, 0);
 	    setAddrReg<Long>(i, 0);
 	}
+
+	m68kreg.usp = 0;
+	m68kreg.ssp = 0;
     }
 
     void Botsashi::reset_exception()
     {
-	setAddrReg<Long>(7, read<Long>(0));
+	setSP(read<Long>(0));
 	m68kreg.pc = read<Long>(4);
 	setStatusReg(0x2700);
 	is_reset_exception = true;

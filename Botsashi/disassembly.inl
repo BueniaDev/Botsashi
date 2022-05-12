@@ -396,6 +396,48 @@ auto m68kdis_unknown(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
     return 0;
 }
 
+auto m68kdis_andi_to_sr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    uint8_t bitmask_val = extension<Byte>(pc);
+    stream << "andi #" << hex << int(bitmask_val) << ", SR";
+    return 4;
+}
+
+auto m68kdis_eori_to_ccr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    uint8_t bitmask_val = extension<Byte>(pc);
+    stream << "eori #" << hex << int(bitmask_val) << ", CCR";
+    return 4;
+}
+
+auto m68kdis_eori_to_sr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    uint8_t bitmask_val = extension<Byte>(pc);
+    stream << "eori #" << hex << int(bitmask_val) << ", SR";
+    return 4;
+}
+
+auto m68kdis_ori_to_ccr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    uint8_t bitmask_val = extension<Byte>(pc);
+    stream << "ori #" << hex << int(bitmask_val) << ", CCR";
+    return 4;
+}
+
+auto m68kdis_ori_to_sr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    uint8_t bitmask_val = extension<Byte>(pc);
+    stream << "ori #" << hex << int(bitmask_val) << ", SR";
+    return 4;
+}
+
+auto m68kdis_andi_to_ccr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    uint8_t bitmask_val = extension<Byte>(pc);
+    stream << "andi #" << hex << int(bitmask_val) << ", CCR";
+    return 4;
+}
+
 auto m68kdis_move_from_sr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
     int srcmode = getsrcmode(instr);
@@ -422,6 +464,23 @@ auto m68kdis_move_to_sr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 
     stream << "move " << src_str.str() << ", SR";
     return offset;
+}
+
+auto m68kdis_move_usp(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    bool is_reg = testbit(instr, 3);
+    int reg = getsrcreg(instr);
+
+    if (is_reg)
+    {
+	stream << "move usp, a" << dec << reg;
+    }
+    else
+    {
+	stream << "move a" << dec << reg << ", usp";
+    }
+
+    return 2;
 }
 
 template<int Size>
