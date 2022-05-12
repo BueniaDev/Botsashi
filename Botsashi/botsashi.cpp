@@ -158,9 +158,9 @@ namespace botsashi
     {
 	int first_four = (instr >> 12);
 	int start = (table_offsets[first_four]);
-	int finish = (table_offsets[(first_four + 1)] - 1);
+	int finish = (table_offsets[(first_four + 1)]);
 
-	for (int i = finish; i >= start; i--)
+	for (int i = start; i < finish; i++)
 	{
 	    auto mapping = funcmappings.at(i);
 
@@ -255,9 +255,9 @@ namespace botsashi
 
 	int first_four = (instr >> 12);
 	int start = (table_offsets[first_four]);
-	int finish = (table_offsets[(first_four + 1)] - 1);
+	int finish = (table_offsets[(first_four + 1)]);
 
-	for (int i = finish; i >= start; i--)
+	for (int i = start; i < finish; i++)
 	{
 	    auto mapping = funcmappings.at(i);
 
