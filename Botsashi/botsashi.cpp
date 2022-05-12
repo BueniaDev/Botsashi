@@ -17,6 +17,8 @@
 */
 
 #include "botsashi.h"
+using namespace botsashi;
+using namespace std;
 
 namespace botsashi
 {
@@ -143,6 +145,7 @@ namespace botsashi
 	if (inst_cycles < 0)
 	{
 	    cout << "Exception occuring..." << endl;
+	    debugoutput();
 	    exit(1);
 	}
 

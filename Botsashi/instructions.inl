@@ -1041,8 +1041,6 @@ auto m68k_movem_to_mem(uint16_t instr) -> int
 	return -1;
     }
 
-    cout << "Address: " << hex << int(addr) << endl;
-
     int num_regs = 0;
 
     for (int i = 0; i < 16; i++)
@@ -1069,8 +1067,6 @@ auto m68k_movem_to_mem(uint16_t instr) -> int
 	    addr += bytes<Size>();
 	}
     }
-
-    cout << "Address: " << hex << int(addr) << endl;
 
     if ((srcmode == 4) || (srcmode == 3))
     {
