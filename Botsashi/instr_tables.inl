@@ -146,14 +146,14 @@ vector<m68kmapping> funcmappings =
     instruction(0xF1C0, 0x5140, subq<Word>, subq<Word>), // 4-181 (p285)
     instruction(0xF1C0, 0x5180, subq<Long>, subq<Long>), // 4-181 (p285)
 
-    instruction(0xF0F8, 0x50C8, dbcc, dbcc), // 4-91 (p195) (DBcc)
     instruction(0xF0C0, 0x50C0, scc, scc), // 4-173 (p276) (Scc)
+    instruction(0xF0F8, 0x50C8, dbcc, dbcc), // 4-91 (p195) (DBcc)
 
     // 0x6
 
-    instruction(0xFF00, 0x6000, bra, bra), // 4-55 (p159) (BRA)
     instruction(0xF000, 0x6000, bcc, bcc), // 4-25 (p129) (Bcc)
     instruction(0xFF00, 0x6100, bsr, bsr), // 4-59 (p163) (BSR)
+    instruction(0xFF00, 0x6000, bra, bra), // 4-55 (p159) (BRA)
 
     // 0x7
 
