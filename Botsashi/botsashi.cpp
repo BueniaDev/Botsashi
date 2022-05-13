@@ -97,7 +97,7 @@ namespace botsashi
     {
 	m68kreg.pc = read<Long>(4);
 	setStatusReg(0x2700);
-	setAddrReg<Long>(7, read<Long>(0));
+	setSP(read<Long>(0));
 	is_reset_exception = true;
     }
 
@@ -139,21 +139,19 @@ namespace botsashi
 
     int Botsashi::executenextinstr()
     {
-	int cycles = handle_interrupts();
-
 	uint16_t currentinstr = read<Word>(m68kreg.pc);
 	m68kreg.pc += 2;
 
-	int inst_cycles = executeinstr(currentinstr);
+	int cycles = executeinstr(currentinstr);
 
-	if (inst_cycles < 0)
+	if (cycles < 0)
 	{
 	    cout << "Exception occuring..." << endl;
 	    debugoutput();
 	    exit(1);
 	}
 
-	cycles += inst_cycles;
+	cycles += handle_interrupts();
 
 	return cycles;
     }

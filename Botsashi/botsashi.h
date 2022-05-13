@@ -150,7 +150,7 @@ namespace botsashi
 
 		if (reg == 7)
 		{
-		    setSP(val);
+		    updateSP();
 		}
 	    }
 
@@ -307,8 +307,14 @@ namespace botsashi
 		return (ismodesupervisor() ? m68kreg.ssp : m68kreg.usp);
 	    }
 
-	    void setSP(uint32_t data)
+	    void setSP(uint32_t val)
 	    {
+		setAddrReg<Long>(7, val);
+	    }
+
+	    void updateSP()
+	    {
+		uint32_t data = getAddrReg<Long>(7);
 		if (ismodesupervisor())
 		{
 		    m68kreg.ssp = data;
