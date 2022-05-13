@@ -685,6 +685,30 @@ auto m68kdis_sub_internal(ostream &stream, uint32_t pc, uint16_t instr) -> size_
 }
 
 template<int Size>
+auto m68kdis_suba(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    int dstreg = getdstreg(instr);
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+    stream << "suba";
+
+    switch (Size)
+    {
+	case Word: stream << ".w"; break;
+	case Long: stream << ".l"; break;
+	default: stream << ".u"; break;
+    }
+
+    stringstream mode_str;
+    size_t offset = 2;
+    offset += srcmodedasm<Size>(srcmode, srcreg, mode_str, pc);
+
+    stream << " " << mode_str.str() << ", a" << dec << dstreg;
+
+    return offset;
+}
+
+template<int Size>
 auto m68kdis_subq(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
     stream << "subq";
