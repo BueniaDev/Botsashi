@@ -1630,6 +1630,45 @@ auto m68k_subq(uint16_t instr) -> int
     return cycles;
 }
 
+template<int Size>
+auto m68k_neg(uint16_t instr) -> int
+{
+    int dstmode = getsrcmode(instr);
+    int dstreg = getsrcreg(instr);
+
+    uint32_t reg_val = srcaddrmode<Size, DataAltAddr, Hold>(dstmode, dstreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    uint32_t result = sub_internal<Size>(0, reg_val);
+
+    dstaddrmode<Size, DataAltAddr>(dstmode, dstreg, result);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    int cycles = 0;
+
+    int dest_mode = calc_mode(dstmode, dstreg);
+
+    if (Size == Long)
+    {
+	cycles = (dest_mode == 0) ? 6 : 12;
+    }
+    else
+    {
+	cycles = (dest_mode == 0) ? 4 : 8;
+    }
+
+    cycles += effective_address_cycles<Size>(dest_mode);
+    return cycles;
+}
+
 auto m68k_lea(uint16_t instr) -> int
 {
     int dstreg = getdstreg(instr);

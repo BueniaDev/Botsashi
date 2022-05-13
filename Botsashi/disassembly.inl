@@ -1067,6 +1067,31 @@ auto m68kdis_tst(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 }
 
 template<int Size>
+auto m68kdis_neg(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    int dstmode = getsrcmode(instr);
+    int dstreg = getsrcreg(instr);
+
+    stream << "neg";
+
+    switch (Size)
+    {
+	case Byte: stream << ".b"; break;
+	case Word: stream << ".w"; break;
+	case Long: stream << ".l"; break;
+	default: stream << ".u"; break;
+    }
+
+    stringstream mode_str;
+
+    size_t offset = 2;
+    offset += dstmodedasm<Size, DataAltAddr>(dstmode, dstreg, mode_str, pc);
+    
+    stream << " " << mode_str.str();
+    return offset;
+};
+
+template<int Size>
 auto m68kdis_not(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
     int dstmode = getsrcmode(instr);
