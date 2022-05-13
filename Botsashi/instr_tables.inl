@@ -203,8 +203,8 @@ vector<m68kmapping> funcmappings =
     instruction(0xF1C0, 0xB040, cmp<Word>, cmp<Word>), // 4-75 (p179)
     instruction(0xF1C0, 0xB080, cmp<Long>, cmp<Long>), // 4-75 (p179)
 
-    instruction(0xF1C0, 0xB0C0, unknown, unknown), // 4-77 (p181)
-    instruction(0xF1C0, 0xB1C0, unknown, unknown), // 4-77 (p181)
+    instruction(0xF1C0, 0xB0C0, cmpa<Word>, cmpa<Word>), // 4-77 (p181)
+    instruction(0xF1C0, 0xB1C0, cmpa<Long>, cmpa<Long>), // 4-77 (p181)
 
     instruction(0xF1F8, 0xB108, unknown, unknown), // 4-81 (p185)
     instruction(0xF1F8, 0xB148, unknown, unknown), // 4-81 (p185)

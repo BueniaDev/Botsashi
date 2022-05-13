@@ -398,6 +398,7 @@ auto m68kdis_unknown(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 
 auto m68kdis_andi_to_sr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
+    (void)instr;
     uint8_t bitmask_val = extension<Byte>(pc);
     stream << "andi #" << hex << int(bitmask_val) << ", SR";
     return 4;
@@ -405,6 +406,7 @@ auto m68kdis_andi_to_sr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 
 auto m68kdis_eori_to_ccr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
+    (void)instr;
     uint8_t bitmask_val = extension<Byte>(pc);
     stream << "eori #" << hex << int(bitmask_val) << ", CCR";
     return 4;
@@ -412,6 +414,7 @@ auto m68kdis_eori_to_ccr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 
 auto m68kdis_eori_to_sr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
+    (void)instr;
     uint8_t bitmask_val = extension<Byte>(pc);
     stream << "eori #" << hex << int(bitmask_val) << ", SR";
     return 4;
@@ -419,6 +422,7 @@ auto m68kdis_eori_to_sr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 
 auto m68kdis_ori_to_ccr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
+    (void)instr;
     uint8_t bitmask_val = extension<Byte>(pc);
     stream << "ori #" << hex << int(bitmask_val) << ", CCR";
     return 4;
@@ -978,6 +982,30 @@ auto m68kdis_cmp(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
     size_t offset = 2;
     offset += srcmodedasm<Size, DataAddr>(srcmode, srcreg, mode_str, pc);
     stream << " " << mode_str.str() << ", d" << dec << dstreg;
+    return offset;
+}
+
+template<int Size>
+auto m68kdis_cmpa(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    int dstreg = getdstreg(instr);
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+    stream << "cmpa";
+
+    switch (Size)
+    {
+	case Word: stream << ".w"; break;
+	case Long: stream << ".l"; break;
+	default: stream << ".u"; break;
+    }
+
+    stringstream mode_str;
+    size_t offset = 2;
+    offset += srcmodedasm<Size>(srcmode, srcreg, mode_str, pc);
+
+    stream << " " << mode_str.str() << ", a" << dec << dstreg;
+
     return offset;
 }
 

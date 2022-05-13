@@ -912,6 +912,7 @@ auto m68k_move_usp(uint16_t instr) -> int
 
 auto m68k_andi_to_sr(uint16_t instr) -> int
 {
+    (void)instr;
     if (!ismodesupervisor())
     {
 	// Privilege violation
@@ -928,6 +929,7 @@ auto m68k_andi_to_sr(uint16_t instr) -> int
 
 auto m68k_andi_to_ccr(uint16_t instr) -> int
 {
+    (void)instr;
     uint8_t status_reg = getConditonReg();
     uint8_t bitmask_val = extension<Byte>(m68kreg.pc);
     status_reg &= bitmask_val;
@@ -937,6 +939,7 @@ auto m68k_andi_to_ccr(uint16_t instr) -> int
 
 auto m68k_eori_to_sr(uint16_t instr) -> int
 {
+    (void)instr;
     if (!ismodesupervisor())
     {
 	// Privilege violation
@@ -953,6 +956,7 @@ auto m68k_eori_to_sr(uint16_t instr) -> int
 
 auto m68k_eori_to_ccr(uint16_t instr) -> int
 {
+    (void)instr;
     uint8_t status_reg = getConditonReg();
     uint8_t bitmask_val = extension<Byte>(m68kreg.pc);
     status_reg ^= bitmask_val;
@@ -962,6 +966,7 @@ auto m68k_eori_to_ccr(uint16_t instr) -> int
 
 auto m68k_ori_to_sr(uint16_t instr) -> int
 {
+    (void)instr;
     if (!ismodesupervisor())
     {
 	// Privilege violation
@@ -978,6 +983,7 @@ auto m68k_ori_to_sr(uint16_t instr) -> int
 
 auto m68k_ori_to_ccr(uint16_t instr) -> int
 {
+    (void)instr;
     uint8_t status_reg = getConditonReg();
     uint8_t bitmask_val = extension<Byte>(m68kreg.pc);
     status_reg |= bitmask_val;
@@ -1929,6 +1935,31 @@ auto m68k_cmp(uint16_t instr) -> int
     int source_mode = calc_mode(srcmode, srcreg);
     cycles += effective_address_cycles<Size>(source_mode);
 
+    return cycles;
+}
+
+template<int Size>
+auto m68k_cmpa(uint16_t instr) -> int
+{
+    int addr_reg = getdstreg(instr);
+
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    uint32_t res_val = srcaddrmode<Size>(srcmode, srcreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    uint32_t reg_val = getAddrReg<Size>(addr_reg);
+
+    cmp_internal<Size>(reg_val, res_val);
+
+    int source_mode = calc_mode(srcmode, srcreg);
+
+    int cycles = (6 + effective_address_cycles<Size>(source_mode));
     return cycles;
 }
 
