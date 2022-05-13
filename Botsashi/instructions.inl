@@ -1829,6 +1829,15 @@ auto m68k_dbcc(uint16_t instr) -> int
     return cycles;
 }
 
+auto m68k_rtr(uint16_t instr) -> int
+{
+    (void)instr;
+    uint16_t status_reg = popStack<Word>();
+    setConditionReg(status_reg);
+    m68kreg.pc = popStack<Long>();
+    return 20;
+}
+
 auto m68k_rts(uint16_t instr) -> int
 {
     (void)instr;

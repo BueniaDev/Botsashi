@@ -19,7 +19,7 @@
 auto Botsashi::clipAddr(uint32_t addr) -> uint32_t
 {
     // Clip address to 24-bits, as on the real 68000
-    // NOTE: This applies to the 68000 and 68010
+    // NOTE: This only applies to the 68000 and 68010
     return (addr & 0xFFFFFF);
 }
 
