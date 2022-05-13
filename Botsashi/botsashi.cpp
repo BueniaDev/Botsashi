@@ -139,21 +139,20 @@ namespace botsashi
 
     int Botsashi::executenextinstr()
     {
-	int cycles = handle_interrupts();
-
+	m68kreg.prev_pc = m68kreg.pc;
 	uint16_t currentinstr = read<Word>(m68kreg.pc);
 	m68kreg.pc += 2;
 
-	int inst_cycles = executeinstr(currentinstr);
+	int cycles = executeinstr(currentinstr);
 
-	if (inst_cycles < 0)
+	if (cycles < 0)
 	{
 	    cout << "Exception occuring..." << endl;
 	    debugoutput();
 	    exit(1);
 	}
 
-	cycles += inst_cycles;
+	cycles += handle_interrupts();
 
 	return cycles;
     }
@@ -204,7 +203,7 @@ namespace botsashi
 	set_irq_mask(irq_level);
 	uint32_t vector_addr = (0x60 + (irq_level << 2));
 
-	pushStack<Long>(m68kreg.pc);
+	pushStack<Long>(m68kreg.prev_pc);
 	pushStack<Word>(status_copy);
 
 	m68kreg.pc = read<Long>(vector_addr);
