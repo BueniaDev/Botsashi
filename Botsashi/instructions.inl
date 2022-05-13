@@ -2772,7 +2772,7 @@ auto m68k_bchg(uint16_t instr) -> int
     int bit_num = getDataReg<Long>(dstreg);
     bit_num &= (srcmode == 0) ? 31 : 7; // Mask to 32-bits for EA mode 0, and 8-bits for the others
 
-    uint32_t data_addr = srcaddrmode<Byte, DataAddr, BitInstr>(srcmode, srcreg);
+    uint32_t data_addr = srcaddrmode<Byte, DataAddr, (BitInstr | Hold)>(srcmode, srcreg);
 
     if (is_m68k_exception())
     {
@@ -2815,7 +2815,7 @@ auto m68k_bclr(uint16_t instr) -> int
     int bit_num = getDataReg<Long>(dstreg);
     bit_num &= (srcmode == 0) ? 31 : 7; // Mask to 32-bits for EA mode 0, and 8-bits for the others
 
-    uint32_t data_addr = srcaddrmode<Byte, DataAddr, BitInstr>(srcmode, srcreg);
+    uint32_t data_addr = srcaddrmode<Byte, DataAddr, (BitInstr | Hold)>(srcmode, srcreg);
 
     if (is_m68k_exception())
     {
@@ -2856,7 +2856,7 @@ auto m68k_bset(uint16_t instr) -> int
     int bit_num = getDataReg<Long>(dstreg);
     bit_num &= (srcmode == 0) ? 31 : 7; // Mask to 32-bits for EA mode 0, and 8-bits for the others
 
-    uint32_t data_addr = srcaddrmode<Byte, DataAddr, BitInstr>(srcmode, srcreg);
+    uint32_t data_addr = srcaddrmode<Byte, DataAddr, (BitInstr | Hold)>(srcmode, srcreg);
 
     if (is_m68k_exception())
     {
@@ -2896,7 +2896,7 @@ auto m68k_bclrimm(uint16_t instr) -> int
     int bit_num = extension<Byte>(m68kreg.pc);
     bit_num &= (srcmode == 0) ? 31 : 7; // Mask to 32-bits for EA mode 0, and 8-bits for the others
 
-    uint32_t data_addr = srcaddrmode<Byte, DataAddr, BitInstr>(srcmode, srcreg);
+    uint32_t data_addr = srcaddrmode<Byte, DataAddr, (BitInstr | Hold)>(srcmode, srcreg);
 
     if (is_m68k_exception())
     {
@@ -2936,7 +2936,7 @@ auto m68k_bsetimm(uint16_t instr) -> int
     int bit_num = extension<Byte>(m68kreg.pc);
     bit_num &= (srcmode == 0) ? 31 : 7; // Mask to 32-bits for EA mode 0, and 8-bits for the others
 
-    uint32_t data_addr = srcaddrmode<Byte, DataAddr, BitInstr>(srcmode, srcreg);
+    uint32_t data_addr = srcaddrmode<Byte, DataAddr, (BitInstr | Hold)>(srcmode, srcreg);
 
     if (is_m68k_exception())
     {
@@ -2976,7 +2976,7 @@ auto m68k_bchgimm(uint16_t instr) -> int
     int bit_num = extension<Byte>(m68kreg.pc);
     bit_num &= (srcmode == 0) ? 31 : 7; // Mask to 32-bits for EA mode 0, and 8-bits for the others
 
-    uint32_t data_addr = srcaddrmode<Byte, DataAddr, BitInstr>(srcmode, srcreg);
+    uint32_t data_addr = srcaddrmode<Byte, DataAddr, (BitInstr | Hold)>(srcmode, srcreg);
 
     if (is_m68k_exception())
     {
