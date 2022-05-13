@@ -399,7 +399,7 @@ auto m68kdis_unknown(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 auto m68kdis_andi_to_sr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
     (void)instr;
-    uint8_t bitmask_val = extension<Byte>(pc);
+    uint16_t bitmask_val = extension<Word>(pc);
     stream << "andi #" << hex << int(bitmask_val) << ", SR";
     return 4;
 }
@@ -415,7 +415,7 @@ auto m68kdis_eori_to_ccr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 auto m68kdis_eori_to_sr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
     (void)instr;
-    uint8_t bitmask_val = extension<Byte>(pc);
+    uint16_t bitmask_val = extension<Word>(pc);
     stream << "eori #" << hex << int(bitmask_val) << ", SR";
     return 4;
 }
@@ -430,13 +430,15 @@ auto m68kdis_ori_to_ccr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 
 auto m68kdis_ori_to_sr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
-    uint8_t bitmask_val = extension<Byte>(pc);
+    (void)instr;
+    uint16_t bitmask_val = extension<Word>(pc);
     stream << "ori #" << hex << int(bitmask_val) << ", SR";
     return 4;
 }
 
 auto m68kdis_andi_to_ccr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
+    (void)instr;
     uint8_t bitmask_val = extension<Byte>(pc);
     stream << "andi #" << hex << int(bitmask_val) << ", CCR";
     return 4;
@@ -472,6 +474,7 @@ auto m68kdis_move_to_sr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 
 auto m68kdis_move_usp(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
+    (void)pc;
     bool is_reg = testbit(instr, 3);
     int reg = getsrcreg(instr);
 

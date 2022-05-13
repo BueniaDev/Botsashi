@@ -42,6 +42,18 @@ array<int, 12> effective_address_l_cycles =
     14, 12, 16, 12, 14,  8
 };
 
+array<int, 12> movem_reg_cycles = 
+{
+     0,  0, 12, 12,  0, 16,
+    18, 16, 20, 16, 18,  0
+};
+
+array<int, 12> movem_mem_cycles = 
+{
+     0,  0,  8, 0, 8, 12,
+    14, 12, 16, 0, 0,  0
+};
+
 template<int Size>
 auto effective_address_cycles(int mode) -> int
 {
@@ -1121,6 +1133,9 @@ auto m68k_movem(uint16_t instr) -> int
     {
 	case 0: cycles = m68k_movem_to_mem<Word>(instr); break;
 	case 1: cycles = m68k_movem_to_mem<Long>(instr); break;
+	case 2: cycles = m68k_movem_to_reg<Word>(instr); break;
+	case 3: cycles = m68k_movem_to_reg<Long>(instr); break;
+	// This shouldn't happen
 	default:
 	{
 	    cout << "Unrecognized movem mask of " << dec << int(mask) << endl;
@@ -1184,7 +1199,72 @@ auto m68k_movem_to_mem(uint16_t instr) -> int
 
     int source_mode = calc_mode(srcmode, srcreg);
 
-    cycles += effective_address_cycles<Size>(source_mode);
+    cycles += movem_mem_cycles[source_mode];
+    return cycles;
+}
+
+template<int Size>
+auto m68k_movem_to_reg(uint16_t instr) -> int
+{
+    uint16_t list_mask = extension<Word>(m68kreg.pc);
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    uint32_t addr = rawaddrmode<Long, ControlRegAddr>(srcmode, srcreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    int num_regs = 0;
+
+    for (int i = 0; i < 16; i++)
+    {
+	if (!testbit(list_mask, i))
+	{
+	    continue;
+	}
+
+	num_regs += 1;
+
+	int index = (srcmode == 4) ? (15 - i) : i;
+
+	if (srcmode == 4)
+	{
+	    addr -= bytes<Size>();
+	}
+
+	auto data = read<Size>(addr);
+	data = sign<Size>(data);
+
+	if (index < 8)
+	{
+	    setDataReg<Long>(index, data);
+	}
+	else
+	{
+	    setAddrReg<Long>((index - 8), data);
+	}
+
+	if (srcmode != 4)
+	{
+	    addr += bytes<Size>();
+	}
+    }
+
+    if ((srcmode == 4) || (srcmode == 3))
+    {
+	setAddrReg<Long>(srcreg, addr);
+    }
+
+    int cycle_mul = (Size == Long) ? 8 : 4;
+
+    int cycles = (cycle_mul * num_regs);
+
+    int source_mode = calc_mode(srcmode, srcreg);
+
+    cycles += movem_reg_cycles[source_mode];
     return cycles;
 }
 
