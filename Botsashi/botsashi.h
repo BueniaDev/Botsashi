@@ -405,6 +405,10 @@ namespace botsashi
 		m68kdasmfunc disfunc;
 	    };
 
+	    vector<m68kmapping> func_table;
+
+	    m68kmapping decode_instr(uint16_t instr);
+
 	    #include "instr_tables.inl"
 
 	    auto count_bits(uint64_t source) -> uint32_t;

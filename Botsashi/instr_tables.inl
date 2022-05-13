@@ -13,14 +13,39 @@
 */
 
 // Instruction table is 180 instructions
+
+array<int, 33> table_offsets = {
+    0, 23, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+
+/*
 array<int, 17> table_offsets = {
      0,  36,  37, 38,  39,  82,  90,  93, 
     94, 103, 114, 115, 126, 138, 149, 181, 182
 };
+*/
 
 vector<m68kmapping> funcmappings =
 {
     // 0x0
+    instruction(0xF1C0, 0x0100, btst, btst), // 4-62 (p166)
+    instruction(0xF1C0, 0x0140, bchg, bchg), // 4-28 (p132)
+    instruction(0xF1C0, 0x01C0, bset, bset), // 4-57 (p161)
+    instruction(0xF1C0, 0x0180, bclr, bclr), // 4-31 (p135)
+
+    instruction(0xF1F8, 0x0108, unknown, unknown), // 4-133 (p237)
+    instruction(0xF1F8, 0x0148, unknown, unknown), // 4-133 (p237)
+    instruction(0xF1F8, 0x0188, unknown, unknown), // 4-133 (p237)
+    instruction(0xF1F8, 0x01C8, unknown, unknown), // 4-133 (p237)
+
+    instruction(0xFFFF, 0x027C, andi_to_sr, andi_to_sr), // 6-2 (p456)
+    instruction(0xFFFF, 0x023C, andi_to_ccr, andi_to_ccr), // 4-20 (p124)
+    instruction(0xFFFF, 0x007C, ori_to_sr, ori_to_sr), // 6-27 (p481)
+    instruction(0xFFFF, 0x003C, ori_to_ccr, ori_to_ccr), // 4-155 (p259)
+
     instruction(0xFFC0, 0x0600, addi<Byte>, addi<Byte>), // 4-9 (p113)
     instruction(0xFFC0, 0x0640, addi<Word>, addi<Word>), // 4-9 (p113)
     instruction(0xFFC0, 0x0680, addi<Long>, addi<Long>), // 4-9 (p113)
@@ -33,10 +58,6 @@ vector<m68kmapping> funcmappings =
     instruction(0xFFC0, 0x0040, ori<Word>, ori<Word>), // 4-153 (p257)
     instruction(0xFFC0, 0x0080, ori<Long>, ori<Long>), // 4-153 (p257)
 
-    instruction(0xFFC0, 0x0A00, eori<Byte>, eori<Byte>), // 4-102 (p206)
-    instruction(0xFFC0, 0x0A40, eori<Word>, eori<Word>), // 4-102 (p206)
-    instruction(0xFFC0, 0x0A80, eori<Long>, eori<Long>), // 4-102 (p206)
-
     instruction(0xFFC0, 0x0400, subi<Byte>, subi<Byte>), // 4-179 (p283)
     instruction(0xFFC0, 0x0440, subi<Word>, subi<Word>), // 4-179 (p283)
     instruction(0xFFC0, 0x0480, subi<Long>, subi<Long>), // 4-179 (p283)
@@ -45,28 +66,17 @@ vector<m68kmapping> funcmappings =
     instruction(0xFFC0, 0x0C40, cmpi<Word>, cmpi<Word>), // 4-79 (p183)
     instruction(0xFFC0, 0x0C80, cmpi<Long>, cmpi<Long>), // 4-79 (p183)
 
-    instruction(0xF1C0, 0x0100, btst, btst), // 4-62 (p166)
-    instruction(0xFFC0, 0x0800, btstimm, btstimm), // 4-63 (p167)
+    instruction(0xFFC0, 0x0A00, eori<Byte>, eori<Byte>), // 4-102 (p206)
+    instruction(0xFFC0, 0x0A40, eori<Word>, eori<Word>), // 4-102 (p206)
+    instruction(0xFFC0, 0x0A80, eori<Long>, eori<Long>), // 4-102 (p206)
 
-    instruction(0xF1C0, 0x0180, bclr, bclr), // 4-31 (p135)
+    instruction(0xFFC0, 0x0800, btstimm, btstimm), // 4-63 (p167)
+    instruction(0xFFC0, 0x0840, bchgimm, bchgimm), // 4-29 (p133)
+    instruction(0xFFC0, 0x08C0, bsetimm, bsetimm), // 4-58 (p162)
     instruction(0xFFC0, 0x0880, bclrimm, bclrimm), // 4-32 (p136)
 
-    instruction(0xF1C0, 0x0140, bchg, bchg), // 4-28 (p132)
-    instruction(0xFFC0, 0x0840, bchgimm, bchgimm), // 4-29 (p133)
-    instruction(0xF1C0, 0x01C0, bset, bset), // 4-57 (p161)
-    instruction(0xFFC0, 0x08C0, bsetimm, bsetimm), // 4-58 (p162)
-
-    instruction(0xF1F8, 0x0108, unknown, unknown), // 4-133 (p237)
-    instruction(0xF1F8, 0x0148, unknown, unknown), // 4-133 (p237)
-    instruction(0xF1F8, 0x0188, unknown, unknown), // 4-133 (p237)
-    instruction(0xF1F8, 0x01C8, unknown, unknown), // 4-133 (p237)
-
-    instruction(0xFFFF, 0x027C, andi_to_sr, andi_to_sr), // 6-2 (p456)
-    instruction(0xFFFF, 0x023C, andi_to_ccr, andi_to_ccr), // 4-20 (p124)
     instruction(0xFFFF, 0x0A7C, eori_to_sr, eori_to_sr), // 6-10 (p464)
     instruction(0xFFFF, 0x0A3C, eori_to_ccr, eori_to_ccr), // 4-104 (p208)
-    instruction(0xFFFF, 0x007C, ori_to_sr, ori_to_sr), // 6-27 (p481)
-    instruction(0xFFFF, 0x003C, ori_to_ccr, ori_to_ccr), // 4-155 (p259)
 
     // 0x1
     instruction(0xF000, 0x1000, move<Byte>, move<Byte>), // 4-116 (p220)
@@ -235,12 +245,12 @@ vector<m68kmapping> funcmappings =
     instruction(0xF1C0, 0xD040, add<Word>, add<Word>), // 4-4 (p108) (ea + Dn -> Dn) 
     instruction(0xF1C0, 0xD080, add<Long>, add<Long>), // 4-4 (p108) (ea + Dn -> Dn)
 
+    instruction(0xF1C0, 0xD0C0, adda<Word>, adda<Word>), // 4-7 (p111)
+    instruction(0xF1C0, 0xD1C0, adda<Long>, adda<Long>), // 4-7 (p111)
+
     instruction(0xF1C0, 0xD100, addr<Byte>, addr<Byte>), // 4-4 (p108) (Dn + ea -> ea)
     instruction(0xF1C0, 0xD140, addr<Word>, addr<Byte>), // 4-4 (p108) (Dn + ea -> ea)
     instruction(0xF1C0, 0xD180, addr<Long>, addr<Byte>), // 4-4 (p108) (Dn + ea -> ea)
-
-    instruction(0xF1C0, 0xD0C0, adda<Word>, adda<Word>), // 4-7 (p111)
-    instruction(0xF1C0, 0xD1C0, adda<Long>, adda<Long>), // 4-7 (p111)
 
     instruction(0xF1F0, 0xD100, unknown, unknown), // 4-14 (p118)
     instruction(0xF1F0, 0xD140, unknown, unknown), // 4-14 (p118)

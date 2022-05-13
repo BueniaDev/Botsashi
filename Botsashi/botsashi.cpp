@@ -17,6 +17,7 @@
 */
 
 #include "botsashi.h"
+#include <chrono>
 using namespace botsashi;
 using namespace std;
 
@@ -36,12 +37,16 @@ namespace botsashi
 
     Botsashi::Botsashi()
     {
-
+	for (uint32_t index = 0; index < 0x10000; index++)
+	{
+	    m68kmapping mapping = decode_instr(index);
+	    func_table.push_back(mapping);
+	}
     }
 
     Botsashi::~Botsashi()
     {
-
+	func_table.clear();
     }
 
     #include "utils.cpp"
@@ -156,24 +161,24 @@ namespace botsashi
 	return cycles;
     }
 
-    int Botsashi::executeinstr(uint16_t instr)
+    Botsashi::m68kmapping Botsashi::decode_instr(uint16_t instr)
     {
-	int first_four = (instr >> 12);
-	int start = (table_offsets[first_four]);
-	int finish = (table_offsets[(first_four + 1)] - 1);
-
-	for (int i = finish; i >= start; i--)
+	for (auto it = funcmappings.rbegin(); it != funcmappings.rend(); it++)
 	{
-	    auto mapping = funcmappings.at(i);
+	    auto mapping = *it;
 
 	    if ((instr & mapping.mask) == mapping.value)
 	    {
-		return mapping.function(instr);
+		return mapping;
 	    }
 	}
 
-	unrecognizedinstr(instr);
-	return 0;
+	return instruction(0xFFFF, instr, unknown, unknown);
+    }
+
+    int Botsashi::executeinstr(uint16_t instr)
+    {
+	return func_table.at(instr).function(instr);
     }
 
     int Botsashi::handle_interrupts()
@@ -256,20 +261,6 @@ namespace botsashi
 	uint16_t instr = read<Word>(pcval);
 	pcval += 2;
 
-	int first_four = (instr >> 12);
-	int start = (table_offsets[first_four]);
-	int finish = (table_offsets[(first_four + 1)] - 1);
-
-	for (int i = finish; i >= start; i--)
-	{
-	    auto mapping = funcmappings.at(i);
-
-	    if ((instr & mapping.mask) == mapping.value)
-	    {
-		return mapping.disfunc(stream, pcval, instr);
-	    }
-	}
-
-	return m68kdis_unknown(stream, pcval, instr);
+	return func_table.at(instr).disfunc(stream, pcval, instr);
     }
 };
