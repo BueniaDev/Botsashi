@@ -119,8 +119,6 @@ vector<m68kmapping> funcmappings =
     instruction(0xFFFF, 0x4E77, rtr, rtr), // 4-168 (p272)
     instruction(0xFFFF, 0x4E73, unknown, unknown), // 6-84 (p538)
 
-    instruction(0xFFF8, 0x4840, swap, swap), // 4-185 (p289)
-
     instruction(0xFFC0, 0x4AC0, unknown, unknown), // 4-186 (p290)
 
     instruction(0xFFF8, 0x4880, ext, ext), // 4-106 (p210)
@@ -131,6 +129,8 @@ vector<m68kmapping> funcmappings =
 
     instruction(0xF1C0, 0x41C0, lea, lea), // 4-110 (p214)
     instruction(0xFFC0, 0x4840, pea, pea), // 4-159 (p263)
+
+    instruction(0xFFF8, 0x4840, swap, swap), // 4-185 (p289)
 
     instruction(0xFFFF, 0x4E72, stop, stop), // 6-85 (p539)
     instruction(0xFFFF, 0x4E71, nop, nop), // 4-147 (p251)

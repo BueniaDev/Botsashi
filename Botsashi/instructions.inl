@@ -3140,11 +3140,6 @@ auto m68k_mulu(uint16_t instr) -> int
 
     uint32_t dstreg_addr = getDataReg<Word>(dstreg);
     uint32_t result = (dstreg_addr * data_addr);
-    
-    cout << "Multiplicand: " << hex << int(dstreg_addr) << endl;
-    cout << "Multiplier: " << hex << int(data_addr) << endl;
-    cout << "Product: " << hex << int(result) << endl;
-    cout << endl;
 
     setzero(getZero<Long>(result));
     setsign(getSign<Long>(result));
