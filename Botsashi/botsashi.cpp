@@ -206,6 +206,7 @@ namespace botsashi
 	pushStack<Word>(status_copy);
 
 	m68kreg.pc = read<Long>(vector_addr);
+	irq_line = 0;
 	return 44;
     }
 
