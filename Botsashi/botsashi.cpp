@@ -163,9 +163,13 @@ namespace botsashi
 
     Botsashi::m68kmapping Botsashi::decode_instr(uint16_t instr)
     {
-	for (auto it = funcmappings.rbegin(); it != funcmappings.rend(); it++)
+	int first_four = (instr >> 12);
+	int start = (table_offsets[first_four]);
+	int finish = (table_offsets[(first_four + 1)] - 1);
+
+	for (int i = finish; i >= start; i--)
 	{
-	    auto mapping = *it;
+	    auto mapping = funcmappings.at(i);
 
 	    if ((instr & mapping.mask) == mapping.value)
 	    {
