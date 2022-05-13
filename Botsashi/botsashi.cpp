@@ -237,6 +237,7 @@ namespace botsashi
 	cout << "USP: " << hex << m68kreg.usp << endl;
 	cout << "SSP: " << hex << m68kreg.ssp << endl;
 	cout << "PC: " << hex << m68kreg.pc << endl;
+	cout << "PPC: " << hex << m68kreg.prev_pc << endl;
 	cout << "Status: " << hex << int(m68kreg.statusreg) << endl;
 	cout << "Current instruction (in hex): " << hex << (int)read<Word>(m68kreg.pc) << endl;
 
