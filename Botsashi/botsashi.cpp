@@ -139,19 +139,21 @@ namespace botsashi
 
     int Botsashi::executenextinstr()
     {
+	int cycles = handle_interrupts();
+
 	uint16_t currentinstr = read<Word>(m68kreg.pc);
 	m68kreg.pc += 2;
 
-	int cycles = executeinstr(currentinstr);
+	int inst_cycles = executeinstr(currentinstr);
 
-	if (cycles < 0)
+	if (inst_cycles < 0)
 	{
 	    cout << "Exception occuring..." << endl;
 	    debugoutput();
 	    exit(1);
 	}
 
-	cycles += handle_interrupts();
+	cycles += inst_cycles;
 
 	return cycles;
     }
