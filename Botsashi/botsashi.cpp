@@ -139,23 +139,19 @@ namespace botsashi
 
     int Botsashi::executenextinstr()
     {
-	m68kreg.prev_pc = m68kreg.pc;
-
-	int cycles = handle_interrupts();
-
 	uint16_t currentinstr = read<Word>(m68kreg.pc);
 	m68kreg.pc += 2;
 
-	int inst_cycles = executeinstr(currentinstr);
+	int cycles = executeinstr(currentinstr);
 
-	if (inst_cycles < 0)
+	if (cycles < 0)
 	{
 	    cout << "Exception occuring..." << endl;
 	    debugoutput();
 	    exit(1);
 	}
 
-	cycles += inst_cycles;
+	cycles += handle_interrupts();
 
 	return cycles;
     }
@@ -200,11 +196,6 @@ namespace botsashi
 	    return 0;
 	}
 
-	cout << "IRQ debug" << endl;
-	cout << "PC: " << hex << int(m68kreg.prev_pc) << endl;
-	cout << "SR: " << hex << int(m68kreg.statusreg) << endl;
-	cout << endl;
-
 	uint16_t status_copy = m68kreg.statusreg;
 	set_supervisor_flag(true);
 	set_trace_flag(false);
@@ -245,7 +236,6 @@ namespace botsashi
 	cout << "USP: " << hex << m68kreg.usp << endl;
 	cout << "SSP: " << hex << m68kreg.ssp << endl;
 	cout << "PC: " << hex << m68kreg.pc << endl;
-	cout << "PPC: " << hex << m68kreg.prev_pc << endl;
 	cout << "Status: " << hex << int(m68kreg.statusreg) << endl;
 	cout << "Current instruction (in hex): " << hex << (int)read<Word>(m68kreg.pc) << endl;
 

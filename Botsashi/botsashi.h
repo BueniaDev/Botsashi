@@ -256,7 +256,6 @@ namespace botsashi
 		uint32_t usp = 0;
 		uint32_t ssp = 0;
 		uint32_t pc = 0;
-		uint32_t prev_pc = 0;
 		uint16_t statusreg;
 	    };
 
