@@ -202,7 +202,7 @@ namespace botsashi
 	set_irq_mask(irq_level);
 	uint32_t vector_addr = (0x60 + (irq_level << 2));
 
-	pushStack<Long>(m68kreg.prev_pc);
+	pushStack<Long>(m68kreg.pc);
 	pushStack<Word>(status_copy);
 
 	m68kreg.pc = read<Long>(vector_addr);
