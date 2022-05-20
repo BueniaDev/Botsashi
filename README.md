@@ -5,7 +5,7 @@
 
 Motorola 68000 emulation engine, kinda
 
-A (currently WIP) emulation of the iconic Motorola 68000 processor, written in C++17.
+An emulation library for the iconic Motorola 68000 processor, written in C++17.
 
 ## Features
 
@@ -146,7 +146,9 @@ cmake .. -G "MSYS Makefiles" -DBUILD_SIMSASHI="<ON/OFF>" -DCMAKE_BUILD_TYPE="<De
 
 ## Near-term
 
-Complete Motorola 68000 support (as of right now, this engine supports only a subset of the M68K instruction set with only extremely bare-bones exception support and basic IRQ support)
+Finish implementing M68K instruction set
+
+Improve exception/IRQ support
 
 Feature parity between the Simsashi and SIM68k simulators
 

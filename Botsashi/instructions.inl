@@ -2084,6 +2084,47 @@ auto m68k_or_internal(uint16_t instr) -> int
 }
 
 template<int Size>
+auto m68k_eor(uint16_t instr) -> int
+{
+    int dstreg = getdstreg(instr);
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    uint32_t res_val = srcaddrmode<Size, DataAltAddr, Hold>(srcmode, srcreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    uint32_t reg_val = getDataReg<Size>(dstreg);
+
+    uint32_t result = eor_internal<Size>(res_val, reg_val);
+    dstaddrmode<Size, DataAltAddr>(srcmode, srcreg, result);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    int cycles = 0;
+
+    int source_mode = calc_mode(srcmode, srcreg);
+
+    if (source_mode == 0)
+    {
+	cycles = (Size == Long) ? 8 : 4;
+    }
+    else
+    {
+	cycles = (Size == Long) ? 12 : 8;
+    }
+
+    cycles += effective_address_cycles<Size>(source_mode);
+    return cycles;
+}
+
+template<int Size>
 auto m68k_cmp(uint16_t instr) -> int
 {
     int dstreg = getdstreg(instr);

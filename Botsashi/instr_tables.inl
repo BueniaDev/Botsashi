@@ -195,9 +195,9 @@ vector<m68kmapping> funcmappings =
 
     // 0xB
 
-    instruction(0xF1C0, 0xB100, unknown, unknown), // 4-100 (p204)
-    instruction(0xF1C0, 0xB140, unknown, unknown), // 4-100 (p204)
-    instruction(0xF1C0, 0xB180, unknown, unknown), // 4-100 (p204)
+    instruction(0xF1C0, 0xB100, eor<Byte>, eor<Byte>), // 4-100 (p204)
+    instruction(0xF1C0, 0xB140, eor<Word>, eor<Word>), // 4-100 (p204)
+    instruction(0xF1C0, 0xB180, eor<Long>, eor<Long>), // 4-100 (p204)
 
     instruction(0xF1C0, 0xB000, cmp<Byte>, cmp<Byte>), // 4-75 (p179)
     instruction(0xF1C0, 0xB040, cmp<Word>, cmp<Word>), // 4-75 (p179)
