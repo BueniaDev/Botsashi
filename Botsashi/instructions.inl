@@ -1042,13 +1042,6 @@ auto m68k_move_from_sr(uint16_t instr) -> int
 
 auto m68k_move_to_ccr(uint16_t instr) -> int
 {
-    if (!ismodesupervisor())
-    {
-	// Privilege violation
-	set_m68k_exception(Unprivileged);
-	return -1;
-    }
-
     int srcmode = getsrcmode(instr);
     int srcreg = getsrcreg(instr);
 
