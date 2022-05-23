@@ -458,6 +458,20 @@ auto m68kdis_move_from_sr(ostream &stream, uint32_t pc, uint16_t instr) -> size_
     return offset;
 }
 
+auto m68kdis_move_to_ccr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    stringstream src_str;
+
+    size_t offset = 2;
+    offset += srcmodedasm<Word, DataAddr>(srcmode, srcreg, src_str, pc);
+
+    stream << "move " << src_str.str() << ", CCR";
+    return offset;
+}
+
 auto m68kdis_move_to_sr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
     int srcmode = getsrcmode(instr);

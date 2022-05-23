@@ -1040,6 +1040,32 @@ auto m68k_move_from_sr(uint16_t instr) -> int
     return cycles;
 }
 
+auto m68k_move_to_ccr(uint16_t instr) -> int
+{
+    if (!ismodesupervisor())
+    {
+	// Privilege violation
+	set_m68k_exception(Unprivileged);
+	return -1;
+    }
+
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    uint32_t ccr_value = srcaddrmode<Word, DataAddr>(srcmode, srcreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    setConditionReg(ccr_value);
+    int source_mode = calc_mode(srcmode, srcreg);
+
+    int cycles = (12 + effective_address_cycles<Word>(source_mode));
+    return cycles;
+}
+
 auto m68k_move_to_sr(uint16_t instr) -> int
 {
     if (!ismodesupervisor())
