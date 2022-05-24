@@ -160,8 +160,6 @@ vector<m68kmapping> funcmappings =
 
     // 0x8
 
-    instruction(0xF1F0, 0x8100, unknown, unknown), // 4-171 (p275)
-
     instruction(0xF1C0, 0x8000, or<Byte>, or<Byte>), // 4-150 (p254) (ea OR Dn -> Dn)
     instruction(0xF1C0, 0x8040, or<Word>, or<Word>), // 4-150 (p254) (ea OR Dn -> Dn)
     instruction(0xF1C0, 0x8080, or<Long>, or<Long>), // 4-150 (p254) (ea OR Dn -> Dn)
@@ -172,6 +170,7 @@ vector<m68kmapping> funcmappings =
 
     instruction(0xF1C0, 0x80C0, unknown, unknown), // 4-97 (p201)
     instruction(0xF1C0, 0x81C0, unknown, unknown), // 4-93 (p197)
+    instruction(0xF1F0, 0x8100, unknown, unknown), // 4-171 (p275)
 
     // 0x9
 
@@ -211,9 +210,6 @@ vector<m68kmapping> funcmappings =
     instruction(0xF1F8, 0xB188, unknown, unknown), // 4-81 (p185)
 
     // 0xC
-
-    instruction(0xF1F0, 0xC100, unknown, unknown), // 4-3 (p107)
-
     instruction(0xF1C0, 0xC000, and<Byte>, and<Byte>), // 4-15 (p119) (ea AND Dn -> Dn)
     instruction(0xF1C0, 0xC040, and<Word>, and<Word>), // 4-15 (p119) (ea AND Dn -> Dn)
     instruction(0xF1C0, 0xC080, and<Long>, and<Long>), // 4-15 (p119) (ea AND Dn -> Dn)
@@ -224,6 +220,8 @@ vector<m68kmapping> funcmappings =
 
     instruction(0xF1C0, 0xC0C0, mulu, mulu), // 4-139 (p243)
     instruction(0xF1C0, 0xC1C0, unknown, unknown), // 4-136 (p240)
+
+    instruction(0xF1F0, 0xC100, unknown, unknown), // 4-3 (p107)
 
     instruction(0xF1F8, 0xC140, exgdreg, exgdreg), // 4-105 (p209)
     instruction(0xF1F8, 0xC148, unknown, unknown), // 4-105 (p209)
