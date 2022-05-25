@@ -170,7 +170,7 @@ vector<m68kmapping> funcmappings =
 
     instruction(0xF1C0, 0x80C0, unknown, unknown), // 4-97 (p201)
     instruction(0xF1C0, 0x81C0, unknown, unknown), // 4-93 (p197)
-    instruction(0xF1F0, 0x8100, unknown, unknown), // 4-171 (p275)
+    instruction(0xF1F0, 0x8100, sbcd, sbcd), // 4-171 (p275)
 
     // 0x9
 
