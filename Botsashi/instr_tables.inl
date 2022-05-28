@@ -168,7 +168,7 @@ vector<m68kmapping> funcmappings =
     instruction(0xF1C0, 0x8140, orr<Word>, orr<Word>), // 4-150 (p254) (Dn OR ea -> ea)
     instruction(0xF1C0, 0x8180, orr<Long>, orr<Long>), // 4-150 (p254) (Dn OR ea -> ea)
 
-    instruction(0xF1C0, 0x80C0, unknown, unknown), // 4-97 (p201)
+    instruction(0xF1C0, 0x80C0, divu, divu), // 4-97 (p201)
     instruction(0xF1C0, 0x81C0, unknown, unknown), // 4-93 (p197)
     instruction(0xF1F0, 0x8100, sbcd, sbcd), // 4-171 (p275)
 

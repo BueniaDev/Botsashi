@@ -3262,6 +3262,66 @@ auto m68k_mulu(uint16_t instr) -> int
     return cycles;
 }
 
+auto m68k_divu(uint16_t instr) -> int
+{
+    int dstreg = getdstreg(instr);
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    uint32_t dividend = getDataReg<Long>(dstreg);
+    uint32_t divisor = (srcaddrmode<Word, DataAddr>(srcmode, srcreg) << 16);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    if (divisor == 0)
+    {
+	set_m68k_exception(DivByZero);
+	return -1;
+    }
+
+    setcarry(false);
+
+    if (dividend >= divisor)
+    {
+	setoverflow(true);
+	setzero(false);
+	setsign(true);
+	return 10;
+    }
+
+    uint16_t quotient = 0;
+    bool is_force = false;
+    bool is_carry = false;
+    int cycles = 6;
+
+    for (int i = 0; i < 16; i++)
+    {
+	is_force = testbit(dividend, 31);
+	dividend <<= 1;
+	quotient = ((quotient << 1) | is_carry);
+	is_carry = is_force;
+
+	if (is_carry || (dividend >= divisor))
+	{
+	    dividend -= divisor;
+	}
+
+	cycles += (!is_carry) ? 8 : (!is_force) ? 6 : 4;
+    }
+
+    cycles += (is_force) ? 6 : (is_carry) ? 4 : 2;
+    quotient = ((quotient << 1) | is_carry);
+
+    setzero(getZero<Word>(quotient));
+    setsign(getSign<Word>(quotient));
+
+    setDataReg<Long>(dstreg, (dividend | quotient));
+    return cycles;
+}
+
 auto m68k_trap(uint16_t instr) -> int
 {
     int val = (instr & 0xF);

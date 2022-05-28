@@ -1597,6 +1597,21 @@ auto m68kdis_mulu(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
     return offset;
 }
 
+auto m68kdis_divu(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    int dstreg = getdstreg(instr);
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    stream << "divu.w";
+
+    stringstream mode_str;
+    size_t offset = 2;
+    offset += srcmodedasm<Word, DataAddr>(srcmode, srcreg, mode_str, pc);
+    stream << " " << mode_str.str() << ", d" << dec << dstreg;
+    return offset;
+}
+
 auto m68kdis_trap(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
     (void)pc;
