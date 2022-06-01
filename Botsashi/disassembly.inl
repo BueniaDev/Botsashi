@@ -788,6 +788,20 @@ auto m68kdis_exgdreg(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
     return 2;
 }
 
+auto m68kdis_exgareg(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    (void)pc;
+    stream << "exg.l a" << getdstreg(instr) << ", a" << getsrcreg(instr);
+    return 2;
+}
+
+auto m68kdis_exgdareg(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    (void)pc;
+    stream << "exg.l d" << getdstreg(instr) << ", a" << getsrcreg(instr);
+    return 2;
+}
+
 auto m68kdis_lea(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
     int dstreg = getdstreg(instr);

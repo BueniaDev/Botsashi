@@ -2989,6 +2989,28 @@ auto m68k_exgdreg(uint16_t instr) -> int
     return 6;
 }
 
+auto m68k_exgareg(uint16_t instr) -> int
+{
+    int regxnum = getdstreg(instr);
+    int regynum = getsrcreg(instr);
+
+    uint32_t oldregx = getAddrReg<Long>(regxnum);
+    setAddrReg<Long>(regxnum, getAddrReg<Long>(regynum));
+    setAddrReg<Long>(regynum, oldregx);
+    return 6;
+}
+
+auto m68k_exgdareg(uint16_t instr) -> int
+{
+    int regxnum = getdstreg(instr);
+    int regynum = getsrcreg(instr);
+
+    uint32_t oldregx = getDataReg<Long>(regxnum);
+    setDataReg<Long>(regxnum, getAddrReg<Long>(regynum));
+    setAddrReg<Long>(regynum, oldregx);
+    return 6;
+}
+
 auto m68k_scc(uint16_t instr) -> int
 {
     int cycles = 0;

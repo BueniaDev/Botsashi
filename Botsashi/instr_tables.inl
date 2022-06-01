@@ -224,8 +224,8 @@ vector<m68kmapping> funcmappings =
     instruction(0xF1F0, 0xC100, unknown, unknown), // 4-3 (p107)
 
     instruction(0xF1F8, 0xC140, exgdreg, exgdreg), // 4-105 (p209)
-    instruction(0xF1F8, 0xC148, unknown, unknown), // 4-105 (p209)
-    instruction(0xF1F8, 0xC188, unknown, unknown), // 4-105 (p209)
+    instruction(0xF1F8, 0xC148, exgareg, exgareg), // 4-105 (p209)
+    instruction(0xF1F8, 0xC188, exgdareg, exgdareg), // 4-105 (p209)
 
     // 0xD
 
