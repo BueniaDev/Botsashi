@@ -192,6 +192,62 @@ auto cmp_internal(uint32_t source, uint32_t operand) -> uint32_t
 }
 
 template<int Size>
+auto asl_internal(uint32_t reg, uint32_t shift) -> uint32_t
+{
+    uint32_t result = reg;
+    bool carry = false;
+    uint32_t overflow = 0;
+
+    for (uint32_t i = 0; i < shift; i++)
+    {
+	carry = testbit(result, topbit<Size>());
+	uint32_t before = result;
+	result <<= 1;
+	overflow |= (before ^ result);
+    }
+
+    setcarry(carry);
+    setoverflow(getSign<Size>(overflow));
+    setzero(getZero<Size>(result));
+    setsign(getSign<Size>(result));
+
+    if (shift != 0)
+    {
+	setextend(iscarry());
+    }
+
+    return clip<Size>(result);
+}
+
+template<int Size>
+auto asr_internal(uint32_t reg, uint32_t shift) -> uint32_t
+{
+    uint32_t result = reg;
+    bool carry = false;
+    uint32_t overflow = 0;
+
+    for (uint32_t i = 0; i < shift; i++)
+    {
+	carry = testbit(result, 0);
+	uint32_t before = result;
+	result = (sign<Size>(result) >> 1);
+	overflow |= (before ^ result);
+    }
+
+    setcarry(carry);
+    setoverflow(getSign<Size>(overflow));
+    setzero(getZero<Size>(result));
+    setsign(getSign<Size>(result));
+
+    if (shift != 0)
+    {
+	setextend(iscarry());
+    }
+
+    return clip<Size>(result);
+}
+
+template<int Size>
 auto lsl_internal(uint32_t reg, uint32_t shift) -> uint32_t
 {
     uint32_t result = reg;
@@ -2532,6 +2588,88 @@ auto m68k_eori(uint16_t instr) -> int
     {
 	cycles = (Size == Long) ? 20 : 12;
 	cycles += effective_address_cycles<Size>(dest_mode);
+    }
+
+    return cycles;
+}
+
+template<int Size>
+auto m68k_asl(uint16_t instr) -> int
+{
+    bool is_reg = testbit(instr, 5);
+    int reg_count = getdstreg(instr);
+    int srcreg = getsrcreg(instr);
+
+    int shift_count = 0;
+
+    if (is_reg)
+    {
+	shift_count = (getDataReg<Size>(reg_count) % 64);
+    }
+    else
+    {
+	shift_count = reg_count;
+
+	if (shift_count == 0)
+	{
+	    shift_count = 8;
+	}
+    }
+
+    uint32_t shift_reg = getDataReg<Size>(srcreg);
+    uint32_t result = asl_internal<Size>(shift_reg, shift_count);
+    setDataReg<Size>(srcreg, result);
+
+    int cycles = (2 * shift_count);
+
+    if (Size == Long)
+    {
+	cycles += 8;
+    }
+    else
+    {
+	cycles += 6;
+    }
+
+    return cycles;
+}
+
+template<int Size>
+auto m68k_asr(uint16_t instr) -> int
+{
+    bool is_reg = testbit(instr, 5);
+    int reg_count = getdstreg(instr);
+    int srcreg = getsrcreg(instr);
+
+    int shift_count = 0;
+
+    if (is_reg)
+    {
+	shift_count = (getDataReg<Size>(reg_count) % 64);
+    }
+    else
+    {
+	shift_count = reg_count;
+
+	if (shift_count == 0)
+	{
+	    shift_count = 8;
+	}
+    }
+
+    uint32_t shift_reg = getDataReg<Size>(srcreg);
+    uint32_t result = asr_internal<Size>(shift_reg, shift_count);
+    setDataReg<Size>(srcreg, result);
+
+    int cycles = (2 * shift_count);
+
+    if (Size == Long)
+    {
+	cycles += 8;
+    }
+    else
+    {
+	cycles += 6;
     }
 
     return cycles;

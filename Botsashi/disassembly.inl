@@ -1319,6 +1319,42 @@ auto m68kdis_eori(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 }
 
 template<int Size>
+auto m68kdis_asl(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    (void)pc;
+    (void)instr;
+    stream << "asl";
+
+    switch (Size)
+    {
+	case Byte: stream << ".b"; break;
+	case Word: stream << ".w"; break;
+	case Long: stream << ".l"; break;
+	default: stream << ".u"; break;
+    }
+
+    return 0;
+}
+
+template<int Size>
+auto m68kdis_asr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    (void)pc;
+    (void)instr;
+    stream << "asr";
+
+    switch (Size)
+    {
+	case Byte: stream << ".b"; break;
+	case Word: stream << ".w"; break;
+	case Long: stream << ".l"; break;
+	default: stream << ".u"; break;
+    }
+
+    return 0;
+}
+
+template<int Size>
 auto m68kdis_lsl(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
     (void)pc;

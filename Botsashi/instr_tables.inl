@@ -246,14 +246,14 @@ vector<m68kmapping> funcmappings =
 
     // 0xE
 
-    instruction(0xF1D8, 0xE100, unknown, unknown), // 4-22 (p126)
-    instruction(0xF1D8, 0xE140, unknown, unknown), // 4-22 (p126)
-    instruction(0xF1D8, 0xE180, unknown, unknown), // 4-22 (p126)
+    instruction(0xF1D8, 0xE100, asl<Byte>, asl<Byte>), // 4-22 (p126)
+    instruction(0xF1D8, 0xE140, asl<Word>, asl<Word>), // 4-22 (p126)
+    instruction(0xF1D8, 0xE180, asl<Long>, asl<Long>), // 4-22 (p126)
     instruction(0xFFC0, 0xE1C0, unknown, unknown), // 4-22 (p126)
 
-    instruction(0xF1D8, 0xE000, unknown, unknown), // 4-22 (p126)
-    instruction(0xF1D8, 0xE040, unknown, unknown), // 4-22 (p126)
-    instruction(0xF1D8, 0xE080, unknown, unknown), // 4-22 (p126)
+    instruction(0xF1D8, 0xE000, asr<Byte>, asr<Byte>), // 4-22 (p126)
+    instruction(0xF1D8, 0xE040, asr<Word>, asr<Word>), // 4-22 (p126)
+    instruction(0xF1D8, 0xE080, asr<Long>, asr<Long>), // 4-22 (p126)
     instruction(0xFFC0, 0xE0C0, unknown, unknown), // 4-22 (p126)
 
     instruction(0xF1D8, 0xE108, lsl<Byte>, lsl<Byte>), // 4-113 (p217)
