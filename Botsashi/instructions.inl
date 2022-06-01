@@ -100,7 +100,7 @@ auto getcond(int cond_val) -> bool
 	case 12: return (issign() == isoverflow()); break; // Greater or Equal (GE)
 	case 13: return (issign() != isoverflow()); break; // Less Than (LT)
 	case 14: return (!iszero() && (issign() == isoverflow())); break; // Greater Than (GT)
-	case 15: return (!iszero() || (issign() != isoverflow())); break; // Less or Equal (LE)
+	case 15: return (iszero() || (issign() != isoverflow())); break; // Less or Equal (LE)
 	default: return false; break;
     }
 }
@@ -2030,6 +2030,22 @@ auto m68k_dbcc(uint16_t instr) -> int
     }
 
     return cycles;
+}
+
+auto m68k_rte(uint16_t instr) -> int
+{
+    if (!ismodesupervisor())
+    {
+	// Privilege violation
+	set_m68k_exception(Unprivileged);
+	return -1;
+    }
+
+    (void)instr;
+    uint16_t status_reg = popStack<Word>();
+    setStatusReg(status_reg);
+    m68kreg.pc = popStack<Long>();
+    return 20;
 }
 
 auto m68k_rtr(uint16_t instr) -> int

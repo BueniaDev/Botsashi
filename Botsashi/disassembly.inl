@@ -943,6 +943,14 @@ auto m68kdis_rtr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
     return 2;
 }
 
+auto m68kdis_rte(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    (void)pc;
+    (void)instr;
+    stream << "rte";
+    return 2;
+}
+
 template<int Size>
 auto m68kdis_and(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
