@@ -808,7 +808,23 @@ auto dstaddrmode(int mode, int reg, uint32_t val) -> void
 	{
 	    if (testbit(mask, 1) && (Size != Byte))
 	    {
-		setAddrReg<Size>(reg, val);
+		if ((Flags & MoveA) != 0)
+		{
+		    uint32_t movea_val = 0;
+
+		    switch (Size)
+		    {
+			case Word: movea_val = sign<Word>(val); break;
+			case Long: movea_val = clip<Long>(val); break;
+		    }
+
+		    setAddrReg<Long>(reg, movea_val);
+		}
+		else
+		{
+		    setAddrReg<Size>(reg, val);
+		}
+
 		is_inst_legal = true;
 	    }
 	}
@@ -1161,7 +1177,7 @@ auto m68k_move(uint16_t instr) -> int
     setcarry(false);
     setoverflow(false);
 
-    dstaddrmode<Size>(dstmode, dstreg, srcvalue);
+    dstaddrmode<Size, AllAddr, MoveA>(dstmode, dstreg, srcvalue);
 
     if (is_m68k_exception())
     {

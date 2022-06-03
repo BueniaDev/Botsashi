@@ -65,6 +65,7 @@ namespace botsashi
 		None = 0,
 		BitInstr = (1 << 0),
 		Hold = (1 << 1),
+		MoveA = (1 << 2),
 	    };
 
 	    enum : int
