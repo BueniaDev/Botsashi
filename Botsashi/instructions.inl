@@ -461,6 +461,24 @@ auto srcaddrmode(int mode, int reg) -> uint32_t
 	    }
 	}
 	break;
+	case 4:
+	{
+	    if (testbit(mask, 4))
+	    {
+		uint32_t inc_bytes = ((reg == 7) && (Size == Byte)) ? bytes<Word>() : bytes<Size>();
+		uint32_t addr_reg = getAddrReg<Long>(reg);
+		uint32_t ea_addr = (addr_reg - inc_bytes);
+		temp = read<Size>(ea_addr);
+
+		if ((Flags & Hold) == 0)
+		{
+		    setAddrReg<Long>(reg, ea_addr);
+		}
+
+		is_inst_legal = true;
+	    }
+	}
+	break;
 	case 5:
 	{
 	    if (testbit(mask, 5))
@@ -858,7 +876,7 @@ auto dstaddrmode(int mode, int reg, uint32_t val) -> void
 		uint32_t addr_reg = getAddrReg<Long>(reg);
 		setAddrReg<Long>(reg, (addr_reg - inc_bytes));
 		uint32_t address = getAddrReg<Long>(reg);
-		write<Size>(address, val);
+		write<Size, true>(address, val);
 		is_inst_legal = true;
 	    }
 	}

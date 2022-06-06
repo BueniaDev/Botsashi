@@ -195,7 +195,7 @@ namespace botsashi
 		}
 	    }
 
-	    template<int Size>
+	    template<int Size, bool is_reverse = false>
 	    auto write(uint32_t addr, uint32_t val) -> void
 	    {
 		switch (Size)
@@ -213,8 +213,16 @@ namespace botsashi
 		    break;
 		    case Long:
 		    {
-			interWrite(true, true, addr & ~1, val >> 16);
-			interWrite(true, true, (addr + 2) & ~1, val);
+			if (is_reverse)
+			{
+			    interWrite(true, true, (addr + 2) & ~1, val);
+			    interWrite(true, true, addr & ~1, val >> 16);
+			}
+			else
+			{
+			    interWrite(true, true, addr & ~1, val >> 16);
+			    interWrite(true, true, (addr + 2) & ~1, val);
+			}
 		    }
 		    break;
 		}
