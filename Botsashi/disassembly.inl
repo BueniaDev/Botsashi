@@ -551,6 +551,14 @@ auto m68kdis_moveq(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
     return 2;
 }
 
+auto m68kdis_abcd(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    (void)pc;
+    (void)instr;
+    stream << "abcd";
+    return 2;
+}
+
 auto m68kdis_sbcd(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
     (void)pc;

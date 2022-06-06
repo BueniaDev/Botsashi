@@ -1359,6 +1359,50 @@ auto m68k_movem_to_reg(uint16_t instr) -> int
     return cycles;
 }
 
+auto m68k_abcd(uint16_t instr) -> int
+{
+    // Bit 3: 1=Pre-decrement mode, 0=Data register mode
+    int address_mode = testbit(instr, 3) ? 4 : 0;
+
+    int srcreg = getsrcreg(instr);
+    int dstreg = getdstreg(instr);
+
+    uint32_t target = srcaddrmode<Byte, AllAddr, Hold>(address_mode, dstreg);
+    uint32_t source = srcaddrmode<Byte, AllAddr>(address_mode, srcreg);
+    uint32_t result = (target + source + isextend());
+
+    bool is_carry = false;
+    bool is_overflow = false;
+
+    bool adjust_low = testbit((target ^ source ^ result), 4);
+
+    if (adjust_low || ((result & 0xF) >= 0xA))
+    {
+	auto prev_result = result;
+	result += 0x06;
+	is_overflow |= (!testbit(prev_result, 7) && testbit(result, 7));
+    }
+
+    if (result >= 0xA0)
+    {
+	auto prev_result = result;
+	result += 0x60;
+	is_carry = true;
+	is_overflow |= (!testbit(prev_result, 7) && testbit(result, 7));
+    }
+
+    dstaddrmode<Byte, AllAddr>(address_mode, dstreg, result);
+
+    setzero(getZero<Byte>(result, true));
+    setsign(getSign<Byte>(result));
+    setcarry(is_carry);
+    setoverflow(is_overflow);
+    setextend(iscarry());
+
+    int cycles = testbit(instr, 3) ? 18 : 6;
+    return cycles;
+}
+
 auto m68k_sbcd(uint16_t instr) -> int
 {
     // Bit 3: 1=Pre-decrement mode, 0=Data register mode
