@@ -1366,6 +1366,14 @@ auto m68kdis_asl(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
     return 0;
 }
 
+auto m68kdis_asl_mem(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    (void)pc;
+    (void)instr;
+    stream << "asl.w <ea>";
+    return 0;
+}
+
 template<int Size>
 auto m68kdis_asr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
@@ -1381,6 +1389,14 @@ auto m68kdis_asr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 	default: stream << ".u"; break;
     }
 
+    return 0;
+}
+
+auto m68kdis_asr_mem(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    (void)pc;
+    (void)instr;
+    stream << "asr.w <ea>";
     return 0;
 }
 
@@ -1402,6 +1418,14 @@ auto m68kdis_lsl(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
     return 0;
 }
 
+auto m68kdis_lsl_mem(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    (void)pc;
+    (void)instr;
+    stream << "lsl.w <ea>";
+    return 0;
+}
+
 template<int Size>
 auto m68kdis_lsr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
@@ -1417,6 +1441,14 @@ auto m68kdis_lsr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 	default: stream << ".u"; break;
     }
 
+    return 0;
+}
+
+auto m68kdis_lsr_mem(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    (void)pc;
+    (void)instr;
+    stream << "lsr.w <ea>";
     return 0;
 }
 
@@ -1438,6 +1470,14 @@ auto m68kdis_rol(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
     return 0;
 }
 
+auto m68kdis_rol_mem(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    (void)pc;
+    (void)instr;
+    stream << "rol.w <ea>";
+    return 0;
+}
+
 template<int Size>
 auto m68kdis_ror(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
@@ -1453,6 +1493,14 @@ auto m68kdis_ror(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 	default: stream << ".u"; break;
     }
 
+    return 0;
+}
+
+auto m68kdis_ror_mem(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    (void)pc;
+    (void)instr;
+    stream << "ror.w <ea>";
     return 0;
 }
 
@@ -1474,6 +1522,14 @@ auto m68kdis_roxl(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
     return 0;
 }
 
+auto m68kdis_roxl_mem(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    (void)pc;
+    (void)instr;
+    stream << "roxl.w <ea>";
+    return 0;
+}
+
 template<int Size>
 auto m68kdis_roxr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
@@ -1489,6 +1545,14 @@ auto m68kdis_roxr(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 	default: stream << ".u"; break;
     }
 
+    return 0;
+}
+
+auto m68kdis_roxr_mem(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    (void)pc;
+    (void)instr;
+    stream << "roxr.w <ea>";
     return 0;
 }
 

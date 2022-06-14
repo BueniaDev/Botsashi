@@ -2728,6 +2728,20 @@ auto m68k_asl(uint16_t instr) -> int
     return cycles;
 }
 
+auto m68k_asl_mem(uint16_t instr) -> int
+{
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    uint32_t address = srcaddrmode<Word, MemAltAddr, Hold>(srcmode, srcreg);
+    address = asl_internal<Word>(address, 1);
+    dstaddrmode<Word, MemAltAddr>(srcmode, srcreg, address);
+
+    int source_mode = calc_mode(srcmode, srcreg);
+    int cycles = (8 + effective_address_cycles<Word>(source_mode));
+    return cycles;
+}
+
 template<int Size>
 auto m68k_asr(uint16_t instr) -> int
 {
@@ -2766,6 +2780,20 @@ auto m68k_asr(uint16_t instr) -> int
 	cycles += 6;
     }
 
+    return cycles;
+}
+
+auto m68k_asr_mem(uint16_t instr) -> int
+{
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    uint32_t address = srcaddrmode<Word, MemAltAddr, Hold>(srcmode, srcreg);
+    address = asr_internal<Word>(address, 1);
+    dstaddrmode<Word, MemAltAddr>(srcmode, srcreg, address);
+
+    int source_mode = calc_mode(srcmode, srcreg);
+    int cycles = (8 + effective_address_cycles<Word>(source_mode));
     return cycles;
 }
 
@@ -2810,6 +2838,20 @@ auto m68k_lsl(uint16_t instr) -> int
     return cycles;
 }
 
+auto m68k_lsl_mem(uint16_t instr) -> int
+{
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    uint32_t address = srcaddrmode<Word, MemAltAddr, Hold>(srcmode, srcreg);
+    address = lsl_internal<Word>(address, 1);
+    dstaddrmode<Word, MemAltAddr>(srcmode, srcreg, address);
+
+    int source_mode = calc_mode(srcmode, srcreg);
+    int cycles = (8 + effective_address_cycles<Word>(source_mode));
+    return cycles;
+}
+
 template<int Size>
 auto m68k_lsr(uint16_t instr) -> int
 {
@@ -2848,6 +2890,20 @@ auto m68k_lsr(uint16_t instr) -> int
 	cycles += 6;
     }
 
+    return cycles;
+}
+
+auto m68k_lsr_mem(uint16_t instr) -> int
+{
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    uint32_t address = srcaddrmode<Word, MemAltAddr, Hold>(srcmode, srcreg);
+    address = lsr_internal<Word>(address, 1);
+    dstaddrmode<Word, MemAltAddr>(srcmode, srcreg, address);
+
+    int source_mode = calc_mode(srcmode, srcreg);
+    int cycles = (8 + effective_address_cycles<Word>(source_mode));
     return cycles;
 }
 
@@ -2892,6 +2948,20 @@ auto m68k_rol(uint16_t instr) -> int
     return cycles;
 }
 
+auto m68k_rol_mem(uint16_t instr) -> int
+{
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    uint32_t address = srcaddrmode<Word, MemAltAddr, Hold>(srcmode, srcreg);
+    address = rol_internal<Word>(address, 1);
+    dstaddrmode<Word, MemAltAddr>(srcmode, srcreg, address);
+
+    int source_mode = calc_mode(srcmode, srcreg);
+    int cycles = (8 + effective_address_cycles<Word>(source_mode));
+    return cycles;
+}
+
 template<int Size>
 auto m68k_ror(uint16_t instr) -> int
 {
@@ -2933,6 +3003,20 @@ auto m68k_ror(uint16_t instr) -> int
     return cycles;
 }
 
+auto m68k_ror_mem(uint16_t instr) -> int
+{
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    uint32_t address = srcaddrmode<Word, MemAltAddr, Hold>(srcmode, srcreg);
+    address = ror_internal<Word>(address, 1);
+    dstaddrmode<Word, MemAltAddr>(srcmode, srcreg, address);
+
+    int source_mode = calc_mode(srcmode, srcreg);
+    int cycles = (8 + effective_address_cycles<Word>(source_mode));
+    return cycles;
+}
+
 template<int Size>
 auto m68k_roxl(uint16_t instr) -> int
 {
@@ -2957,7 +3041,7 @@ auto m68k_roxl(uint16_t instr) -> int
     }
 
     uint32_t shift_reg = getDataReg<Size>(srcreg);
-    uint32_t result = rol_internal<Size>(shift_reg, shift_count);
+    uint32_t result = roxl_internal<Size>(shift_reg, shift_count);
     setDataReg<Size>(srcreg, result);
 
     int cycles = (2 * shift_count);
@@ -2971,6 +3055,20 @@ auto m68k_roxl(uint16_t instr) -> int
 	cycles += 6;
     }
 
+    return cycles;
+}
+
+auto m68k_roxl_mem(uint16_t instr) -> int
+{
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    uint32_t address = srcaddrmode<Word, MemAltAddr, Hold>(srcmode, srcreg);
+    address = roxl_internal<Word>(address, 1);
+    dstaddrmode<Word, MemAltAddr>(srcmode, srcreg, address);
+
+    int source_mode = calc_mode(srcmode, srcreg);
+    int cycles = (8 + effective_address_cycles<Word>(source_mode));
     return cycles;
 }
 
@@ -2998,7 +3096,7 @@ auto m68k_roxr(uint16_t instr) -> int
     }
 
     uint32_t shift_reg = getDataReg<Size>(srcreg);
-    uint32_t result = ror_internal<Size>(shift_reg, shift_count);
+    uint32_t result = roxr_internal<Size>(shift_reg, shift_count);
     setDataReg<Size>(srcreg, result);
 
     int cycles = (2 * shift_count);
@@ -3012,6 +3110,20 @@ auto m68k_roxr(uint16_t instr) -> int
 	cycles += 6;
     }
 
+    return cycles;
+}
+
+auto m68k_roxr_mem(uint16_t instr) -> int
+{
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    uint32_t address = srcaddrmode<Word, MemAltAddr, Hold>(srcmode, srcreg);
+    address = roxr_internal<Word>(address, 1);
+    dstaddrmode<Word, MemAltAddr>(srcmode, srcreg, address);
+
+    int source_mode = calc_mode(srcmode, srcreg);
+    int cycles = (8 + effective_address_cycles<Word>(source_mode));
     return cycles;
 }
 
