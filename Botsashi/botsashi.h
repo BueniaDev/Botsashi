@@ -74,7 +74,7 @@ namespace botsashi
 		AddrError = 3,
 		IllegalInst = 4,
 		DivByZero = 5,
-		BoundsChl = 6,
+		BoundsChk = 6,
 		Overflow = 7,
 		Unprivileged = 8,
 		Trace = 9,

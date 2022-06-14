@@ -18,6 +18,7 @@ QSimsashi::QSimsashi(QWidget *parent) : window_width(640), window_height(480)
 	render();
     });
 
+    setWindowTitle("QSimsashi");
     resize(window_width, window_height);
 }
 
@@ -595,7 +596,9 @@ void QSimsashi::trapException(int val)
 void QSimsashi::stopFunction()
 {
     cout << "Stopping Simsashi..." << endl;
+    cout << "Total cycles: " << dec << int(total_cycles) << endl;
     stopped = true;
+    total_cycles = 0;
 }
 
 void QSimsashi::setPenColor(uint32_t color)
@@ -982,7 +985,7 @@ void QSimsashi::render()
     if (!stopped)
     {
 	m68k.debugoutput();
-	m68k.executenextinstr();
+	total_cycles += m68k.executenextinstr();
     }
 }
 

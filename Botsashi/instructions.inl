@@ -3530,6 +3530,9 @@ auto m68k_divu(uint16_t instr) -> int
 	return -1;
     }
 
+    int source_mode = calc_mode(srcmode, srcreg);
+    int ea_cycles = effective_address_cycles<Word>(source_mode);
+
     if (divisor == 0)
     {
 	set_m68k_exception(DivByZero);
@@ -3543,12 +3546,13 @@ auto m68k_divu(uint16_t instr) -> int
 	setoverflow(true);
 	setzero(false);
 	setsign(true);
-	return 10;
+	return (10 + ea_cycles);
     }
 
     uint16_t quotient = 0;
     bool is_force = false;
     bool is_carry = false;
+
     int cycles = 6;
 
     for (int i = 0; i < 16; i++)
@@ -3556,9 +3560,10 @@ auto m68k_divu(uint16_t instr) -> int
 	is_force = testbit(dividend, 31);
 	dividend <<= 1;
 	quotient = ((quotient << 1) | is_carry);
-	is_carry = is_force;
 
-	if (is_carry || (dividend >= divisor))
+	is_carry = (is_force || (dividend >= divisor));
+
+	if (is_carry)
 	{
 	    dividend -= divisor;
 	}
@@ -3566,13 +3571,155 @@ auto m68k_divu(uint16_t instr) -> int
 	cycles += (!is_carry) ? 8 : (!is_force) ? 6 : 4;
     }
 
-    cycles += (is_force) ? 6 : (is_carry) ? 4 : 2;
+    cycles += is_force ? 6 : is_carry ? 4 : 2;
     quotient = ((quotient << 1) | is_carry);
 
-    setzero(getZero<Word>(quotient));
     setsign(getSign<Word>(quotient));
+    setzero(getZero<Word>(quotient));
 
     setDataReg<Long>(dstreg, (dividend | quotient));
+    cycles += ea_cycles;
+    return cycles;
+}
+
+auto m68k_divs(uint16_t instr) -> int
+{
+    int dstreg = getdstreg(instr);
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    uint32_t dividend = getDataReg<Long>(dstreg);
+    uint32_t divisor = (srcaddrmode<Word, DataAddr>(srcmode, srcreg) << 16);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    uint32_t dividend_i32 = dividend;
+    uint32_t divisor_i32 = divisor;
+
+    int source_mode = calc_mode(srcmode, srcreg);
+    int ea_cycles = effective_address_cycles<Word>(source_mode);
+
+    if (divisor == 0)
+    {
+	set_m68k_exception(DivByZero);
+	return -1;
+    }
+
+    int sign_cycles = 0;
+
+    if (testbit(divisor, 31))
+    {
+	divisor_i32 = -divisor_i32;
+    }
+
+    if (testbit(dividend, 31))
+    {
+	dividend_i32 = -dividend_i32;
+	sign_cycles = 2;
+    }
+
+    setcarry(false);
+
+    if (dividend_i32 >= divisor_i32)
+    {
+	setoverflow(true);
+	setzero(false);
+	setsign(true);
+	return (16 + sign_cycles + ea_cycles);
+    }
+
+    uint16_t quotient = 0;
+    bool is_carry = false;
+    int cycles = (12 + sign_cycles);
+
+    for (int i = 0; i < 15; i++)
+    {
+	dividend_i32 <<= 1;
+	quotient = ((quotient << 1) | is_carry);
+	is_carry = (dividend_i32 >= divisor_i32);
+
+	if (is_carry)
+	{
+	    dividend_i32 -= divisor_i32;
+	}
+
+	cycles += !is_carry ? 8 : 6;
+    }
+
+    quotient = ((quotient << 1) | is_carry);
+    dividend_i32 <<= 1;
+
+    is_carry = (dividend_i32 >= divisor_i32);
+
+    if (is_carry)
+    {
+	dividend_i32 -= divisor_i32;
+    }
+
+    quotient = ((quotient << 1) | is_carry);
+    cycles += 4;
+
+    if (testbit(divisor, 31))
+    {
+	cycles += 16;
+
+	if (testbit(dividend, 31))
+	{
+	    if (testbit(quotient, 15))
+	    {
+		setoverflow(true);
+	    }
+
+	    dividend_i32 = -dividend_i32;
+	}
+	else
+	{
+	    quotient = -quotient;
+
+	    if (quotient && !testbit(quotient, 15))
+	    {
+		setoverflow(true);
+	    }
+	}
+    }
+    else if (testbit(dividend, 31))
+    {
+	cycles += 18;
+	quotient = -quotient;
+
+	if (quotient && !testbit(quotient, 15))
+	{
+	    setoverflow(true);
+	}
+
+	dividend_i32 = -dividend_i32;
+    }
+    else
+    {
+	cycles += 14;
+
+	if (testbit(quotient, 15))
+	{
+	    setoverflow(true);
+	}
+    }
+
+    if (isoverflow())
+    {
+	setzero(false);
+	setsign(true);
+	return (cycles + ea_cycles);
+    }
+
+    setsign(getSign<Word>(quotient));
+    setzero(getZero<Word>(quotient));
+
+    setDataReg<Long>(dstreg, (dividend_i32 | quotient));
+
+    cycles += ea_cycles;
     return cycles;
 }
 

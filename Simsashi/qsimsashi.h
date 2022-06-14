@@ -208,6 +208,7 @@ class QSimsashi : public QMainWindow, public BotsashiInterface
 
 	int mouse_irq_level = 0;
 	int mouse_irq_mask = 0;
+	int total_cycles = 0;
 };
 
 
