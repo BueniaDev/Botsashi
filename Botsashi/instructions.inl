@@ -1562,7 +1562,7 @@ auto m68k_adda(uint16_t instr) -> int
 
     uint32_t reg_val = getAddrReg<Size>(addr_reg);
 
-    setAddrReg<Size>(addr_reg, (reg_val + res_val));
+    setAddrReg<Long>(addr_reg, (reg_val + res_val));
 
     int source_mode = calc_mode(srcmode, srcreg);
 
@@ -1743,7 +1743,7 @@ auto m68k_suba(uint16_t instr) -> int
 
     uint32_t reg_val = getAddrReg<Size>(addr_reg);
 
-    setAddrReg<Size>(addr_reg, (reg_val - res_val));
+    setAddrReg<Long>(addr_reg, (reg_val - res_val));
 
     int source_mode = calc_mode(srcmode, srcreg);
 
@@ -2380,9 +2380,9 @@ auto m68k_cmpa(uint16_t instr) -> int
 	return -1;
     }
 
-    uint32_t reg_val = getAddrReg<Size>(addr_reg);
+    uint32_t reg_val = getAddrReg<Long>(addr_reg);
 
-    cmp_internal<Size>(reg_val, res_val);
+    cmp_internal<Long>(reg_val, res_val);
 
     int source_mode = calc_mode(srcmode, srcreg);
 
