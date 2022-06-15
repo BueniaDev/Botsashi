@@ -1553,7 +1553,7 @@ auto m68k_adda(uint16_t instr) -> int
     int srcmode = getsrcmode(instr);
     int srcreg = getsrcreg(instr);
 
-    uint32_t res_val = srcaddrmode<Size>(srcmode, srcreg);
+    uint32_t res_val = sign<Size>(srcaddrmode<Size>(srcmode, srcreg));
 
     if (is_m68k_exception())
     {
@@ -1734,7 +1734,7 @@ auto m68k_suba(uint16_t instr) -> int
     int srcmode = getsrcmode(instr);
     int srcreg = getsrcreg(instr);
 
-    uint32_t res_val = srcaddrmode<Size>(srcmode, srcreg);
+    uint32_t res_val = sign<Size>(srcaddrmode<Size>(srcmode, srcreg));
 
     if (is_m68k_exception())
     {
@@ -2373,7 +2373,7 @@ auto m68k_cmpa(uint16_t instr) -> int
     int srcmode = getsrcmode(instr);
     int srcreg = getsrcreg(instr);
 
-    uint32_t res_val = srcaddrmode<Size>(srcmode, srcreg);
+    uint32_t res_val = sign<Size>(srcaddrmode<Size>(srcmode, srcreg));
 
     if (is_m68k_exception())
     {
