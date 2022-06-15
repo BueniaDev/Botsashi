@@ -1560,7 +1560,7 @@ auto m68k_adda(uint16_t instr) -> int
 	return -1;
     }
 
-    uint32_t reg_val = getAddrReg<Size>(addr_reg);
+    uint32_t reg_val = getAddrReg<Long>(addr_reg);
 
     setAddrReg<Long>(addr_reg, (reg_val + res_val));
 
@@ -1741,7 +1741,7 @@ auto m68k_suba(uint16_t instr) -> int
 	return -1;
     }
 
-    uint32_t reg_val = getAddrReg<Size>(addr_reg);
+    uint32_t reg_val = getAddrReg<Long>(addr_reg);
 
     setAddrReg<Long>(addr_reg, (reg_val - res_val));
 
