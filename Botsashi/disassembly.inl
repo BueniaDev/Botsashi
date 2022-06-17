@@ -1097,6 +1097,24 @@ auto m68kdis_cmpa(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 }
 
 template<int Size>
+auto m68kdis_cmpm(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    (void)pc;
+    (void)instr;
+    stream << "cmpm";
+
+    switch (Size)
+    {
+	case Byte: stream << ".b"; break;
+	case Word: stream << ".w"; break;
+	case Long: stream << ".l"; break;
+	default: stream << ".u"; break;
+    }
+
+    return 2;
+}
+
+template<int Size>
 auto m68kdis_tst(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
     int srcmode = getsrcmode(instr);
@@ -1719,6 +1737,21 @@ auto m68kdis_mulu(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
     int srcreg = getsrcreg(instr);
 
     stream << "mulu.w";
+
+    stringstream mode_str;
+    size_t offset = 2;
+    offset += srcmodedasm<Word, DataAddr>(srcmode, srcreg, mode_str, pc);
+    stream << " " << mode_str.str() << ", d" << dec << dstreg;
+    return offset;
+}
+
+auto m68kdis_muls(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    int dstreg = getdstreg(instr);
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    stream << "muls.w";
 
     stringstream mode_str;
     size_t offset = 2;

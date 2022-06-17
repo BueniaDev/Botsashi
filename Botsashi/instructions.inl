@@ -1377,6 +1377,82 @@ auto m68k_movem_to_reg(uint16_t instr) -> int
     return cycles;
 }
 
+auto m68k_movep(uint16_t instr) -> int
+{
+    int opmode = ((instr >> 6) & 0x3);
+
+    int cycles = 0;
+
+    switch (opmode)
+    {
+	case 0: cycles = m68k_movep_to_reg<Word>(instr); break;
+	case 1: cycles = m68k_movep_to_reg<Long>(instr); break;
+	case 2: cycles = m68k_movep_to_mem<Word>(instr); break;
+	case 3: cycles = m68k_movep_to_mem<Long>(instr); break;
+	// This shouldn't happen
+	default:
+	{
+	    cout << "Unrecognized movep opmode of " << dec << int(opmode) << endl;
+	    exit(0);
+	}
+	break;
+    }
+
+    return cycles;
+}
+
+template<int Size>
+auto m68k_movep_to_reg(uint16_t instr) -> int
+{
+    int data_reg = getdstreg(instr);
+    int addr_reg = getsrcreg(instr);
+    uint16_t ext_word = extension<Word>(m68kreg.pc);
+
+    uint32_t displacement = clip<Long>(sign<Size>(ext_word));
+    uint32_t addr_value = getAddrReg<Long>(addr_reg);
+    uint32_t address = (addr_value + displacement);
+    uint32_t data_value = getDataReg<Long>(data_reg);
+
+    uint32_t shift_bytes = bytes<Size>();
+
+    for (uint32_t index = 0; index < bytes<Size>(); index++)
+    {
+	shift_bytes -= 1;
+	data_value &= ~(0xFF << (shift_bytes * 8));
+	data_value |= (read<Byte>(address) << (shift_bytes * 8));
+	address += 2;
+    }
+
+    setDataReg<Long>(data_reg, data_value);
+    int cycles = (Size == Long) ? 24 : 16;
+    return cycles;
+}
+
+template<int Size>
+auto m68k_movep_to_mem(uint16_t instr) -> int
+{
+    int data_reg = getdstreg(instr);
+    int addr_reg = getsrcreg(instr);
+    uint16_t ext_word = extension<Word>(m68kreg.pc);
+
+    uint32_t displacement = clip<Long>(sign<Size>(ext_word));
+    uint32_t addr_value = getAddrReg<Long>(addr_reg);
+    uint32_t address = (addr_value + displacement);
+    uint32_t data_value = getDataReg<Long>(data_reg);
+
+    uint32_t shift_bytes = bytes<Size>();
+
+    for (uint32_t index = 0; index < bytes<Size>(); index++)
+    {
+	shift_bytes -= 1;
+	write<Byte>(address, (data_value >> (shift_bytes * 8)));
+	address += 2;
+    }
+
+    int cycles = (Size == Long) ? 24 : 16;
+    return cycles;
+}
+
 auto m68k_abcd(uint16_t instr) -> int
 {
     // Bit 3: 1=Pre-decrement mode, 0=Data register mode
@@ -2387,6 +2463,21 @@ auto m68k_cmpa(uint16_t instr) -> int
     int source_mode = calc_mode(srcmode, srcreg);
 
     int cycles = (6 + effective_address_cycles<Size>(source_mode));
+    return cycles;
+}
+
+template<int Size>
+auto m68k_cmpm(uint16_t instr) -> int
+{
+    int srcreg = getsrcreg(instr);
+    int dstreg = getdstreg(instr);
+
+    uint32_t destination = srcaddrmode<Size>(3, dstreg);
+    uint32_t source = srcaddrmode<Size>(3, srcreg);
+
+    cmp_internal<Size>(destination, source);
+
+    int cycles = (Size == Long) ? 20 : 12;
     return cycles;
 }
 
@@ -3622,6 +3713,38 @@ auto m68k_mulu(uint16_t instr) -> int
     int source_mode = calc_mode(srcmode, srcreg);
 
     auto count = count_bits(data_addr);
+
+    int cycles = (38 + (2 * count));
+    cycles += effective_address_bw_cycles[source_mode];
+    return cycles;
+}
+
+auto m68k_muls(uint16_t instr) -> int
+{
+    int dstreg = getdstreg(instr);
+    int srcmode = getsrcmode(instr);
+    int srcreg = getsrcreg(instr);
+
+    uint32_t data_addr = srcaddrmode<Word, DataAddr>(srcmode, srcreg);
+
+    if (is_m68k_exception())
+    {
+	return -1;
+    }
+
+    uint32_t dstreg_addr = getDataReg<Word>(dstreg);
+    uint32_t result = (int16_t(dstreg_addr) * int16_t(data_addr));
+
+    setzero(getZero<Long>(result));
+    setsign(getSign<Long>(result));
+    setcarry(false);
+    setoverflow(false);
+    setDataReg<Long>(dstreg, result);
+
+    int source_mode = calc_mode(srcmode, srcreg);
+
+    // +2 cycles per 0<>1 bit transition
+    auto count = count_bits(uint16_t(data_addr << 1) ^ data_addr);
 
     int cycles = (38 + (2 * count));
     cycles += effective_address_bw_cycles[source_mode];
