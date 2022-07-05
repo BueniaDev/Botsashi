@@ -9,26 +9,15 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 option(BUILD_SIMSASHI "Enables the Simsashi frontend (requires Qt5)." OFF)
 
-set(BOTSASHI_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
-
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-set(BOTSASHI_HEADERS
-	Botsashi/botsashi_api.h
-	Botsashi/botsashi.h)
-
-set(BOTSASHI_SOURCES
-	Botsashi/botsashi.cpp)
+add_subdirectory(Botsashi)
 
 if (BUILD_SIMSASHI STREQUAL "ON")
     add_subdirectory(Simsashi)
 endif()
-
-add_library(botsashi ${BOTSASHI_SOURCES} ${BOTSASHI_HEADERS})
-target_include_directories(botsashi PUBLIC ${BOTSASHI_INCLUDE_DIR})
-add_library(libbotsashi ALIAS botsashi)
 
 if (WIN32)
     message(STATUS "Operating system is Windows.")

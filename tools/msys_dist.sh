@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ ! -f "libbotsashi.a" ]]; then
+if [[ ! -f "Botsashi/libbotsashi.a" ]]; then
 	echo "Run this script from the directory where you built the Botsashi engine."
 	exit 1
 fi

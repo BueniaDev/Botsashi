@@ -4,7 +4,7 @@
 #include <QtCore>
 #include <QtGui>
 #include <QtWidgets>
-#include <Botsashi/botsashi.h>
+#include <botsashi.h>
 #include <iostream>
 #include <fstream>
 #include <vector>
