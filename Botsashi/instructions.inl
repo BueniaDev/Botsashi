@@ -1408,7 +1408,7 @@ auto m68k_movep_to_reg(uint16_t instr) -> int
     int addr_reg = getsrcreg(instr);
     uint16_t ext_word = extension<Word>(m68kreg.pc);
 
-    uint32_t displacement = clip<Long>(sign<Size>(ext_word));
+    uint32_t displacement = clip<Long>(sign<Word>(ext_word));
     uint32_t addr_value = getAddrReg<Long>(addr_reg);
     uint32_t address = (addr_value + displacement);
     uint32_t data_value = getDataReg<Long>(data_reg);
@@ -1435,7 +1435,7 @@ auto m68k_movep_to_mem(uint16_t instr) -> int
     int addr_reg = getsrcreg(instr);
     uint16_t ext_word = extension<Word>(m68kreg.pc);
 
-    uint32_t displacement = clip<Long>(sign<Size>(ext_word));
+    uint32_t displacement = clip<Long>(sign<Word>(ext_word));
     uint32_t addr_value = getAddrReg<Long>(addr_reg);
     uint32_t address = (addr_value + displacement);
     uint32_t data_value = getDataReg<Long>(data_reg);
