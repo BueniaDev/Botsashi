@@ -544,6 +544,14 @@ auto m68kdis_movem(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
     return 0;
 }
 
+auto m68kdis_movep(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    (void)instr;
+    (void)pc;
+    stream << "movep";
+    return 0;
+}
+
 auto m68kdis_moveq(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
     (void)pc;
@@ -787,6 +795,14 @@ auto m68kdis_ext(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 
     stream << " d" << getsrcreg(instr);
     return 2;
+}
+
+auto m68kdis_link(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    (void)pc;
+    (void)instr;
+    stream << "link";
+    return 4;
 }
 
 auto m68kdis_exgdreg(ostream &stream, uint32_t pc, uint16_t instr) -> size_t

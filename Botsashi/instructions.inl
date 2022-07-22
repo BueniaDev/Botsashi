@@ -3275,6 +3275,19 @@ auto m68k_ext_internal(uint16_t instr) -> int
     return 4;
 }
 
+auto m68k_link(uint16_t instr) -> int
+{
+    uint16_t ext_word = extension<Word>(m68kreg.pc);
+    uint32_t displacement = clip<Long>(sign<Word>(ext_word));
+    int addr_reg = getsrcreg(instr);
+
+    pushStack<Long>(getAddrReg<Long>(addr_reg));
+    setAddrReg<Long>(addr_reg, getSP());
+    uint32_t value = (getSP() + displacement);
+    setSP(value);
+    return 16;
+}
+
 auto m68k_exgdreg(uint16_t instr) -> int
 {
     int regxnum = getdstreg(instr);
