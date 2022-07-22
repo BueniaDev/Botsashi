@@ -3288,6 +3288,15 @@ auto m68k_link(uint16_t instr) -> int
     return 16;
 }
 
+auto m68k_unlk(uint16_t instr) -> int
+{
+    int addr_reg = getsrcreg(instr);
+    uint32_t current_sp = getAddrReg<Long>(addr_reg);
+    setSP(current_sp);
+    setAddrReg<Long>(addr_reg, popStack<Long>());
+    return 12;
+}
+
 auto m68k_exgdreg(uint16_t instr) -> int
 {
     int regxnum = getdstreg(instr);

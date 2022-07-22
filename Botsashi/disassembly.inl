@@ -805,6 +805,14 @@ auto m68kdis_link(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
     return 4;
 }
 
+auto m68kdis_unlk(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    (void)pc;
+    (void)instr;
+    stream << "unlk";
+    return 2;
+}
+
 auto m68kdis_exgdreg(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
     (void)pc;
