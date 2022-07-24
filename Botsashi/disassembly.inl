@@ -50,16 +50,24 @@ auto srcmodedasm(int mode, int reg, ostream &stream, uint32_t &pc) -> size_t
 	    }
 	}
 	break;
+	case 4:
+	{
+	    if (testbit(mask, 4))
+	    {
+		ss << "-(a" << dec << reg << ")";
+		is_inst_legal = true;
+	    }
+	}
+	break;
 	case 5:
 	{
 	    if (testbit(mask, 5))
 	    {
-		uint32_t addr_reg = getAddrReg<Long>(reg);
 		uint16_t ext_word = extension<Word>(pc);
 
 		uint32_t displacement = clip<Long>(sign<Word>(ext_word));
 
-		ss << "$" << hex << int(addr_reg + displacement);
+		ss << "($" << hex << int(displacement) << ", a" << dec << int(reg) << ")";
 		is_inst_legal = true;
 	    }
 	}
@@ -98,7 +106,7 @@ auto srcmodedasm(int mode, int reg, ostream &stream, uint32_t &pc) -> size_t
 
 			uint32_t displacement = clip<Long>(sign<Word>(ext_word));
 
-			ss << "$" << hex << int(pc_val + displacement);
+			ss << "($" << hex << int(displacement) << ", PC)";
 			is_inst_legal = true;
 		    }
 		}
@@ -322,12 +330,11 @@ auto dstmodedasm(int mode, int reg, ostream &stream, uint32_t &pc) -> size_t
 	{
 	    if (testbit(mask, 5))
 	    {
-		uint32_t addr_reg = getAddrReg<Long>(reg);
 		uint16_t ext_word = extension<Word>(pc);
 
 		uint32_t displacement = clip<Long>(sign<Word>(ext_word));
 
-		ss << "$" << hex << int(addr_reg + displacement);
+		ss << "($" << hex << int(displacement) << ", a" << dec << int(reg) << ")";
 		is_inst_legal = true;
 	    }
 	}
@@ -352,7 +359,7 @@ auto dstmodedasm(int mode, int reg, ostream &stream, uint32_t &pc) -> size_t
 		    if (testbit(mask, 8))
 		    {
 			uint32_t addr = extension<Long>(pc);
-			ss << "$" << hex << int(addr);
+			ss << "$" << hex << int(addr) << ".l";
 			is_inst_legal = true;
 		    }
 		}

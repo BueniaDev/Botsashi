@@ -601,6 +601,36 @@ auto srcaddrmode(int mode, int reg) -> uint32_t
 		    }
 		}
 		break;
+		case 3:
+		{
+		    if (testbit(mask, 10))
+		    {
+			uint32_t pc_val = m68kreg.pc;
+			uint16_t ext_word = extension<Word>(m68kreg.pc);
+
+			int reg_val = ((ext_word >> 12) & 0x7);
+
+			bool is_addr_reg = testbit(ext_word, 15);
+			bool is_longword = testbit(ext_word, 11);
+
+			uint32_t register_index = (is_addr_reg) ? getAddrReg<Long>(reg_val) : getDataReg<Long>(reg_val);
+
+			uint32_t index_value = register_index;
+
+			if (!is_longword)
+			{
+			    index_value = sign<Word>(register_index);
+			}
+
+			uint8_t displacement = (ext_word & 0xFF);
+			uint32_t ext_displace = sign<Byte>(displacement);
+
+			temp = read<Size>(pc_val + index_value + ext_displace);
+
+			is_inst_legal = true;
+		    }
+		}
+		break;
 		case 4:
 		{
 		    if (testbit(mask, 11))
