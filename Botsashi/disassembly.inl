@@ -101,7 +101,6 @@ auto srcmodedasm(int mode, int reg, ostream &stream, uint32_t &pc) -> size_t
 		{
 		    if (testbit(mask, 9))
 		    {
-			uint32_t pc_val = pc;
 			uint16_t ext_word = extension<Word>(pc);
 
 			uint32_t displacement = clip<Long>(sign<Word>(ext_word));
