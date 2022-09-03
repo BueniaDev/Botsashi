@@ -1618,7 +1618,7 @@ auto m68k_addr(uint16_t instr) -> int
 template<int Size, bool is_rev>
 auto m68k_add_internal(uint16_t instr) -> int
 {
-    constexpr uint16_t addr_mode_mask = is_rev ? MemAltAddr : DataAddr;
+    constexpr uint16_t addr_mode_mask = is_rev ? MemAltAddr : AllAddr;
     constexpr uint16_t addr_mode_flags = is_rev ? Hold : None;
     int dstreg = getdstreg(instr);
     int srcmode = getsrcmode(instr);
@@ -1799,7 +1799,7 @@ auto m68k_subr(uint16_t instr) -> int
 template<int Size, bool is_rev>
 auto m68k_sub_internal(uint16_t instr) -> int
 {
-    constexpr uint16_t addr_mode_mask = is_rev ? MemAltAddr : DataAddr;
+    constexpr uint16_t addr_mode_mask = is_rev ? MemAltAddr : AllAddr;
     constexpr uint16_t addr_mode_flags = is_rev ? Hold : None;
     int dstreg = getdstreg(instr);
     int srcmode = getsrcmode(instr);

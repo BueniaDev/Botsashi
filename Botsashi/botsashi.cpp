@@ -149,6 +149,7 @@ namespace botsashi
 
 	int cycles = executeinstr(currentinstr);
 
+	// TODO: Implement exception handling
 	if (cycles < 0)
 	{
 	    cout << "Exception occuring..." << endl;
