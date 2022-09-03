@@ -1827,6 +1827,14 @@ auto m68kdis_trap(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
     return 2;
 }
 
+auto m68kdis_reset(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
+{
+    (void)pc;
+    (void)instr;
+    stream << "reset";
+    return 2;
+}
+
 auto m68kdis_nop(ostream &stream, uint32_t pc, uint16_t instr) -> size_t
 {
     (void)pc;

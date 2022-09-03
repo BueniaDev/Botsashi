@@ -82,7 +82,7 @@ vector<m68kmapping> funcmappings =
     instruction(0xFFC0, 0x44C0, move_to_ccr, move_to_ccr), // 4-123 (p227)
     instruction(0xFFC0, 0x40C0, move_from_sr, move_from_sr), // 6-17 (p471)
 
-    instruction(0xFFFF, 0x4E70, unknown, unknown), // 6-83 (p537)
+    instruction(0xFFFF, 0x4E70, reset, reset), // 6-83 (p537)
 
     instruction(0xFFC0, 0x4EC0, jmp, jmp), // 4-108 (p212)
     instruction(0xFFC0, 0x4E80, jsr, jsr), // 4-109 (p213)
